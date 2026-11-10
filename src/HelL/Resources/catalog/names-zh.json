@@ -1,0 +1,788 @@
+[
+  {
+    "kind": "mod",
+    "chinese": "钠",
+    "english": "Sodium",
+    "modrinth": "sodium",
+    "curseforge": "sodium",
+    "aliases": [
+      "钠优化",
+      "钠模组"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "锂",
+    "english": "Lithium",
+    "modrinth": "lithium",
+    "curseforge": "lithium",
+    "aliases": [
+      "锂优化"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "Iris 光影加载器",
+    "english": "Iris Shaders",
+    "modrinth": "iris",
+    "curseforge": "irisshaders",
+    "aliases": [
+      "鸢尾",
+      "iris光影"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "Fabric 接口库",
+    "english": "Fabric API",
+    "modrinth": "fabric-api",
+    "curseforge": "fabric-api",
+    "aliases": [
+      "fabric前置",
+      "fabric api"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "机械动力",
+    "english": "Create",
+    "modrinth": "create",
+    "curseforge": "create",
+    "curseforgeId": "328085",
+    "aliases": [
+      "机械动力模组"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "苹果皮",
+    "english": "AppleSkin",
+    "modrinth": "appleskin",
+    "curseforge": "appleskin",
+    "aliases": [
+      "饥饿值显示"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "实体渲染剔除",
+    "english": "Entity Culling",
+    "modrinth": "entityculling",
+    "curseforge": "entityculling",
+    "aliases": [
+      "实体剔除",
+      "实体优化"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "铁氧体磁芯",
+    "english": "FerriteCore",
+    "modrinth": "ferrite-core",
+    "curseforge": "ferritecore",
+    "aliases": [
+      "内存优化",
+      "铁氧体"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "Cloth 配置接口",
+    "english": "Cloth Config API",
+    "modrinth": "cloth-config",
+    "curseforge": "cloth-config",
+    "aliases": [
+      "布料配置",
+      "cloth配置"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "玉",
+    "english": "Jade",
+    "modrinth": "jade",
+    "curseforge": "jade",
+    "aliases": [
+      "玉模组",
+      "方块信息"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "JEI 物品管理器",
+    "english": "Just Enough Items",
+    "modrinth": "jei",
+    "curseforge": "jei",
+    "aliases": [
+      "jei",
+      "物品管理器",
+      "配方查询"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "REI 物品管理器",
+    "english": "Roughly Enough Items",
+    "modrinth": "rei",
+    "curseforge": "roughly-enough-items",
+    "aliases": [
+      "rei"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "EMI 物品与配方",
+    "english": "EMI",
+    "modrinth": "emi",
+    "curseforge": "emi",
+    "aliases": [
+      "emi物品管理器"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "Xaero 的小地图",
+    "english": "Xaero's Minimap",
+    "modrinth": "xaeros-minimap",
+    "curseforge": "xaeros-minimap",
+    "aliases": [
+      "小地图",
+      "xaero小地图"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "Xaero 的世界地图",
+    "english": "Xaero's World Map",
+    "modrinth": "xaeros-world-map",
+    "curseforge": "xaeros-world-map",
+    "aliases": [
+      "世界地图"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "旅行地图",
+    "english": "JourneyMap",
+    "modrinth": "journeymap",
+    "curseforge": "journeymap",
+    "aliases": [
+      "旅图"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "投影",
+    "english": "Litematica",
+    "modrinth": "litematica",
+    "curseforge": "litematica",
+    "aliases": [
+      "建筑投影"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "创世神",
+    "english": "WorldEdit",
+    "modrinth": "worldedit",
+    "curseforge": "worldedit",
+    "aliases": [
+      "世界编辑器"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "农夫乐事",
+    "english": "Farmer's Delight",
+    "modrinth": "farmers-delight",
+    "curseforge": "farmers-delight",
+    "aliases": [
+      "农夫"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "简易语音聊天",
+    "english": "Simple Voice Chat",
+    "modrinth": "simple-voice-chat",
+    "curseforge": "simple-voice-chat",
+    "aliases": [
+      "语音聊天",
+      "语音"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "模组菜单",
+    "english": "Mod Menu",
+    "modrinth": "modmenu",
+    "curseforge": "modmenu",
+    "aliases": [
+      "mod菜单"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "动态 FPS",
+    "english": "Dynamic FPS",
+    "modrinth": "dynamic-fps",
+    "curseforge": "dynamic-fps",
+    "aliases": [
+      "后台省电"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "现代化修复",
+    "english": "ModernFix",
+    "modrinth": "modernfix",
+    "curseforge": "modernfix",
+    "aliases": [
+      "现代修复"
+    ]
+  },
+  {
+    "kind": "mod",
+    "chinese": "远景",
+    "english": "Distant Horizons",
+    "modrinth": "distanthorizons",
+    "curseforge": "distant-horizons",
+    "aliases": [
+      "遥远的地平线",
+      "无限视距",
+      "dh"
+    ]
+  },
+  {
+    "kind": "modpack",
+    "chinese": "难以置信的优化",
+    "english": "Fabulously Optimized",
+    "modrinth": "fabulously-optimized",
+    "curseforge": "fabulously-optimized",
+    "aliases": [
+      "精致优化",
+      "fo",
+      "极致优化"
+    ]
+  },
+  {
+    "kind": "modpack",
+    "chinese": "肾上腺素",
+    "english": "Adrenaline",
+    "modrinth": "adrenaline",
+    "curseforge": "adrenaline",
+    "aliases": [
+      "性能优化整合包"
+    ]
+  },
+  {
+    "kind": "modpack",
+    "chinese": "真实生存",
+    "english": "RLCraft",
+    "curseforge": "rlcraft",
+    "curseforgeId": "285109",
+    "aliases": [
+      "rlcraft整合包"
+    ]
+  },
+  {
+    "kind": "modpack",
+    "chinese": "格雷科技：新视野",
+    "english": "GT: New Horizons",
+    "curseforge": "gt-new-horizons",
+    "curseforgeId": "252507",
+    "aliases": [
+      "gtnh",
+      "格雷科技新视野"
+    ]
+  },
+  {
+    "kind": "modpack",
+    "chinese": "更好的 MC",
+    "english": "Better MC",
+    "curseforge": "better-mc-forge-bmc1",
+    "curseforgeId": "429793",
+    "aliases": [
+      "更好的mc",
+      "更好的我的世界"
+    ]
+  },
+  {
+    "kind": "modpack",
+    "chinese": "机械动力：黄铜协奏曲",
+    "english": "Create: The Brass Concerto",
+    "curseforge": "create-the-brass-concerto",
+    "curseforgeId": "1238396",
+    "aliases": [
+      "黄铜协奏曲",
+      "cbc"
+    ]
+  },
+  {
+    "kind": "modpack",
+    "chinese": "机械动力：齿轮盛宴",
+    "english": "Create: Delight Remake",
+    "curseforge": "create-delight-remake",
+    "curseforgeId": "1059094",
+    "aliases": [
+      "齿轮盛宴",
+      "cdc"
+    ]
+  },
+  {
+    "kind": "modpack",
+    "chinese": "简单空岛",
+    "english": "Simply Skyblock",
+    "modrinth": "simply-skyblock",
+    "aliases": [
+      "简单空岛生存"
+    ]
+  },
+  {
+    "kind": "modpack",
+    "chinese": "僵尸入侵 100 天",
+    "english": "Zombie Invade 100 Days",
+    "modrinth": "zombie-invade-100-days",
+    "aliases": [
+      "僵尸百日",
+      "僵尸入侵"
+    ]
+  },
+  {
+    "kind": "modpack",
+    "chinese": "Cobblemon 官方整合包",
+    "english": "Cobblemon Official Modpack",
+    "modrinth": "cobblemon-fabric",
+    "aliases": [
+      "宝可梦整合包",
+      "方可梦",
+      "cobblemon"
+    ]
+  },
+  {
+    "kind": "modpack",
+    "chinese": "石头世界 3",
+    "english": "StoneBlock 3",
+    "curseforge": "ftb-stoneblock-3",
+    "aliases": [
+      "石块3",
+      "石头世界"
+    ]
+  },
+  {
+    "kind": "modpack",
+    "chinese": "所有模组 10",
+    "english": "All the Mods 10",
+    "curseforge": "all-the-mods-10",
+    "aliases": [
+      "atm10",
+      "所有模组10"
+    ]
+  },
+  {
+    "kind": "resourcepack",
+    "chinese": "生动动画",
+    "english": "Fresh Animations",
+    "modrinth": "fresh-animations",
+    "curseforge": "fresh-animations",
+    "aliases": [
+      "新鲜动画",
+      "鲜活动画",
+      "fa"
+    ]
+  },
+  {
+    "kind": "resourcepack",
+    "chinese": "钠界面汉化",
+    "english": "Translations for Sodium",
+    "modrinth": "translations-for-sodium",
+    "aliases": [
+      "钠汉化",
+      "sodium汉化"
+    ]
+  },
+  {
+    "kind": "resourcepack",
+    "chinese": "简约方块",
+    "english": "Bare Bones",
+    "modrinth": "bare-bones",
+    "curseforge": "bare-bones-texture-pack",
+    "aliases": [
+      "裸骨",
+      "官方宣传片材质"
+    ]
+  },
+  {
+    "kind": "resourcepack",
+    "chinese": "忠实原版 32×",
+    "english": "Faithful 32x",
+    "modrinth": "faithful-32x",
+    "curseforge": "faithful-32x",
+    "aliases": [
+      "忠实32",
+      "原版高清32"
+    ]
+  },
+  {
+    "kind": "resourcepack",
+    "chinese": "忠实原版 64×",
+    "english": "Faithful 64x",
+    "modrinth": "faithful-64x",
+    "aliases": [
+      "忠实64"
+    ]
+  },
+  {
+    "kind": "resourcepack",
+    "chinese": "原版增强",
+    "english": "Stay True",
+    "modrinth": "stay-true",
+    "curseforge": "stay-true",
+    "aliases": [
+      "保持真实"
+    ]
+  },
+  {
+    "kind": "resourcepack",
+    "chinese": "更好的树叶",
+    "english": "Better Leaves",
+    "modrinth": "better-leaves",
+    "aliases": [
+      "茂密树叶",
+      "圆润树叶"
+    ]
+  },
+  {
+    "kind": "resourcepack",
+    "chinese": "生动细节",
+    "english": "Fresh Details",
+    "modrinth": "fresh-details",
+    "aliases": [
+      "新鲜细节"
+    ]
+  },
+  {
+    "kind": "resourcepack",
+    "chinese": "可视附魔",
+    "english": "Visual Enchantments",
+    "modrinth": "visual-enchantments",
+    "curseforge": "visual-enchantments",
+    "aliases": [
+      "附魔可视化"
+    ]
+  },
+  {
+    "kind": "resourcepack",
+    "chinese": "清晰玻璃",
+    "english": "Clear Glass",
+    "modrinth": "clear-glass",
+    "aliases": [
+      "透明玻璃"
+    ]
+  },
+  {
+    "kind": "resourcepack",
+    "chinese": "Xray 矿物透视",
+    "english": "Xray Ultimate",
+    "modrinth": "xray-ultimate",
+    "curseforge": "xray-ultimate-1-11-compatible",
+    "aliases": [
+      "矿物透视",
+      "透视资源包"
+    ]
+  },
+  {
+    "kind": "shader",
+    "chinese": "互补光影：重制版",
+    "english": "Complementary Shaders - Reimagined",
+    "modrinth": "complementary-reimagined",
+    "curseforge": "complementary-reimagined",
+    "aliases": [
+      "互补光影",
+      "互补重制",
+      "complementary"
+    ]
+  },
+  {
+    "kind": "shader",
+    "chinese": "互补光影：无限版",
+    "english": "Complementary Shaders - Unbound",
+    "modrinth": "complementary-unbound",
+    "curseforge": "complementary-unbound",
+    "aliases": [
+      "互补无限",
+      "互补解绑"
+    ]
+  },
+  {
+    "kind": "shader",
+    "chinese": "BSL 光影",
+    "english": "BSL Shaders",
+    "modrinth": "bsl-shaders",
+    "curseforge": "bsl-shaders",
+    "aliases": [
+      "bsl",
+      "bsl光影"
+    ]
+  },
+  {
+    "kind": "shader",
+    "chinese": "缤纷光影",
+    "english": "Sildur's Vibrant Shaders",
+    "modrinth": "sildurs-vibrant-shaders",
+    "curseforge": "sildurs-vibrant-shaders",
+    "aliases": [
+      "sildur",
+      "缤纷"
+    ]
+  },
+  {
+    "kind": "shader",
+    "chinese": "MakeUp 极速光影",
+    "english": "MakeUp - Ultra Fast",
+    "modrinth": "makeup-ultra-fast-shaders",
+    "curseforge": "makeup-ultra-fast-shader",
+    "aliases": [
+      "makeup",
+      "极速光影"
+    ]
+  },
+  {
+    "kind": "shader",
+    "chinese": "微型光影",
+    "english": "Miniature Shader",
+    "modrinth": "miniature-shader",
+    "aliases": [
+      "微型光影",
+      "miniature"
+    ]
+  },
+  {
+    "kind": "shader",
+    "chinese": "香草增强光影",
+    "english": "Vanilla Plus Shader",
+    "modrinth": "vanilla-plus-shader",
+    "curseforge": "vanilla-plus-shader",
+    "aliases": [
+      "原版增强光影",
+      "vanilla plus"
+    ]
+  },
+  {
+    "kind": "shader",
+    "chinese": "怀旧光影",
+    "english": "Nostalgia Shader",
+    "modrinth": "nostalgia-shader",
+    "curseforge": "nostalgia-shader",
+    "aliases": [
+      "nostalgia"
+    ]
+  },
+  {
+    "kind": "shader",
+    "chinese": "迭代光影",
+    "english": "IterationT Shaders",
+    "modrinth": "iterationt-shaders",
+    "aliases": [
+      "iterationt"
+    ]
+  },
+  {
+    "kind": "shader",
+    "chinese": "土豆光影",
+    "english": "Potato Shaders",
+    "modrinth": "potato-shaders",
+    "aliases": [
+      "土豆",
+      "低配光影"
+    ]
+  },
+  {
+    "kind": "datapack",
+    "chinese": "Terralith 地形扩展",
+    "english": "Terralith",
+    "modrinth": "terralith",
+    "curseforge": "terralith",
+    "aliases": [
+      "地形石",
+      "地形扩展",
+      "地形革新"
+    ]
+  },
+  {
+    "kind": "datapack",
+    "chinese": "Incendium 下界扩展",
+    "english": "Incendium",
+    "modrinth": "incendium",
+    "curseforge": "incendium",
+    "aliases": [
+      "下界扩展",
+      "下界革新"
+    ]
+  },
+  {
+    "kind": "datapack",
+    "chinese": "Nullscape 末地扩展",
+    "english": "Nullscape",
+    "modrinth": "nullscape",
+    "curseforge": "nullscape",
+    "aliases": [
+      "末地扩展",
+      "末地革新"
+    ]
+  },
+  {
+    "kind": "datapack",
+    "chinese": "构造地形",
+    "english": "Tectonic",
+    "modrinth": "tectonic",
+    "curseforge": "tectonic",
+    "aliases": [
+      "构造",
+      "板块地形"
+    ]
+  },
+  {
+    "kind": "datapack",
+    "chinese": "探索结构",
+    "english": "Structory",
+    "modrinth": "structory",
+    "curseforge": "structory",
+    "aliases": [
+      "结构扩展"
+    ]
+  },
+  {
+    "kind": "datapack",
+    "chinese": "连锁采集",
+    "english": "VeinMiner",
+    "modrinth": "veinminer",
+    "curseforge": "veinminer",
+    "aliases": [
+      "连锁挖矿",
+      "矿脉挖掘"
+    ]
+  },
+  {
+    "kind": "datapack",
+    "chinese": "更好的村庄",
+    "english": "Towns and Towers",
+    "modrinth": "towns-and-towers",
+    "curseforge": "towns-and-towers",
+    "aliases": [
+      "城镇与高塔"
+    ]
+  },
+  {
+    "kind": "datapack",
+    "chinese": "更多地牢与酒馆",
+    "english": "Dungeons and Taverns",
+    "modrinth": "dungeons-and-taverns",
+    "curseforge": "dungeons-and-taverns",
+    "aliases": [
+      "地牢与酒馆"
+    ]
+  },
+  {
+    "kind": "datapack",
+    "chinese": "农夫乐事切割兼容",
+    "english": "Farmer's Delight Cutting Compat",
+    "curseforge": "farmers-delight-cutting-compat",
+    "aliases": [
+      "切割兼容"
+    ]
+  },
+  {
+    "kind": "datapack",
+    "chinese": "锦致装饰兼容",
+    "english": "Supplementaries Compat",
+    "curseforge": "supplementaries-compat",
+    "aliases": [
+      "锦致兼容"
+    ]
+  },
+  {
+    "kind": "world",
+    "chinese": "空岛生存",
+    "english": "SkyBlock",
+    "curseforge": "skyblock",
+    "aliases": [
+      "空岛",
+      "天空方块"
+    ]
+  },
+  {
+    "kind": "world",
+    "chinese": "单方块生存",
+    "english": "OneBlock",
+    "curseforge": "oneblock",
+    "aliases": [
+      "单方块",
+      "一格空岛",
+      "一个方块"
+    ]
+  },
+  {
+    "kind": "world",
+    "chinese": "单方块：荒野之境",
+    "english": "Oneblock (Wilderness Bound!)",
+    "aliases": [
+      "荒野之境",
+      "wilderness bound"
+    ]
+  },
+  {
+    "kind": "world",
+    "chinese": "幸运单方块",
+    "english": "Lucky OneBlock",
+    "aliases": [
+      "幸运方块空岛",
+      "幸运单方块生存"
+    ]
+  },
+  {
+    "kind": "world",
+    "chinese": "多样性 3",
+    "english": "Diversity 3",
+    "curseforge": "diversity-3",
+    "aliases": [
+      "多样性3",
+      "多元3"
+    ]
+  },
+  {
+    "kind": "world",
+    "chinese": "多样性 2",
+    "english": "Diversity 2",
+    "curseforge": "diversity-2",
+    "aliases": [
+      "多样性2"
+    ]
+  },
+  {
+    "kind": "world",
+    "chinese": "螺旋跑酷",
+    "english": "Parkour Spiral",
+    "aliases": [
+      "螺旋跑酷地图"
+    ]
+  },
+  {
+    "kind": "world",
+    "chinese": "天空乐园",
+    "english": "SkyGrid",
+    "curseforge": "skygrid",
+    "aliases": [
+      "网格空岛"
+    ]
+  },
+  {
+    "kind": "world",
+    "chinese": "新手生存基地",
+    "english": "Survival Starter Base",
+    "aliases": [
+      "生存基地",
+      "新手基地"
+    ]
+  }
+]

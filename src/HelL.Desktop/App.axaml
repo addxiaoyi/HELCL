@@ -1,0 +1,12 @@
+<Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="HelL.Desktop.App" RequestedThemeVariant="Dark">
+  <Application.Styles>
+    <FluentTheme />
+    <Style Selector="Window"><Setter Property="FontSize" Value="14" /><Setter Property="FontFamily" Value="Microsoft YaHei UI, PingFang SC, Noto Sans CJK SC, WenQuanYi Zen Hei" /></Style>
+    <Style Selector="Button"><Setter Property="MinHeight" Value="36" /><Setter Property="CornerRadius" Value="6" /></Style>
+    <Style Selector="TextBox"><Setter Property="MinHeight" Value="36" /></Style>
+    <Style Selector="ComboBox"><Setter Property="MinHeight" Value="36" /></Style>
+    <Style Selector="TextBlock.muted"><Setter Property="Foreground" Value="#A5ADB5" /></Style>
+    <Style Selector="TextBlock.section"><Setter Property="FontSize" Value="18" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+  </Application.Styles>
+</Application>

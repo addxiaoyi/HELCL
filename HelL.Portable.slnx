@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HelL.Core/HelL.Core.csproj" />
+    <Project Path="src/HelL.Desktop/HelL.Desktop.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/HelL.Portable.Tests/HelL.Portable.Tests.csproj" />
+    <Project Path="tools/HelL.Portable.Verify/HelL.Portable.Verify.csproj" />
+  </Folder>
+</Solution>

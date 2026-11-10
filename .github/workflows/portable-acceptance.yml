@@ -1,0 +1,107 @@
+name: Portable native acceptance
+
+on:
+  push:
+    branches: ['codex/portable-native-*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, rid: win-x64, signature: unsigned }
+          - { os: macos-15-intel, rid: osx-x64, signature: adhoc }
+          - { os: macos-15, rid: osx-arm64, signature: adhoc }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: dotnet test tests/HelL.Portable.Tests -c Release --nologo
+      - run: python -m unittest discover -s tests -p test_package_portable.py -v
+      - name: Publish native application and package
+        shell: pwsh
+        env:
+          RUNTIME: ${{ matrix.rid }}
+          SIGNATURE: ${{ matrix.signature }}
+        run: |
+          ./tools/publish_portable.ps1 -Runtime $env:RUNTIME -OutputDirectory publish/application
+          [xml]$project = Get-Content src/HelL.Desktop/HelL.Desktop.csproj -Raw
+          $version = [string]$project.Project.PropertyGroup.Version
+          python tools/package_portable.py --source publish/application --output publish/artifacts --runtime $env:RUNTIME --version $version --signature $env:SIGNATURE
+          if ($LASTEXITCODE -ne 0) { throw 'Native packaging/signature verification failed.' }
+          python tools/verify_portable.py publish/artifacts
+          if ($LASTEXITCODE -ne 0) { throw 'Checksum verification failed.' }
+      - name: Extract final package and verify actual executable
+        shell: pwsh
+        run: |
+          $archive = (Get-ChildItem publish/artifacts/*.zip).FullName
+          $unpacked = Join-Path $env:RUNNER_TEMP 'hell-unpacked'
+          if ($IsMacOS) {
+            ditto -x -k $archive $unpacked
+            if ($LASTEXITCODE -ne 0) { throw 'Archive extraction failed.' }
+            $app = (Get-ChildItem $unpacked -Recurse -Directory -Filter HelL.app).FullName
+            codesign --verify --deep --strict --verbose=2 $app
+            if ($LASTEXITCODE -ne 0) { throw 'Final bundle signature verification failed.' }
+            $exe = Join-Path $app 'Contents/MacOS/HelL.Desktop'
+            codesign -dv --verbose=2 $app 2>&1 | Out-File publish/codesign.txt
+            spctl --assess --type execute --verbose=4 $app 2>&1 | Out-File publish/gatekeeper.txt
+            # Ad-hoc is not notarized; preserve the assessment rather than claiming Gatekeeper acceptance.
+          } else {
+            Expand-Archive -LiteralPath $archive -DestinationPath $unpacked
+            $exe = (Get-ChildItem $unpacked -Recurse -File -Filter HelL.Desktop.exe).FullName
+          }
+          python tools/smoke_portable.py $exe
+          if ($LASTEXITCODE -ne 0) { throw 'Final package restart test failed.' }
+          python tools/smoke_portable_ui.py $exe (Join-Path $env:RUNNER_TEMP 'hell-ui')
+          if ($LASTEXITCODE -ne 0) { throw 'Final package GUI test failed.' }
+      - name: Prepare disposable macOS keychain
+        if: runner.os == 'macOS'
+        shell: pwsh
+        run: |
+          $keychain = Join-Path $env:RUNNER_TEMP 'hell-test.keychain-db'
+          $password = [guid]::NewGuid().ToString('N')
+          security create-keychain -p $password $keychain
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot create test keychain.' }
+          security unlock-keychain -p $password $keychain
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot unlock test keychain.' }
+          security default-keychain -s $keychain
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot select test keychain.' }
+      - name: Test native credentials with disposable fixture
+        shell: pwsh
+        run: |
+          dotnet run --project tools/HelL.Portable.Verify -c Release -- --credentials (Join-Path $env:RUNNER_TEMP 'hell-credentials')
+          if ($LASTEXITCODE -ne 0) { throw 'Native credential store test failed.' }
+      - name: Remove disposable keychain
+        if: always() && runner.os == 'macOS'
+        shell: pwsh
+        run: |
+          $keychain = Join-Path $env:RUNNER_TEMP 'hell-test.keychain-db'
+          if (Test-Path -LiteralPath $keychain) {
+            security delete-keychain $keychain
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot remove test keychain.' }
+          }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: native-acceptance-${{ matrix.rid }}
+          path: |
+            publish/artifacts/*
+            publish/codesign.txt
+            publish/gatekeeper.txt
+            ${{ runner.temp }}/hell-ui/ui-*.png
+            ${{ runner.temp }}/hell-ui/ui-smoke*.json
+            ${{ runner.temp }}/hell-ui/ui-smoke-error.txt
+            ${{ runner.temp }}/hell-credentials/credential-probe.json
+          if-no-files-found: warn

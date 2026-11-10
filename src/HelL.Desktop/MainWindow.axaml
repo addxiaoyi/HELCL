@@ -1,0 +1,95 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:portable="using:HelL.Portable" x:Class="HelL.Desktop.MainWindow"
+        Title="HelL · 跨平台预览" Width="1060" Height="720" MinWidth="800" MinHeight="600"
+        Background="#F0181C21" TransparencyLevelHint="AcrylicBlur" UseLayoutRounding="True">
+  <Grid RowDefinitions="Auto,*,Auto">
+    <Border Padding="24,18" BorderBrush="#24313A" BorderThickness="0,0,0,1">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <Image Source="avares://HelL.Desktop/Assets/Helstera.png" Width="32" Height="32" Margin="0,0,12,0" />
+        <StackPanel Grid.Column="1"><TextBlock Text="HelL" FontSize="20" FontWeight="SemiBold" /><TextBlock Text="你的 Minecraft 工作区" Classes="muted" FontSize="12" /></StackPanel>
+        <TextBlock Grid.Column="2" Text="跨平台迁移 · 预览 2" Classes="muted" VerticalAlignment="Center" />
+      </Grid>
+    </Border>
+    <Grid Grid.Row="1" ColumnDefinitions="240,*">
+      <Border Background="#40101418" BorderBrush="#24313A" BorderThickness="0,0,1,0" Padding="16,22">
+        <Grid RowDefinitions="Auto,*,Auto">
+          <TextBlock Text="实例" FontWeight="SemiBold" Margin="8,0,0,16" />
+          <ListBox x:Name="InstanceList" Grid.Row="1" SelectionChanged="SelectInstance" Background="Transparent">
+            <ListBox.ItemTemplate><DataTemplate DataType="portable:InstanceEntry">
+              <StackPanel Margin="2,8" Spacing="4"><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" /><TextBlock Text="{Binding Description}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" /></StackPanel>
+            </DataTemplate></ListBox.ItemTemplate>
+          </ListBox>
+          <StackPanel Grid.Row="2" Spacing="8" Margin="0,16,0,0">
+            <TextBlock Text="新建实例" Classes="muted" FontSize="12" />
+            <TextBox x:Name="InstanceName" PlaceholderText="例如：我的生存世界" MaxLength="48" AutomationProperties.Name="新实例名称" />
+            <Button x:Name="CreateButton" Content="创建实例" Click="CreateInstance" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+          </StackPanel>
+        </Grid>
+      </Border>
+      <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="28,24" Spacing="22">
+          <StackPanel Spacing="6"><TextBlock x:Name="InstanceTitle" Text="开始你的世界" FontSize="26" FontWeight="SemiBold" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" /><TextBlock x:Name="InstanceHint" Text="创建一个独立实例，然后安装 Minecraft。" Classes="muted" TextWrapping="Wrap" /></StackPanel>
+          <Border BorderBrush="#34404B" BorderThickness="0,0,0,1" Padding="0,0,0,20">
+            <TextBlock Text="原版安装、微软登录与试玩已接入。模组管理、AI 和插件市场仍在迁移，现有 Windows 完整版可独立使用。" Classes="muted" TextWrapping="Wrap" LineHeight="22" />
+          </Border>
+          <StackPanel x:Name="AccountPanel" Spacing="8">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+              <TextBlock x:Name="AccountName" Text="微软账号" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+              <Button x:Name="LoginButton" Grid.Column="1" Content="登录微软" Click="LoginMicrosoft" />
+              <Button x:Name="RefreshAccountButton" Grid.Column="2" Content="刷新授权" Click="RefreshAccount" IsVisible="False" Margin="8,0,0,0" />
+              <Button x:Name="LogoutButton" Grid.Column="3" Content="退出登录" Click="LogoutAccount" IsVisible="False" Margin="8,0,0,0" />
+            </Grid>
+            <CheckBox x:Name="RememberAccount" Content="在本机安全保存登录" IsChecked="True" />
+            <TextBlock x:Name="AccountNotice" Text="尚未登录，可使用试玩模式。" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+          </StackPanel>
+          <Border x:Name="AuthorizationPanel" IsVisible="False" BorderBrush="#456473" BorderThickness="1" CornerRadius="6" Padding="16">
+            <StackPanel Spacing="8">
+              <TextBlock Text="在微软网页输入下面的代码" FontWeight="SemiBold" />
+              <SelectableTextBlock x:Name="DeviceCode" FontSize="24" FontWeight="SemiBold" AutomationProperties.Name="微软授权代码" />
+              <SelectableTextBlock x:Name="DeviceAddress" TextWrapping="Wrap" />
+              <TextBlock x:Name="DeviceExpiry" Classes="muted" FontSize="12" />
+              <Button Content="打开微软授权页面" Click="OpenAuthorization" />
+              <TextBlock Text="请在浏览器中登录。启动器不会收集微软密码。" Classes="muted" FontSize="12" />
+            </StackPanel>
+          </Border>
+          <StackPanel x:Name="Workspace" Spacing="20">
+            <StackPanel Spacing="10">
+              <TextBlock Text="开始游戏" Classes="section" />
+              <Grid ColumnDefinitions="*,Auto">
+                <ComboBox x:Name="InstalledVersions" HorizontalAlignment="Stretch" PlaceholderText="尚未安装游戏版本" AutomationProperties.Name="已安装游戏版本" />
+                <Button x:Name="LaunchButton" Grid.Column="1" Margin="12,0,0,0" Content="启动试玩" Click="LaunchDemo" Classes="accent" />
+              </Grid>
+              <CheckBox x:Name="DemoMode" Content="试玩模式（无需登录）" IsChecked="True" IsCheckedChanged="SwitchLaunchMode" />
+            </StackPanel>
+            <StackPanel Spacing="10">
+              <TextBlock Text="Java 运行环境" FontWeight="SemiBold" />
+              <Grid ColumnDefinitions="*,Auto,Auto">
+                <TextBox x:Name="JavaPath" PlaceholderText="自动选择；缺少时下载匹配版本" AutomationProperties.Name="Java 可执行文件路径" />
+                <Button x:Name="DetectButton" Grid.Column="1" Content="检测" Click="DetectJava" Margin="8,0,0,0" />
+                <Button x:Name="BrowseButton" Grid.Column="2" Content="选择…" Click="BrowseJava" Margin="8,0,0,0" />
+              </Grid>
+              <ComboBox x:Name="JavaChoices" IsVisible="False" HorizontalAlignment="Stretch" SelectionChanged="SelectJava" AutomationProperties.Name="检测到的 Java" />
+            </StackPanel>
+            <StackPanel Spacing="10">
+              <TextBlock Text="安装 Minecraft" Classes="section" />
+              <Grid ColumnDefinitions="*,Auto,Auto">
+                <ComboBox x:Name="RemoteVersions" HorizontalAlignment="Stretch" PlaceholderText="获取正式版本列表" AutomationProperties.Name="可安装 Minecraft 版本" />
+                <Button x:Name="RefreshButton" Grid.Column="1" Content="获取版本" Click="RefreshVersions" Margin="8,0,0,0" />
+                <Button x:Name="InstallButton" Grid.Column="2" Content="安装" Click="InstallVersion" Margin="8,0,0,0" IsEnabled="False" />
+              </Grid>
+              <TextBlock Text="下载失败后可再次安装；已校验的文件会复用。" Classes="muted" FontSize="12" />
+            </StackPanel>
+          </StackPanel>
+          <StackPanel Spacing="6"><TextBlock Text="便携数据目录" Classes="muted" FontSize="12" /><SelectableTextBlock x:Name="DataDirectory" Foreground="#A5ADB5" FontSize="12" TextWrapping="Wrap" /></StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+    <Border Grid.Row="2" BorderBrush="#34404B" BorderThickness="0,1,0,0" Padding="24,14">
+      <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+        <TextBlock x:Name="Status" Text="就绪" TextWrapping="Wrap" VerticalAlignment="Center" />
+        <Button x:Name="CancelButton" Grid.Column="1" Content="取消任务" Click="CancelTask" IsVisible="False" Margin="16,0,0,0" />
+        <ProgressBar x:Name="Progress" Grid.Row="1" Grid.ColumnSpan="2" Minimum="0" Maximum="100" Height="3" Margin="0,10,0,0" IsVisible="False" />
+      </Grid>
+    </Border>
+  </Grid>
+</Window>

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>3.2.0-preview.2</Version>
+    <AssemblyName>HelL.Desktop</AssemblyName>
+    <ApplicationIcon>../HelL/HelL.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishSingleFile>false</PublishSingleFile>
+    <EnableAvaloniaDiagnostics>false</EnableAvaloniaDiagnostics>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../HelL.Core/HelL.Core.csproj" />
+    <PackageReference Include="Avalonia" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.6" />
+    <AvaloniaResource Include="../HelL/Resources/Brand/Helstera.png" Link="Assets/Helstera.png" />
+  </ItemGroup>
+</Project>

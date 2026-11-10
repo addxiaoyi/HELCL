@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>annotations</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Version>3.2.0</Version>
+    <DefineConstants>$(DefineConstants);HELL_PORTABLE</DefineConstants>
+    <NoWarn>$(NoWarn);CS0168;CS0219;CS0162;CS0649;CS0414;CS8981;CS8632</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../HelL/Core/**/*.cs" Exclude="../HelL/Core/Platform/Wpf/**/*.cs" Link="Core/%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="../HelL/Models/CatalogItem.cs" Link="Models/CatalogItem.cs" />
+    <PackageReference Include="System.Management" Version="10.0.0" />
+    <EmbeddedResource Include="../HelL/Resources/locales/*.json" LogicalName="HelL.Core.locales.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../HelL/Resources/ai/model_rules.json" LogicalName="HelL.Core.ai.model_rules.json" />
+    <EmbeddedResource Include="../HelL/Resources/news/zh_CN.json" LogicalName="HelL.Core.news.zh_CN.json" />
+    <EmbeddedResource Include="../HelL/Resources/catalog/names-zh.json" LogicalName="HelL.Core.catalog.names-zh.json" />
+    <EmbeddedResource Include="../../tools/HelL.MinecraftMcp/package*.json" LogicalName="HelL.Core.minecraft.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../../tools/HelL.MinecraftMcp/dist/*" LogicalName="HelL.Core.minecraft.dist.%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

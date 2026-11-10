@@ -1,0 +1,50 @@
+{
+  "10d2359117793eb78370f4d8f00675abb20120d812faa083a30bdbcd415dcd64": {
+    "summary": "本次快照带来新的音乐唱片和一批建筑方块。",
+    "version": "26.4-snapshot-7"
+  },
+  "d6acf8b819732a81590036199d77f96fee334ed131c182f609ce6ce3d6d42644": {
+    "summary": "雪砖冰屋与冰钓场景，呈现新快照的冰雪主题。",
+    "version": "26.4-snapshot-6"
+  },
+  "056d0ab2062737bc7d565f110571420499c0a736211f971639cf71a9b8beb4c5": {
+    "summary": "在浮冰砖小屋旁，用冰球应对新的冰雪生物。",
+    "version": "26.4-snapshot-5"
+  },
+  "aced0c686454dc511ed6647131862101eaa491b4fa68f0d6f365f60ba5be973f": {
+    "summary": "新增易碎冰；唱片机可从上方箱子连续播放唱片。",
+    "version": "26.4-snapshot-4"
+  },
+  "607e5c337f62e239268cca7c8af0bc43b02d3eacbed593ca831ab9a6ae791af2": {
+    "summary": "探索冰洞、冰柱与冰晶，迎接新的敌对生物。",
+    "version": "26.4-snapshot-3"
+  },
+  "b5e6353cd10f79c6f9c1d262bee0da6a261fc1080d7c17fd429c79f5e5b3a055": {
+    "summary": "调整渲染距离雾效、天体遮挡，并重新设计 F3 信息界面。",
+    "version": "26.4-snapshot-2"
+  },
+  "fbe99209d3921ba4d3b129255b2de41e7177d064ef3a9dfcc741dfd7ba4780bc": {
+    "summary": "26.4 首个快照聚焦技术改进，Vulkan 成为默认图形接口。",
+    "version": "26.4-snapshot-1"
+  },
+  "512d4e5bd6cffd0e36f1d1ad9e55420a32d14d73b6a68d59fd87dceb4b5d8446": {
+    "summary": "Java 版 Wilderness Bound 更新发布，开启林间探索之旅。",
+    "version": "26.3"
+  },
+  "e0adefc18a452a4a3f5bfa573ecd1570b5652a06a7c823b62a981fa687582c0d": {
+    "summary": "继续修复问题，为 26.3 正式发布做最后准备。",
+    "version": "26.3-rc-3"
+  },
+  "fe44809752414f293ff589c74dab41208cc02ae450deb35d6eb1bc9e2f053ce2": {
+    "summary": "26.3 第二个候选版本，进一步检查正式发布前的问题。",
+    "version": "26.3-rc-2"
+  },
+  "ffcdb2c1d5b8e530cc6a8a5d31e5a545e3ac357970bfe830d87aeb7fc5d71156": {
+    "summary": "26.3 首个候选版本，进入发布前的最终测试阶段。",
+    "version": "26.3-rc-1"
+  },
+  "429c7a11b2093172a4b61caa2796daead79c8986799bcbeb6a4261ae93b9e849": {
+    "summary": "26.3 第三个预发布版本，继续修复问题并调整技术内容。",
+    "version": "26.3-pre-3"
+  }
+}

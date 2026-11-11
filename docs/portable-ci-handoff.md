@@ -4,8 +4,8 @@
 
 本地 Windows 已完成 40 项 .NET 测试、9 项打包测试、图形界面自检、中文实例创建，以及系统凭据库加密往返。远程结果以本次 Actions run 为准。
 
-工作流 `portable-acceptance.yml` 在 `codex/portable-native-*` 分支推送后运行：Windows x64、macOS Intel、macOS Apple Silicon。macOS 包经过嵌套 Mach-O 与 `.app` ad-hoc 签名，解压最终 ZIP 后再次验签，再测试重启、界面与一次性钥匙串。`spctl` 的 Gatekeeper 结果保存为证据；ad-hoc 不是 Developer ID 或公证，不能将程序能运行解释为 Gatekeeper 已放行。
+工作流 `portable-acceptance.yml` 在 `codex/portable-native-*` 分支推送后运行：Windows x64、Linux x64、macOS Intel、macOS Apple Silicon。Linux GUI 在 Xvfb 下检查，Secret Service 在一次性 D-Bus 与 GNOME keyring 会话中读写并删除测试密钥。macOS 包经过嵌套 Mach-O 与 `.app` ad-hoc 签名，解压最终 ZIP 后再次验签，再测试重启、界面与一次性钥匙串。`spctl` 的 Gatekeeper 结果保存为证据；ad-hoc 不是 Developer ID 或公证，不能将程序能运行解释为 Gatekeeper 已放行。
 
 账号使用设备码授权和官方 Minecraft 身份链；令牌加密保存在 `portable-account.json`，AES-GCM 密钥位于当前用户的系统凭据库。密钥库不可用时明确提示仅在内存保留，换电脑后需重新登录。测试均使用虚构凭据，不读日常账户。
 
-许可证来源见 `docs/license-provenance.md`，上游 MIT 声明附在 `docs/licenses/TipCL-MIT.txt`。HelL 原创部分根许可证、SignPath 申请和历史杀软检测调查尚未完成。工作流不提交 SignPath 请求，不上传正式发行版，不改动 HELL 插件市场。
+许可证来源见 `docs/license-provenance.md`，上游 MIT 声明附在 `docs/licenses/TipCL-MIT.txt`。HELCL 当前仍缺根许可证，且 TipCL v1.1.0 发布的 EXE 未签名；按 SignPath Foundation 的 fork 规则，当前不具备申请条件。工作流不提交 SignPath 请求、不上传正式发行版，也不改动 HELL 插件市场。

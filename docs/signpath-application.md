@@ -4,6 +4,8 @@
 
 已核实的项目来源：https://github.com/addxiaoyi/HELCL 。GitHub 维护者账号为 `addxiaoyi`（当前 ADMIN 权限）；插件市场 https://github.com/addxiaoyi/HELL 为独立仓库。上游 https://github.com/wfwwq/TipCL 使用 MIT，版权属于 `2026 wfwwq`，原文已保留在 `docs/licenses/TipCL-MIT.txt`。详细证据见 [license-provenance.md](license-provenance.md)。
 
+**当前资格阻塞（2026-11-11）：** GitHub 将 HELCL 标记为 TipCL 的 fork。TipCL 最新正式版 [v1.1.0](https://github.com/wfwwq/TipCL/releases/tag/v1.1.0) 的 `TipCL.exe` 经 Authenticode 检查为 `NotSigned`（SHA-256：`8d5f266bbf9d9c3f4231479d4c4e06a692ea5423863f63a7242126c6aa9b759f`）。按 [SignPath Foundation 条款](https://signpath.org/terms)，当前 fork 路径不符合申请条件；上游开始发布已签名版本前，不提交申请。
+
 提交前由项目所有者补充并确认：
 
 - 正式发布仓库、维护者法定身份与联系地址。源码归属 HELCL 已核实，签名申请不能只用 GitHub 昵称代替需要的真实身份。

@@ -6,6 +6,8 @@
 - 插件市场：[addxiaoyi/HELL](https://github.com/addxiaoyi/HELL)，公开仓库、main 分支、MIT，版权行为 `Copyright (c) 2026 addxiaoyi2048`。README 明确它是启动器插件公共目录，源码主要为 `market`、`plugins` 和目录构建工具，不能据此给启动器代码套用同一许可证。
 - 上游：[wfwwq/TipCL](https://github.com/wfwwq/TipCL)，公开仓库、main 分支、MIT，版权行为 `Copyright (c) 2026 wfwwq`。远程 HEAD 为 `803dd3857e62b9c89d7eda2b0b892a0a724438a6`，LICENSE Git blob SHA 为 `3f8248572b3aaf6019cfc6b3209fdc187f3cf405`。
 
+截至 2026-11-11，TipCL 最新正式 release 为 [v1.1.0](https://github.com/wfwwq/TipCL/releases/tag/v1.1.0)，发布于 2026-11-07。下载其 `TipCL.exe` 后，本机 `Get-AuthenticodeSignature` 返回 `NotSigned`；文件 SHA-256 为 `8d5f266bbf9d9c3f4231479d4c4e06a692ea5423863f63a7242126c6aa9b759f`，与 GitHub release asset digest 一致。HELCL 在 GitHub 标记为 TipCL 的 fork。按 [SignPath Foundation 条款](https://signpath.org/terms)中的 fork 资格规则，在上游开始发布已签名构建前，不应为 HELCL 提交基金会签名申请。
+
 已原样保留上游许可文本：[licenses/TipCL-MIT.txt](licenses/TipCL-MIT.txt)，文件 SHA-256 为 `597eb74c2d55107819f7b31a972a74aec51488621147c4ed86778af1158dec3d`。便携包附带这份上游声明。
 
 这份 MIT 授权允许在遵守原版权与许可声明的前提下使用、修改和再分发上游代码；它不自动决定 HelL 新增代码的许可证，也不能替代全部资产、第三方组件和历史来源的检查。当前没有擅自为用户原创部分新增根 LICENSE。

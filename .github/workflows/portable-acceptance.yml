@@ -15,6 +15,7 @@ jobs:
       matrix:
         include:
           - { os: windows-latest, rid: win-x64, signature: unsigned }
+          - { os: ubuntu-24.04, rid: linux-x64, signature: unsigned }
           - { os: macos-15-intel, rid: osx-x64, signature: adhoc }
           - { os: macos-15, rid: osx-arm64, signature: adhoc }
     runs-on: ${{ matrix.os }}
@@ -28,6 +29,11 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
+      - name: Install Linux display and keyring dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y dbus-x11 gnome-keyring libsecret-tools xvfb
       - run: dotnet test tests/HelL.Portable.Tests -c Release --nologo
       - run: python -m unittest discover -s tests -p test_package_portable.py -v
       - name: Publish native application and package
@@ -46,9 +52,10 @@ jobs:
       - name: Extract final package and verify actual executable
         shell: pwsh
         run: |
-          $archive = (Get-ChildItem publish/artifacts/*.zip).FullName
           $unpacked = Join-Path $env:RUNNER_TEMP 'hell-unpacked'
+          New-Item -ItemType Directory -Path $unpacked | Out-Null
           if ($IsMacOS) {
+            $archive = (Get-ChildItem publish/artifacts/*.zip).FullName
             ditto -x -k $archive $unpacked
             if ($LASTEXITCODE -ne 0) { throw 'Archive extraction failed.' }
             $app = (Get-ChildItem $unpacked -Recurse -Directory -Filter HelL.app).FullName
@@ -58,13 +65,24 @@ jobs:
             codesign -dv --verbose=2 $app 2>&1 | Out-File publish/codesign.txt
             spctl --assess --type execute --verbose=4 $app 2>&1 | Out-File publish/gatekeeper.txt
             # Ad-hoc is not notarized; preserve the assessment rather than claiming Gatekeeper acceptance.
+          } elseif ($IsLinux) {
+            $archive = (Get-ChildItem publish/artifacts/*.tar.gz).FullName
+            tar -xzf $archive -C $unpacked
+            if ($LASTEXITCODE -ne 0) { throw 'Archive extraction failed.' }
+            $exe = (Get-ChildItem $unpacked -Recurse -File -Filter HelL.Desktop).FullName
           } else {
+            $archive = (Get-ChildItem publish/artifacts/*.zip).FullName
             Expand-Archive -LiteralPath $archive -DestinationPath $unpacked
             $exe = (Get-ChildItem $unpacked -Recurse -File -Filter HelL.Desktop.exe).FullName
           }
+          if ([string]::IsNullOrWhiteSpace($exe)) { throw 'Packaged executable was not found.' }
           python tools/smoke_portable.py $exe
           if ($LASTEXITCODE -ne 0) { throw 'Final package restart test failed.' }
-          python tools/smoke_portable_ui.py $exe (Join-Path $env:RUNNER_TEMP 'hell-ui')
+          if ($IsLinux) {
+            xvfb-run -a python tools/smoke_portable_ui.py $exe (Join-Path $env:RUNNER_TEMP 'hell-ui')
+          } else {
+            python tools/smoke_portable_ui.py $exe (Join-Path $env:RUNNER_TEMP 'hell-ui')
+          }
           if ($LASTEXITCODE -ne 0) { throw 'Final package GUI test failed.' }
       - name: Prepare disposable macOS keychain
         if: runner.os == 'macOS'
@@ -79,10 +97,21 @@ jobs:
           security default-keychain -s $keychain
           if ($LASTEXITCODE -ne 0) { throw 'Cannot select test keychain.' }
       - name: Test native credentials with disposable fixture
+        if: runner.os != 'Linux'
         shell: pwsh
         run: |
           dotnet run --project tools/HelL.Portable.Verify -c Release -- --credentials (Join-Path $env:RUNNER_TEMP 'hell-credentials')
           if ($LASTEXITCODE -ne 0) { throw 'Native credential store test failed.' }
+      - name: Test Linux Secret Service with disposable keyring
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          dbus-run-session -- bash -euo pipefail -c '
+            keyring_password="$(python3 -c "import secrets; print(secrets.token_hex(24))")"
+            eval "$(printf "%s\\n" "$keyring_password" | gnome-keyring-daemon --unlock --components=secrets)"
+            eval "$(gnome-keyring-daemon --start --components=secrets)"
+            dotnet run --project tools/HelL.Portable.Verify -c Release -- --credentials "$RUNNER_TEMP/hell-credentials"
+          '
       - name: Remove disposable keychain
         if: always() && runner.os == 'macOS'
         shell: pwsh

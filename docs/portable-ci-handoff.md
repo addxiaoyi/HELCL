@@ -14,6 +14,17 @@
 
 每个平台附件包含便携包、版本/架构/签名状态清单、`SHA256SUMS`、1060/800 DIP 界面截图、界面自检与凭据自检报告。macOS 另包含 `codesign.txt`、`gatekeeper.txt`。GitHub 构建附件会按仓库保留策略过期，不是永久下载地址。
 
+四个附件已从上述 run 下载并在本机重新执行 `tools/verify_portable.py`：SHA-256、文件大小、版本与架构清单全部一致；压缩包内容检查、四组界面/凭据报告和八张截图复核通过。Linux 包保留可执行权限。取回的 Windows 包解压后再次执行 `tools/smoke_portable.py`，返回 `ok=true, launches=2, persistedInstances=2`；`Get-AuthenticodeSignature` 返回 `NotSigned`。
+
+最终便携包 SHA-256（均为 `3.2.0-preview.2`）：
+
+| 平台 | SHA-256 |
+| --- | --- |
+| win-x64 | `38acf28a332328c3359df90125e08ed2b692ce19b31374571dbb56bc1c334c69` |
+| linux-x64 | `40b136fb5ad7f524963cc7989a258349341c97116bd8e026181596b0930e7cd1` |
+| osx-x64 | `19ba7f19f782c3362a139a586eca7bc4343d04528af9b0d0b9d7a5d7a2c6c12b` |
+| osx-arm64 | `8e357e3666173813d92162c1124f314f61467bea6818001dfa668e87dc7766b5` |
+
 截图检查发现 Linux runner 原先缺少中文字体，界面虽然能启动，中文却显示为方框。工作流现安装 `fonts-noto-cjk`，并检查 fontconfig 可找到 Noto CJK；新版 Linux 截图已确认中文正常。程序仍依赖系统字体，Linux 用户需按 [下载说明](downloads.md) 安装中文字体。
 
 Windows 的一次复验在认证测试清理阶段报 `Replay server did not stop`。模拟 HTTP 服务现使用可取消的异步接收，保留 5 秒退出断言，并传播非取消异常。本机完整测试 40/40 通过，原失败的刷新场景连续 5/5 通过，随后四个平台 CI 均通过。

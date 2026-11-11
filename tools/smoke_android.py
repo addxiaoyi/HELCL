@@ -21,8 +21,8 @@ def smoke(apk: Path, output: Path) -> None:
     package = "io.hell.launcher.preview"
     evidence = f"/sdcard/Android/data/{package}/files/ui-evidence"
     adb("install", "-r", str(apk))
-    adb("shell", "am", "start", "-W", "-n", f"{package}/{package}.MainActivity", "--ez", "hell_ui_smoke", "true")
-    deadline = time.monotonic() + 100
+    adb("shell", "am", "start", "-W", "-n", f"{package}/{package}.MainActivity", "--ez", "hell_ui_smoke", "true", "--ez", "hell_catalog_live", "true")
+    deadline = time.monotonic() + 300
     try:
         while time.monotonic() < deadline:
             files = adb("shell", "ls", evidence, allowed=(0, 1))
@@ -33,6 +33,11 @@ def smoke(apk: Path, output: Path) -> None:
         report = json.loads((output / "ui/mobile-smoke.json").read_text(encoding="utf-8"))
         if not report.get("ok") or not all(report.get(k) for k in ("created", "renamed", "grouped", "pinned", "resources")):
             raise ValueError("Android native UI checks did not pass.")
+        if not report.get("nativeResourceDownload"):
+            raise ValueError("Android native catalog download did not complete.")
+        catalog = json.loads((output / "ui/mobile-catalog-live.json").read_text(encoding="utf-8"))
+        if not catalog.get("ok") or not catalog.get("iconRendered") or catalog.get("bytes", 0) <= 0:
+            raise ValueError("Android live catalog report is incomplete.")
         for page in ("library", "manage", "resources-empty", "resources", "detail", "download", "about"):
             if not (output / f"ui/mobile-{page}.png").is_file():
                 raise ValueError(f"Missing native mobile screenshot: {page}")

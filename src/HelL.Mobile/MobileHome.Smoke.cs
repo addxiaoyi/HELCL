@@ -53,11 +53,13 @@ public sealed partial class MobileHome
             await Capture("download");
             ShowPage("about");
             await Capture("about");
+            if (MobileRuntime.LiveSmoke) await CheckNativeDownload();
             File.WriteAllText(Path.Combine(EvidenceRoot, "mobile-smoke.json"), JsonSerializer.Serialize(new
             {
                 ok = true, platform = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier,
                 width = Bounds.Width, height = Bounds.Height, created = true, renamed = true, grouped = true, pinned = true,
                 referenceVersion = reference, resources = true, gameExecutionSupported = false,
+                nativeResourceDownload = MobileRuntime.LiveSmoke,
                 persistedInstances = launcher.LibraryList().Count
             }));
             Status.Text = "移动页面验收完成。";
@@ -75,5 +77,41 @@ public sealed partial class MobileHome
         using var bitmap = new RenderTargetBitmap(new PixelSize((int)Bounds.Width, (int)Bounds.Height), new Vector(96, 96));
         bitmap.Render(this);
         bitmap.Save(Path.Combine(EvidenceRoot, $"mobile-{page}.png"), new PngBitmapEncoderOptions());
+    }
+
+    private async Task CheckNativeDownload()
+    {
+        ShowPage("resources");
+        ClearProjects();
+        Query.Text = "忠实";
+        SearchResources(this, new RoutedEventArgs());
+        await WaitOperation();
+        var pack = Projects.Items.OfType<CatalogProject>().FirstOrDefault(row => row.Slug == "faithful-64x")
+            ?? throw new IOException("Native Chinese resource search failed: " + Status.Text);
+        Projects.SelectedItem = pack;
+        OpenDetails(this, new RoutedEventArgs());
+        await WaitOperation();
+        if (Releases.SelectedItem is not CatalogRelease release) throw new IOException("Native compatible release lookup failed: " + Status.Text);
+        DateTime pictureDeadline = DateTime.UtcNow.AddSeconds(20);
+        while (!ProjectIcon.ImageLoaded && DateTime.UtcNow < pictureDeadline) await Task.Delay(100);
+        if (!ProjectIcon.ImageLoaded) throw new IOException("Native upstream project icon did not load.");
+        await Capture("live-detail");
+        DownloadResource(this, new RoutedEventArgs());
+        await WaitOperation();
+        string file = Path.Combine(launcher.InstanceFolder(selected), "resourcepacks", release.Filename);
+        if (!File.Exists(file)) throw new IOException("Native resource download failed: " + Status.Text);
+        string expected = Py.S((release.File.Get("hashes") as PyDict ?? release.File).Get("sha512"));
+        string actual = Convert.ToHexString(System.Security.Cryptography.SHA512.HashData(File.ReadAllBytes(file))).ToLowerInvariant();
+        if (!string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase)) throw new IOException("Native downloaded resource checksum mismatch.");
+        File.WriteAllText(Path.Combine(EvidenceRoot, "mobile-catalog-live.json"), JsonSerializer.Serialize(new
+            { ok = true, query = "忠实", slug = pack.Slug, release = release.Id, iconRendered = true, bytes = new FileInfo(file).Length, sha512 = actual }));
+        await Capture("live-installed");
+
+        async Task WaitOperation()
+        {
+            DateTime deadline = DateTime.UtcNow.AddMinutes(3);
+            while (operation != null && DateTime.UtcNow < deadline) await Task.Delay(100);
+            if (operation != null) { operation.Cancel(); throw new TimeoutException("Native catalog operation timed out."); }
+        }
     }
 }

@@ -17,6 +17,7 @@ public sealed class MainActivity : AvaloniaMainActivity
         if (smoke || restart)
         {
             MobileRuntime.Smoke = smoke;
+            MobileRuntime.LiveSmoke = smoke && Intent?.GetBooleanExtra("hell_catalog_live", false) == true;
             MobileRuntime.VerifyRestart = restart;
             MobileRuntime.Root = Path.Combine(FilesDir!.AbsolutePath, "ui-smoke");
             MobileRuntime.ReportRoot = Path.Combine(GetExternalFilesDir(null)!.AbsolutePath, "ui-evidence");

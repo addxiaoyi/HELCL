@@ -1,5 +1,7 @@
 # Portable native acceptance branch
 
+最新交付为 **3.2.0-preview.3**，包含 Android APK、macOS 页面、实例库、资源下载与 Linux ARM64 原生验收；当前结果见 [Android/macOS 最终验收](mobile-macos-delivery.md) 和 [工作区验收](portable-workspaces-preview3.md)。下文保留 preview.2 的历史构建证据及边界。
+
 ## 2026-11-11 验收结果
 
 分支：`codex/portable-native-20261111`。已验证源码提交：`bb254bae027288f0cd3bf711b9928fd746c627d3`。

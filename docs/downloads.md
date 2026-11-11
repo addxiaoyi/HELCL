@@ -6,6 +6,8 @@ Avalonia 跨平台版目前为 **3.2.0-preview.3 迁移预览版**，不是 Wind
 
 ## 免安装便携包
 
+Android 单独提供签名 APK，包含实例与资源管理页面；不包含 Java 游戏运行内核。详见 [Android 预览说明](android-preview.md)。APK 的安装方式和数据目录不同于桌面便携包。
+
 - Windows 10/11 x64：`HelL-3.2.0-preview.3-win-x64.zip`。完整解压到个人文件夹，双击 `HelL.Desktop.exe`。无需另装 .NET，也不要求管理员权限。
 - Linux x64 / ARM64：对应 `linux-x64.tar.gz` / `linux-arm64.tar.gz`，解压后运行 `./HelL.Desktop`。依赖图形会话和系统原生库；建议 Ubuntu 24.04。缺库时安装系统提供的 fontconfig、X11、ICE/SM、libicu 与 OpenGL 驱动。中文显示需安装中文字体（如 Noto Sans CJK）。这不是静态链接程序，也不是 AppImage。
 - macOS 14+ Intel / Apple Silicon：对应 `osx-x64.zip` / `osx-arm64.zip`，解压整个文件夹，再打开 `HelL.app`。`.app` 和旁边的 `data` 保持在同一个可写文件夹中。无需安装 .NET。macOS 包由 macOS runner 生成并做 ad-hoc 完整性签名，**不具备 Apple Developer ID 身份或公证**。

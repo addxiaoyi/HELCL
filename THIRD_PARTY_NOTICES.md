@@ -10,6 +10,7 @@ The portable desktop dependency graph currently includes:
 | Component | Version | Declared license |
 | --- | --- | --- |
 | Avalonia UI and platform packages | 12.1.6 | MIT |
+| Avalonia.Android | 12.1.6 | MIT; AndroidX and other transitive Android package notices also apply |
 | Avalonia.BuildServices (build tool) | 11.3.2 | MIT |
 | Avalonia.Angle.Windows.Natives | 2.1.27548.20260419 | Bundled LICENSE (includes upstream notices) |
 | SkiaSharp and native assets | 3.119.4 | MIT; native third-party notices also apply |

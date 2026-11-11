@@ -1,3 +1,15 @@
+# HelL 跨平台预览工作区
+
+本分支提供 Windows、Linux x64/ARM64、macOS Intel/Apple Silicon 的 Avalonia 桌面预览，以及 Android 实例与资源管理 APK。它是分阶段迁移版本；Android 尚不能运行 Minecraft Java 版，桌面加载器、AI 和插件界面也仍在迁移。
+
+- [便携包下载与首次打开](docs/downloads.md) · [Android 页面、签名与安装](docs/android-preview.md)
+- [Android/macOS 最终验收](docs/mobile-macos-delivery.md) · [跨平台工作区记录](docs/portable-workspaces-preview3.md) · [macOS 真实桌面验收步骤](docs/macos-desktop-acceptance.md)
+- [MIT 许可与来源说明](docs/license-provenance.md) · [SignPath 申请状态](docs/signpath-application.md)
+
+构建附件由本分支的 `Portable native acceptance` 和 `Android preview APK` 工作流生成，尚未公开发布正式 Release。桌面开发入口为 `HelL.Portable.slnx`；Android 入口为 `src/HelL.Android/HelL.Android.csproj`（需要 .NET Android workload）。
+
+以下保留上游 TipCL 的历史说明，所述完整功能不代表当前跨平台预览已全部迁移。
+
 <div align="center">
 
 <img src="docs/icon.png" width="140" alt="TipCL" />

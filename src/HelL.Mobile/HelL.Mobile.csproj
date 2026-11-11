@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../HelL.Core/HelL.Core.csproj" />
+    <PackageReference Include="Avalonia" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.6" />
+    <Compile Include="../HelL.Desktop/Controls/ProjectPicture.cs" Link="Controls/ProjectPicture.cs" />
+    <Compile Include="../HelL.Desktop/Services/DesktopImages.cs" Link="Services/DesktopImages.cs" />
+    <AvaloniaResource Include="../HelL/Resources/Brand/Helstera.png" Link="Assets/Helstera.png" />
+  </ItemGroup>
+</Project>

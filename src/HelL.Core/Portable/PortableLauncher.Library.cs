@@ -45,4 +45,12 @@ public sealed partial class PortableLauncher
     public void SetInstanceCover(string name, string file) => InstanceArtwork.SetCover(RequireInstance(name), file);
     public void ResetInstanceCover(string name) => InstanceArtwork.ResetCover(RequireInstance(name));
     public string InstanceFolder(string name) => RequireInstance(name).path;
+    public void SetReferenceVersion(string name, string version)
+    {
+        RequireVersionId(version);
+        if (!System.Text.RegularExpressions.Regex.IsMatch(version, @"\A1\.\d+(?:\.\d+)?\z"))
+            throw new ArgumentException("请输入正式 Minecraft 版本，例如 1.21.1。此设置仅用于资源兼容性筛选。");
+        RequireInstance(name).SetMeta("portable_reference_version", version);
+    }
+    public string ReferenceVersion(string name) => Py.S(RequireInstance(name).Meta().Get("portable_reference_version"));
 }

@@ -1,0 +1,69 @@
+name: Android preview APK
+on:
+  push:
+    branches: ['codex/portable-native-*']
+    paths: ['src/**', 'tools/smoke_android.py', '.github/workflows/android-preview.yml', 'LICENSE', 'THIRD_PARTY_NOTICES.md']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+      - name: Install Android workload
+        run: |
+          dotnet workload install android
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Build signed preview APK
+        env:
+          PREVIEW_KEYSTORE: ${{ secrets.HELCL_ANDROID_KEYSTORE }}
+          HELCL_SIGNING_PASSWORD: ${{ secrets.HELCL_ANDROID_STORE_PASS }}
+        run: |
+          test -n "$PREVIEW_KEYSTORE"
+          test -n "$HELCL_SIGNING_PASSWORD"
+          umask 077
+          printf '%s' "$PREVIEW_KEYSTORE" | base64 --decode > "$RUNNER_TEMP/hell-preview.p12"
+          trap 'rm -f "$RUNNER_TEMP/hell-preview.p12"' EXIT
+          dotnet publish src/HelL.Android -c Release -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$RUNNER_TEMP/hell-preview.p12" -p:AndroidSigningKeyAlias=hell-preview -p:AndroidSigningStorePass=env:HELCL_SIGNING_PASSWORD -p:AndroidSigningKeyPass=env:HELCL_SIGNING_PASSWORD -p:ApplicationVersion="$GITHUB_RUN_NUMBER" -o publish/android
+          mkdir -p publish/apk
+          cp publish/android/*-Signed.apk publish/apk/HelL-3.2.0-preview.3-android.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs publish/apk/*.apk > publish/apk/signature.txt
+          cd publish/apk
+          sha256sum *.apk > SHA256SUMS
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install and exercise signed APK
+        uses: ReactiveCircus/android-emulator-runner@4c44018e59b437e86cdfc41da381398f93ed8808
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_5
+          disable-animations: true
+          script: python3 tools/smoke_android.py publish/apk/HelL-3.2.0-preview.3-android.apk publish/android-evidence
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: android-preview-apk
+          path: publish/apk/*
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: android-native-evidence
+          path: publish/android-evidence/*
+          if-no-files-found: warn

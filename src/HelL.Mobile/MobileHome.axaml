@@ -1,0 +1,99 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pictures="using:HelL.Desktop.Controls" x:Class="HelL.Mobile.MobileHome" Background="#171E23">
+  <Grid RowDefinitions="Auto,*,Auto,Auto">
+    <Border Padding="20,16" BorderBrush="#34434B" BorderThickness="0,0,0,1">
+      <Grid ColumnDefinitions="40,*"><Image Source="avares://HelL.Mobile/Assets/Helstera.png" Width="28" Height="28" />
+        <StackPanel Grid.Column="1"><TextBlock Text="HelL" FontSize="23" FontWeight="SemiBold" /><TextBlock Text="移动资源工作区 · 预览" Classes="muted" FontSize="12" /></StackPanel>
+      </Grid>
+    </Border>
+    <Grid Grid.Row="1" x:Name="Pages">
+      <ScrollViewer x:Name="LibraryPage" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20" Spacing="16">
+          <TextBlock Text="我的实例" FontSize="25" FontWeight="SemiBold" />
+          <TextBlock Text="管理资源与存档。Android 游戏运行内核尚未接入。" Classes="muted" TextWrapping="Wrap" />
+          <TextBox x:Name="LibrarySearch" PlaceholderText="搜索名称或分组" TextChanged="FilterInstances" AutomationProperties.Name="搜索实例" />
+          <ListBox x:Name="InstancesList" MaxHeight="280" Background="Transparent" SelectionChanged="SelectInstance" AutomationProperties.Name="实例列表">
+            <ListBox.ItemTemplate><DataTemplate>
+              <Grid ColumnDefinitions="64,*" Margin="0,8"><pictures:ProjectPicture Source="{Binding Cover}" Width="52" Height="52" /><StackPanel Grid.Column="1" Spacing="5"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" /><TextBlock Text="{Binding Detail}" Classes="muted" FontSize="12" TextWrapping="Wrap" /></StackPanel></Grid>
+            </DataTemplate></ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock x:Name="LibraryNotice" Text="创建一个实例，开始管理资源。" Classes="muted" TextWrapping="Wrap" />
+          <Border BorderBrush="#34434B" BorderThickness="0,1,0,0" Padding="0,16,0,0">
+            <StackPanel Spacing="10">
+              <TextBlock Text="创建实例" FontWeight="SemiBold" />
+              <TextBox x:Name="NewName" PlaceholderText="实例名称" MaxLength="48" AutomationProperties.Name="新实例名称" />
+              <TextBox x:Name="NewVersion" Text="1.21.1" PlaceholderText="资源参考版本，例如 1.21.1" AutomationProperties.Name="新实例参考版本" />
+              <Button x:Name="CreateButton" Content="创建实例" Click="CreateInstance" HorizontalAlignment="Stretch" />
+            </StackPanel>
+          </Border>
+          <StackPanel x:Name="InstanceEditor" Spacing="10" IsVisible="False">
+            <TextBlock Text="当前实例" FontWeight="SemiBold" />
+            <TextBox x:Name="InstanceName" AutomationProperties.Name="实例名称" />
+            <TextBox x:Name="InstanceGroup" PlaceholderText="分组，留空移出" MaxLength="32" AutomationProperties.Name="实例分组" />
+            <TextBox x:Name="ReferenceVersion" AutomationProperties.Name="资源参考版本" />
+            <Button x:Name="SaveInstanceButton" Content="保存名称、分组与参考版本" Click="SaveInstance" HorizontalAlignment="Stretch" />
+            <WrapPanel><Button x:Name="PinButton" Content="固定" Click="PinInstance" Margin="0,0,8,8" /><Button Content="选择封面" Click="ChooseCover" Margin="0,0,8,8" /><Button Content="恢复截图" Click="ResetCover" Margin="0,0,0,8" /></WrapPanel>
+            <Button Content="导出实例备份" Click="ExportInstance" HorizontalAlignment="Stretch" />
+            <Button Content="为此实例查找资源" Click="GoResources" HorizontalAlignment="Stretch" />
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+      <ScrollViewer x:Name="ResourcesPage" IsVisible="False" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20" Spacing="12">
+          <TextBlock Text="资源下载" FontSize="25" FontWeight="SemiBold" />
+          <TextBlock x:Name="ResourceTarget" Text="请先在实例页选择目标。" Classes="muted" TextWrapping="Wrap" />
+          <StackPanel x:Name="SearchPanel" Spacing="10">
+            <TextBox x:Name="Query" PlaceholderText="中文或英文资源名称" AutomationProperties.Name="搜索资源" />
+            <Grid ColumnDefinitions="*,*">
+              <ComboBox x:Name="Kind" SelectedIndex="0" HorizontalAlignment="Stretch" SelectionChanged="FiltersChanged" AutomationProperties.Name="资源类型"><ComboBoxItem Content="资源包" Tag="resourcepack" /><ComboBoxItem Content="光影" Tag="shader" /><ComboBoxItem Content="模组" Tag="mod" /><ComboBoxItem Content="整合包" Tag="modpack" /><ComboBoxItem Content="数据包" Tag="datapack" /><ComboBoxItem Content="世界" Tag="world" /></ComboBox>
+              <ComboBox x:Name="Provider" Grid.Column="1" Margin="8,0,0,0" SelectedIndex="0" HorizontalAlignment="Stretch" SelectionChanged="FiltersChanged" AutomationProperties.Name="资源来源"><ComboBoxItem Content="Modrinth" Tag="modrinth" /><ComboBoxItem Content="CurseForge" Tag="curseforge" /></ComboBox>
+            </Grid>
+            <Button Content="搜索资源" Click="SearchResources" HorizontalAlignment="Stretch" />
+            <TextBlock x:Name="SearchNotice" Text="支持中文映射、真实项目图标与兼容版本筛选。" Classes="muted" TextWrapping="Wrap" FontSize="13" />
+            <ListBox x:Name="Projects" MaxHeight="420" Background="Transparent" SelectionChanged="ProjectSelected" AutomationProperties.Name="资源结果">
+              <ListBox.ItemTemplate><DataTemplate>
+                <Grid ColumnDefinitions="58,*" Margin="0,8"><pictures:ProjectPicture Source="{Binding Icon}" Width="46" Height="46" /><StackPanel Grid.Column="1" Spacing="5"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" /><TextBlock Text="{Binding Author}" Classes="muted" FontSize="12" /><TextBlock Text="{Binding PreviewSummary}" Classes="muted" FontSize="13" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" /></StackPanel></Grid>
+              </DataTemplate></ListBox.ItemTemplate>
+            </ListBox>
+            <Button x:Name="DetailsButton" Content="查看所选资源" IsEnabled="False" Click="OpenDetails" HorizontalAlignment="Stretch" />
+          </StackPanel>
+          <StackPanel x:Name="DetailsPanel" IsVisible="False" Spacing="12">
+            <Button Content="‹ 返回结果" Click="BackToSearch" HorizontalAlignment="Left" />
+            <pictures:ProjectPicture x:Name="ProjectIcon" Width="72" Height="72" HorizontalAlignment="Left" />
+            <TextBlock x:Name="ProjectTitle" FontSize="23" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock x:Name="ProjectAuthor" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+            <TextBlock x:Name="ProjectDescription" TextWrapping="Wrap" LineHeight="24" />
+            <Button x:Name="OriginalButton" Content="切换原文" Click="ToggleOriginal" HorizontalAlignment="Left" />
+            <TextBlock Text="兼容文件" FontWeight="SemiBold" />
+            <ComboBox x:Name="Releases" HorizontalAlignment="Stretch" SelectionChanged="ReleaseSelected" AutomationProperties.Name="资源文件版本" />
+            <TextBlock x:Name="ReleaseInfo" Classes="muted" TextWrapping="Wrap" FontSize="13" />
+            <ComboBox x:Name="Worlds" IsVisible="False" HorizontalAlignment="Stretch" PlaceholderText="选择存档" SelectionChanged="ReleaseSelected" AutomationProperties.Name="数据包目标存档" />
+            <TextBlock x:Name="DownloadNotice" Classes="muted" TextWrapping="Wrap" FontSize="13" />
+            <Button x:Name="DownloadButton" Content="下载到当前实例" IsEnabled="False" Click="DownloadResource" HorizontalAlignment="Stretch" />
+            <Button Content="刷新版本 / 重试" Click="RefreshReleases" HorizontalAlignment="Stretch" />
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+      <ScrollViewer x:Name="AboutPage" IsVisible="False" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20" Spacing="16">
+          <TextBlock Text="设置与数据" FontSize="25" FontWeight="SemiBold" />
+          <TextBlock Text="Android 预览版" FontSize="18" FontWeight="SemiBold" />
+          <TextBlock Text="此版本可管理实例和下载资源。Minecraft Java 游戏运行、微软登录与模组加载器将在后续接入 Android 专用运行方案。" TextWrapping="Wrap" LineHeight="24" />
+          <TextBlock Text="数据保存在应用专属目录。卸载会删除这些数据，换机或重新安装前请在实例页导出备份。" TextWrapping="Wrap" LineHeight="24" />
+          <TextBlock Text="数据位置" FontWeight="SemiBold" /><SelectableTextBlock x:Name="DataPath" TextWrapping="Wrap" Classes="muted" FontSize="12" />
+          <TextBlock Text="签名与升级" FontWeight="SemiBold" />
+          <TextBlock Text="APK 使用预览签名。只有签名一致的后续 APK 才能直接更新；请核对随包提供的 SHA-256 和证书摘要。不要为更新而直接卸载未备份的数据。" TextWrapping="Wrap" LineHeight="24" />
+          <TextBlock Text="MIT · © 2026 addxiaoyi / wfwwq。上游资源保留各自许可，暂无正式 SignPath 或商店发布认证。" Classes="muted" TextWrapping="Wrap" FontSize="13" />
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+    <Border Grid.Row="2" Padding="16,10" BorderBrush="#34434B" BorderThickness="0,1,0,0">
+      <StackPanel Spacing="6"><TextBlock x:Name="Status" Text="就绪" FontSize="12" TextWrapping="Wrap" /><ProgressBar x:Name="Progress" IsVisible="False" IsIndeterminate="True" Height="3" /><Button x:Name="CancelButton" Content="取消任务" IsVisible="False" Click="Cancel" /></StackPanel>
+    </Border>
+    <Grid x:Name="Navigation" Grid.Row="3" ColumnDefinitions="*,*,*" Margin="8,4,8,12">
+      <Button x:Name="LibraryTab" Content="实例" Tag="library" Click="Navigate" HorizontalAlignment="Stretch" />
+      <Button x:Name="ResourcesTab" Grid.Column="1" Content="资源" Tag="resources" Click="Navigate" HorizontalAlignment="Stretch" Margin="6,0" />
+      <Button x:Name="AboutTab" Grid.Column="2" Content="设置" Tag="about" Click="Navigate" HorizontalAlignment="Stretch" />
+    </Grid>
+  </Grid>
+</UserControl>

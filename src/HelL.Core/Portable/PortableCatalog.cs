@@ -34,6 +34,9 @@ public sealed class PortableCatalog
     public CatalogTarget Target(string instance, string version)
     {
         var game = ExistingInstance(instance);
+        if (Py.S(game.Meta().Get("portable_reference_version")) == version &&
+            Regex.IsMatch(version, @"\A1\.\d+(?:\.\d+)?\z"))
+            return new CatalogTarget { Version = version, GameVersion = version, Loader = "vanilla" };
         if (!game.InstalledIds().Contains(version) || !File.Exists(Path.Combine(game.VersionsDir(), version, version + ".jar")) ||
             File.Exists(Path.Combine(game.VersionsDir(), version, ".portable-install-pending")))
             throw new InvalidOperationException("请先为目标实例安装完整的 Minecraft 版本。");

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationId>io.hell.launcher.preview</ApplicationId>
+    <ApplicationTitle>HelL Preview</ApplicationTitle>
+    <ApplicationVersion>3</ApplicationVersion>
+    <ApplicationDisplayVersion>3.2.0-preview.3</ApplicationDisplayVersion>
+    <AndroidPackageFormats>apk</AndroidPackageFormats>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <PublishTrimmed>false</PublishTrimmed>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Android" Version="12.1.6" />
+    <ProjectReference Include="../HelL.Mobile/HelL.Mobile.csproj" />
+    <AndroidResource Include="../HelL/Resources/Brand/Helstera.png" Link="Resources/drawable/hell_icon.png" />
+    <AndroidAsset Include="../../LICENSE" Link="LICENSE" />
+    <AndroidAsset Include="../../THIRD_PARTY_NOTICES.md" Link="THIRD_PARTY_NOTICES.md" />
+    <AndroidAsset Include="../../docs/licenses/TipCL-MIT.txt" Link="licenses/TipCL-MIT.txt" />
+  </ItemGroup>
+</Project>

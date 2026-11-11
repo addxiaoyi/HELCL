@@ -33,7 +33,10 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y dbus-x11 gnome-keyring libsecret-tools xvfb
+          sudo apt-get install --no-install-recommends -y dbus-x11 fontconfig fonts-noto-cjk gnome-keyring libsecret-tools xvfb
+          fc-cache -f
+          fc-match --format='CJK UI font: %{family}\n' 'Noto Sans CJK SC'
+          fc-list :lang=zh family | grep -qi 'Noto Sans CJK'
       - run: dotnet test tests/HelL.Portable.Tests -c Release --nologo
       - run: python -m unittest discover -s tests -p test_package_portable.py -v
       - name: Publish native application and package

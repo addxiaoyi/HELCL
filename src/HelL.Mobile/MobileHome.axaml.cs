@@ -35,6 +35,13 @@ public sealed partial class MobileHome : UserControl
         ready = true;
         Reload();
         ShowPage("library");
+        if (MobileRuntime.VerifyRestart)
+        {
+            var saved = instances.Single();
+            if (saved.Name != "手机生存世界" || saved.Group != "移动工作区" || !saved.Pinned || launcher.ReferenceVersion(saved.Name) != "1.21.1")
+                throw new IOException("Android restart did not restore the isolated instance.");
+            File.WriteAllText(Path.Combine(MobileRuntime.ReportRoot, "mobile-restart.json"), "{\"ok\":true,\"restoredInstances\":1,\"referenceVersion\":\"1.21.1\"}");
+        }
         if (MobileRuntime.Smoke) AttachedToVisualTree += RunSmoke;
     }
 

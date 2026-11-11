@@ -39,11 +39,20 @@ def smoke(apk: Path, output: Path) -> None:
         with (output / "android-screen.png").open("wb") as screenshot:
             subprocess.run(["adb", "exec-out", "screencap", "-p"], stdout=screenshot, check=True, timeout=20)
         adb("shell", "am", "force-stop", package)
-        adb("shell", "am", "start", "-W", "-n", f"{package}/{package}.MainActivity")
-        time.sleep(3)
+        adb("shell", "am", "start", "-W", "-n", f"{package}/{package}.MainActivity", "--ez", "hell_verify_restart", "true")
+        restart_deadline = time.monotonic() + 30
+        while time.monotonic() < restart_deadline:
+            if "mobile-restart.json" in adb("shell", "ls", evidence, allowed=(0, 1)):
+                break
+            time.sleep(1)
+        adb("pull", evidence + "/mobile-restart.json", str(output / "mobile-restart.json"))
+        restart = json.loads((output / "mobile-restart.json").read_text(encoding="utf-8"))
+        if not restart.get("ok") or restart.get("restoredInstances") != 1:
+            raise RuntimeError("Android instance persistence check failed.")
         pid = adb("shell", "pidof", package)
         if not pid: raise RuntimeError("APK did not remain alive after restart.")
         report["nativeApkRestartAlive"] = True
+        report["nativeApkRestoredInstances"] = restart["restoredInstances"]
         report["deviceAbi"] = adb("shell", "getprop", "ro.product.cpu.abi")
         report["androidVersion"] = adb("shell", "getprop", "ro.build.version.release")
         (output / "acceptance.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

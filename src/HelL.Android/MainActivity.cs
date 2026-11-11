@@ -12,9 +12,12 @@ public sealed class MainActivity : AvaloniaMainActivity
 {
     protected override void OnCreate(Bundle? savedInstanceState)
     {
-        if (Intent?.GetBooleanExtra("hell_ui_smoke", false) == true)
+        bool smoke = Intent?.GetBooleanExtra("hell_ui_smoke", false) == true;
+        bool restart = Intent?.GetBooleanExtra("hell_verify_restart", false) == true;
+        if (smoke || restart)
         {
-            MobileRuntime.Smoke = true;
+            MobileRuntime.Smoke = smoke;
+            MobileRuntime.VerifyRestart = restart;
             MobileRuntime.Root = Path.Combine(FilesDir!.AbsolutePath, "ui-smoke");
             MobileRuntime.ReportRoot = Path.Combine(GetExternalFilesDir(null)!.AbsolutePath, "ui-evidence");
         }

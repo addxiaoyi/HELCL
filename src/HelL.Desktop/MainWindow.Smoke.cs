@@ -26,10 +26,16 @@ public sealed partial class MainWindow
             await Capture(1060, 720);
             await Capture(800, 600);
             await CheckLibraryAndResources(Capture);
+            ShowPage("settings");
+            await Capture(1060, 720, "settings-");
+            await Capture(800, 600, "settings-");
+            if (OperatingSystem.IsMacOS() && NativeMenu.GetMenu(this)?.Items.Count != 1)
+                throw new InvalidOperationException("macOS workspace menu was not installed.");
             File.WriteAllText(Path.Combine(Program.DataRoot, "ui-smoke.json"), JsonSerializer.Serialize(new
             {
                 ok = true, platform = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier,
-                widths = new[] { 1060, 800 }, instanceCreation = true, selection = true, library = true, resources = true
+                widths = new[] { 1060, 800 }, instanceCreation = true, selection = true, library = true, resources = true,
+                settings = true, macMenu = OperatingSystem.IsMacOS()
             }));
             exitCode = 0;
         }

@@ -20,6 +20,7 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         DataDirectory.Text = root;
+        InitializeDesktopNavigation(root);
         launcher = new PortableLauncher(root);
         ResourcesView.Initialize(this);
         LibraryView.Initialize(this);
@@ -222,6 +223,7 @@ public sealed partial class MainWindow : Window
         LaunchView.IsVisible = page == "launch";
         LibraryView.IsVisible = page == "library";
         ResourcesView.IsVisible = page == "resources";
+        SettingsView.IsVisible = page == "settings";
         foreach (var button in Navigation.Children.OfType<Button>())
             button.Classes.Set("current", (string?)button.Tag == page);
     }

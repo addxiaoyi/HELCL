@@ -17,6 +17,7 @@
             <Button Content="启动游戏" Tag="launch" Click="Navigate" HorizontalAlignment="Stretch" />
             <Button Content="实例库" Tag="library" Click="Navigate" HorizontalAlignment="Stretch" />
             <Button Content="资源下载" Tag="resources" Click="Navigate" HorizontalAlignment="Stretch" />
+            <Button Content="设置与数据" Tag="settings" Click="Navigate" HorizontalAlignment="Stretch" />
           </StackPanel>
           <TextBlock Grid.Row="1" Text="当前实例" FontWeight="SemiBold" Margin="8,0,0,12" />
           <ListBox x:Name="InstanceList" Grid.Row="2" SelectionChanged="SelectInstance" Background="Transparent">
@@ -91,6 +92,24 @@
       </ScrollViewer>
       <views:InstanceLibraryView x:Name="LibraryView" IsVisible="False" />
       <views:ResourceBrowserView x:Name="ResourcesView" IsVisible="False" />
+      <ScrollViewer x:Name="SettingsView" IsVisible="False" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="28,24" Spacing="18">
+          <TextBlock Text="设置与数据" FontSize="26" FontWeight="SemiBold" />
+          <TextBlock Text="便携工作区" FontSize="18" FontWeight="SemiBold" />
+          <TextBlock Text="实例、资源和运行环境保存在下方目录。迁移到其他电脑前，请关闭游戏与启动器，再复制整个目录。" TextWrapping="Wrap" LineHeight="22" />
+          <SelectableTextBlock x:Name="SettingsDataDirectory" FontSize="13" Classes="muted" TextWrapping="Wrap" />
+          <Button Content="打开数据目录" Click="OpenDataDirectory" HorizontalAlignment="Left" />
+          <Border BorderBrush="#34404B" BorderThickness="0,1,0,0" Padding="0,18,0,0"><StackPanel Spacing="10">
+            <TextBlock Text="快捷键" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock x:Name="ShortcutHelp" TextWrapping="Wrap" LineHeight="24" Classes="muted" />
+          </StackPanel></Border>
+          <TextBlock Text="账号与升级" FontSize="18" FontWeight="SemiBold" />
+          <TextBlock Text="已保存的登录信息绑定当前系统用户。换电脑或系统后需要重新登录。升级前先备份数据；预览版不会自动覆盖安装。" TextWrapping="Wrap" LineHeight="22" />
+          <TextBlock x:Name="PlatformNotice" TextWrapping="Wrap" LineHeight="22" Classes="muted" />
+          <TextBlock Text="HelL 3.2.0-preview.3 · MIT" FontWeight="SemiBold" />
+          <TextBlock Text="© 2026 addxiaoyi / wfwwq。第三方资源保留各自许可。加载器启动、AI 和插件市场仍在迁移。" TextWrapping="Wrap" Classes="muted" FontSize="13" />
+        </StackPanel>
+      </ScrollViewer>
       </Grid>
     </Grid>
     <Border Grid.Row="2" BorderBrush="#34404B" BorderThickness="0,1,0,0" Padding="24,14">

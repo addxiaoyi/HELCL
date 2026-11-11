@@ -83,14 +83,8 @@ def mac_bundle(folder: Path, version: str) -> Path:
                                check=True, stdout=subprocess.DEVNULL)
         subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(resources / "HelL.icns")], check=True)
     (binaries / "HelL.Desktop").chmod(0o755)
-    for binary in sorted(binaries.rglob("*")):
-        if not binary.is_file():
-            continue
-        with binary.open("rb") as stream:
-            magic = stream.read(4)
-        if magic in MACHO:
-            subprocess.run(["codesign", "--force", "--sign", "-", "--timestamp=none", str(binary)], check=True)
-    subprocess.run(["codesign", "--force", "--sign", "-", "--timestamp=none", str(app)], check=True)
+    # Bundle signing must include the managed assemblies beside the .NET app host.
+    subprocess.run(["codesign", "--force", "--deep", "--sign", "-", "--timestamp=none", str(app)], check=True)
     subprocess.run(["codesign", "--verify", "--deep", "--strict", "--verbose=2", str(app)], check=True)
     subprocess.run([sys.executable, str(ROOT / "tools/smoke_portable.py"), str(binaries / "HelL.Desktop")], check=True)
     return app

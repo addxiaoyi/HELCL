@@ -19,8 +19,13 @@ def smoke(executable: Path) -> None:
             subprocess.run([str(executable), "--self-test"], cwd=temporary, env=environment,
                            timeout=60, check=True, capture_output=True)
             report = json.loads((root / "self-test.json").read_text(encoding="utf-8"))
-            if not report["ok"] or Path(report["root"]) != root:
-                raise ValueError("Published application did not use its isolated data directory.")
+            actual_root = report.get("root")
+            try:
+                same_root = isinstance(actual_root, str) and os.path.samefile(actual_root, root)
+            except OSError:
+                same_root = False
+            if not report.get("ok") or not same_root:
+                raise ValueError(f"Isolated data root mismatch: expected {root}, got {actual_root!r}.")
             names.add(report["instance"])
         instances = list((root / ".minecraft").glob("*/.instance.json"))
         if len(instances) != 2 or len(names) != 2:

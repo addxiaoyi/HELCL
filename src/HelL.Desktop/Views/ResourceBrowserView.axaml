@@ -1,0 +1,74 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:HelL.Desktop.Controls" x:Class="HelL.Desktop.Views.ResourceBrowserView">
+  <Grid Margin="28,24" RowDefinitions="Auto,Auto,Auto,*">
+    <StackPanel Margin="0,0,0,20" Spacing="5">
+      <TextBlock Text="资源下载" FontSize="26" FontWeight="SemiBold" />
+      <TextBlock Text="中文搜索 · 上游真实图标 · 按实例匹配版本" Classes="muted" FontSize="12" />
+    </StackPanel>
+    <Grid x:Name="SearchControls" Grid.Row="1" RowDefinitions="Auto,Auto" Margin="0,0,0,16">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBox x:Name="QueryBox" PlaceholderText="搜索中文名、英文名或项目 ID" KeyDown="SearchKey" AutomationProperties.Name="搜索资源" />
+        <Button Grid.Column="1" Content="搜索" Classes="accent" Click="SearchResources" Margin="8,0,0,0" />
+      </Grid>
+      <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,10,0,0">
+        <ComboBox x:Name="KindPicker" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="KindChanged" AutomationProperties.Name="资源类型">
+          <ComboBoxItem Content="资源包" Tag="resourcepack" /><ComboBoxItem Content="光影" Tag="shader" />
+          <ComboBoxItem Content="模组" Tag="mod" /><ComboBoxItem Content="整合包" Tag="modpack" />
+          <ComboBoxItem Content="数据包" Tag="datapack" /><ComboBoxItem Content="世界" Tag="world" />
+        </ComboBox>
+        <ComboBox x:Name="SourcePicker" Grid.Column="1" Margin="8,0,0,0" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="SourceChanged" AutomationProperties.Name="资源来源">
+          <ComboBoxItem Content="Modrinth" Tag="modrinth" /><ComboBoxItem Content="CurseForge" Tag="curseforge" />
+        </ComboBox>
+      </Grid>
+    </Grid>
+    <Border Grid.Row="2" BorderBrush="#34404B" BorderThickness="0,0,0,1" Padding="0,0,0,16" Margin="0,0,0,12">
+      <Grid ColumnDefinitions="*,180">
+        <StackPanel Spacing="5"><TextBlock Text="安装目标" FontSize="12" Classes="muted" /><TextBlock x:Name="TargetLabel" Text="请从左侧选择实例" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" /></StackPanel>
+        <ComboBox x:Name="VersionPicker" Grid.Column="1" Margin="12,0,0,0" HorizontalAlignment="Stretch" SelectionChanged="TargetChanged" PlaceholderText="尚未安装游戏" AutomationProperties.Name="资源安装目标版本" />
+      </Grid>
+    </Border>
+    <Grid Grid.Row="3">
+      <Grid x:Name="BrowsePanel" RowDefinitions="Auto,*,Auto">
+        <TextBlock x:Name="ResultNotice" Text="输入名称后搜索，也可以直接搜索热门项目。" Classes="muted" TextWrapping="Wrap" Margin="0,0,0,10" />
+        <ListBox x:Name="Results" Grid.Row="1" Background="Transparent" SelectionChanged="SelectProject" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="资源搜索结果">
+          <ListBox.ItemTemplate><DataTemplate>
+            <Grid ColumnDefinitions="64,*" Margin="4,10">
+              <local:ProjectPicture Source="{Binding Icon}" Width="48" Height="48" VerticalAlignment="Top" />
+              <StackPanel Grid.Column="1" Spacing="5">
+                <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Byline}" FontSize="12" Classes="muted" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding PreviewSummary}" FontSize="13" Classes="muted" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+            </Grid>
+          </DataTemplate></ListBox.ItemTemplate>
+        </ListBox>
+        <Button x:Name="DetailsButton" Grid.Row="2" Content="查看版本与安装" Click="OpenProject" IsEnabled="False" HorizontalAlignment="Right" Margin="0,12,0,0" />
+      </Grid>
+      <Grid x:Name="DetailPanel" IsVisible="False" RowDefinitions="*,Auto">
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="16">
+          <Button Content="‹ 返回搜索结果" Click="BackToResults" HorizontalAlignment="Left" />
+          <Grid ColumnDefinitions="76,*">
+            <local:ProjectPicture x:Name="DetailPicture" Width="60" Height="60" />
+            <StackPanel Grid.Column="1" Spacing="5"><TextBlock x:Name="ProjectTitle" FontSize="21" FontWeight="SemiBold" TextWrapping="Wrap" /><TextBlock x:Name="ProjectAuthor" FontSize="12" Classes="muted" TextWrapping="Wrap" /></StackPanel>
+          </Grid>
+          <TextBlock x:Name="ProjectSummary" TextWrapping="Wrap" LineHeight="22" />
+          <Button x:Name="OriginalButton" Content="查看原文" Click="ToggleOriginal" HorizontalAlignment="Left" />
+          <StackPanel Spacing="8">
+            <TextBlock Text="选择文件版本" FontWeight="SemiBold" />
+            <ComboBox x:Name="ReleasePicker" HorizontalAlignment="Stretch" SelectionChanged="ReleaseChanged" PlaceholderText="正在获取兼容文件…" AutomationProperties.Name="资源文件版本" />
+            <TextBlock x:Name="ReleaseNotice" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+            <ComboBox x:Name="WorldPicker" IsVisible="False" HorizontalAlignment="Stretch" PlaceholderText="选择目标存档" SelectionChanged="ReleaseChanged" AutomationProperties.Name="数据包目标存档" />
+            <TextBlock x:Name="InstallNotice" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+          <WrapPanel Grid.Row="1" Margin="0,12,0,0">
+            <Button x:Name="DownloadButton" Content="安装到此实例" Classes="accent" IsEnabled="False" Click="DownloadResource" Margin="0,0,8,8" />
+            <Button Content="刷新版本" Click="RefreshReleases" Margin="0,0,8,8" />
+            <Button Content="项目主页" Click="OpenWebsite" Margin="0,0,0,8" />
+          </WrapPanel>
+      </Grid>
+    </Grid>
+  </Grid>
+</UserControl>

@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:HelL.Desktop.Controls" x:Class="HelL.Desktop.Views.InstanceLibraryView">
+  <UserControl.Resources>
+    <DataTemplate x:Key="RowTemplate">
+      <Grid ColumnDefinitions="76,*,Auto" Margin="4,8">
+        <local:ProjectPicture Source="{Binding Cover}" Width="64" Height="52" />
+        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="5">
+          <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+        <TextBlock Grid.Column="2" Text="›" FontSize="22" Classes="muted" Margin="12,0" VerticalAlignment="Center" />
+      </Grid>
+    </DataTemplate>
+    <DataTemplate x:Key="CardTemplate">
+      <StackPanel Margin="6" Spacing="8">
+        <local:ProjectPicture Source="{Binding Cover}" Height="114" />
+        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+        <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" />
+      </StackPanel>
+    </DataTemplate>
+  </UserControl.Resources>
+  <Grid Margin="28,24" RowDefinitions="Auto,Auto,*,Auto,Auto">
+    <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,20">
+      <StackPanel Spacing="5"><TextBlock Text="实例库" FontSize="26" FontWeight="SemiBold" /><TextBlock x:Name="CountLabel" Classes="muted" FontSize="12" /></StackPanel>
+      <Button x:Name="ViewButton" Grid.Column="1" Content="封面视图" Click="SwitchView" VerticalAlignment="Center" />
+      <Button Grid.Column="2" Content="刷新" Click="RefreshLibrary" Margin="8,0,0,0" VerticalAlignment="Center" />
+    </Grid>
+    <Grid Grid.Row="1" ColumnDefinitions="*,130,Auto" Margin="0,0,0,16">
+      <TextBox x:Name="SearchBox" PlaceholderText="搜索实例名称或分组" TextChanged="FilterChanged" AutomationProperties.Name="搜索实例" />
+      <ComboBox x:Name="GroupFilter" Grid.Column="1" HorizontalAlignment="Stretch" Margin="8,0,0,0" SelectionChanged="GroupChanged" AutomationProperties.Name="筛选实例分组" />
+      <CheckBox x:Name="PinnedOnly" Grid.Column="2" Content="仅固定" Margin="12,0,0,0" IsCheckedChanged="PinnedChanged" />
+    </Grid>
+    <Grid Grid.Row="2">
+      <ListBox x:Name="LibraryList" Background="Transparent" SelectionChanged="ChooseInstance" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="实例库" />
+      <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+        <TextBlock x:Name="EmptyTitle" Text="还没有实例" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" />
+        <TextBlock Text="从左侧创建实例，或调整搜索与分组条件。" Classes="muted" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="340" />
+      </StackPanel>
+    </Grid>
+    <Border Grid.Row="3" BorderBrush="#34404B" BorderThickness="0,1,0,0" Padding="0,16,0,0" Margin="0,16,0,0">
+      <StackPanel x:Name="Editor" Spacing="12" IsEnabled="False">
+        <Grid ColumnDefinitions="*,Auto,Auto">
+          <TextBlock x:Name="SelectionTitle" Text="选择实例后可管理" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+          <Button x:Name="ManageButton" Grid.Column="1" Content="管理" Click="ToggleDetails" Margin="8,0" />
+          <Button Grid.Column="2" Content="进入实例" Click="OpenInstance" Classes="accent" />
+        </Grid>
+        <StackPanel x:Name="ManagementFields" Spacing="12">
+        <Grid ColumnDefinitions="*,*,Auto">
+          <TextBox x:Name="RenameBox" PlaceholderText="实例名称" AutomationProperties.Name="实例名称" />
+          <TextBox x:Name="GroupBox" Grid.Column="1" Margin="8,0" PlaceholderText="分组，留空移出" MaxLength="32" AutomationProperties.Name="实例分组" />
+          <Button x:Name="SaveButton" Grid.Column="2" Content="保存" Click="SaveInstance" />
+        </Grid>
+        <WrapPanel>
+          <Button x:Name="PinButton" Content="固定实例" Click="PinInstance" Margin="0,0,8,6" />
+          <Button Content="选择封面" Click="PickCover" Margin="0,0,8,6" />
+          <Button Content="恢复截图" Click="ResetCover" Margin="0,0,8,6" />
+          <Button Content="打开文件夹" Click="OpenFolder" Margin="0,0,0,6" />
+        </WrapPanel>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+    <TextBlock Grid.Row="4" Text="封面来自本实例截图、存档图标或你选择的图片。" Classes="muted" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0" />
+  </Grid>
+</UserControl>

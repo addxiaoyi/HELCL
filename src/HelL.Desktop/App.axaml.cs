@@ -11,6 +11,7 @@ public sealed partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        HelL.Core.Platform.PlatformServices.ImageCodec = new Services.DesktopImages();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             try

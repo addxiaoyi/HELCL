@@ -30,6 +30,17 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
+      - name: Verify native runner architecture
+        shell: pwsh
+        env:
+          EXPECTED_RUNTIME: ${{ matrix.rid }}
+        run: |
+          $expected = $env:EXPECTED_RUNTIME.Split('-')[-1]
+          $process = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().ToLowerInvariant()
+          $system = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
+          if ($process -ne $expected -or $system -ne $expected) { throw "Native runner architecture mismatch: $process / $system, expected $expected" }
+          New-Item -ItemType Directory -Path publish -Force | Out-Null
+          @{ runtime = $env:EXPECTED_RUNTIME; process = $process; system = $system } | ConvertTo-Json | Set-Content publish/native-platform.json
       - name: Install Linux display and keyring dependencies
         if: runner.os == 'Linux'
         run: |
@@ -69,6 +80,8 @@ jobs:
             codesign -dv --verbose=2 $app 2>&1 | Out-File publish/codesign.txt
             spctl --assess --type execute --verbose=4 $app 2>&1 | Out-File publish/gatekeeper.txt
             # Ad-hoc is not notarized; preserve the assessment rather than claiming Gatekeeper acceptance.
+            python tools/verify_macos_download.py $app --report publish/macos-download-check.json
+            if ($LASTEXITCODE -ne 0) { throw 'macOS download verification script failed.' }
           } elseif ($IsLinux) {
             $archive = (Get-ChildItem publish/artifacts/*.tar.gz).FullName
             tar -xzf $archive -C $unpacked
@@ -125,6 +138,22 @@ jobs:
             security delete-keychain $keychain
             if ($LASTEXITCODE -ne 0) { throw 'Cannot remove test keychain.' }
           }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: native-evidence-${{ matrix.rid }}
+          path: |
+            publish/artifacts/*.json
+            publish/artifacts/SHA256SUMS
+            publish/native-platform.json
+            publish/macos-download-check.json
+            publish/codesign.txt
+            publish/gatekeeper.txt
+            ${{ runner.temp }}/hell-ui/ui-*.png
+            ${{ runner.temp }}/hell-ui/ui-smoke*.json
+            ${{ runner.temp }}/hell-ui/ui-smoke-error.txt
+            ${{ runner.temp }}/hell-credentials/credential-probe.json
+          if-no-files-found: warn
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

@@ -4,6 +4,11 @@ using HelL.Core.Launcher;
 using HelL.Portable;
 
 if (args.Length == 2 && args[0] == "--credentials") return CredentialProbe.Run(args[1]);
+if (args.Length == 2 && args[0] == "--catalog")
+{
+    try { return CatalogProbe.Run(args[1]); }
+    catch (Exception error) { Console.Error.WriteLine("Catalog probe failed: " + error.Message); return 1; }
+}
 
 if (args.Length != 2 || !Path.IsPathFullyQualified(args[0]))
 {

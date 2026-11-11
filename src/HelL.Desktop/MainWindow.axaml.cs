@@ -21,10 +21,14 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         DataDirectory.Text = root;
         launcher = new PortableLauncher(root);
+        ResourcesView.Initialize(this);
+        LibraryView.Initialize(this);
         ReloadInstances(launcher.SelectedInstance);
+        ShowPage("launch");
         Closing += OnClosing;
         Opened += RestoreAccount;
         if (Program.UiSmoke) Opened += RunUiSmoke;
+        if (Program.CatalogSmoke) Opened += RunCatalogSmoke;
     }
 
     private void ReloadInstances(string? selected)
@@ -48,6 +52,7 @@ public sealed partial class MainWindow : Window
             InstalledVersions.SelectedIndex = instance.Versions.Length == 0 ? -1 : 0;
             UpdateLaunchButton();
             Workspace.IsEnabled = task == null;
+            ResourcesView.SetTarget(instance);
         }
         catch (Exception ex) { ShowError(ex); }
     }
@@ -56,6 +61,7 @@ public sealed partial class MainWindow : Window
     {
         var instance = launcher.CreateInstance(InstanceName.Text ?? "");
         ReloadInstances(instance.Name);
+        LibraryView.Reload(instance.Name);
         InstanceName.Clear();
         Status.Text = "实例已创建。获取版本列表后即可安装。";
         await Task.CompletedTask;
@@ -137,7 +143,7 @@ public sealed partial class MainWindow : Window
         Progress.Value = update.Percent;
     });
 
-    private async Task RunTask(Func<CancellationToken, Task> action)
+    internal async Task RunTask(Func<CancellationToken, Task> action)
     {
         if (task != null) return;
         using var cancellation = new CancellationTokenSource();
@@ -163,6 +169,9 @@ public sealed partial class MainWindow : Window
         CreateButton.IsEnabled = !busy;
         Workspace.IsEnabled = !busy && SelectedName != null;
         AccountPanel.IsEnabled = !busy;
+        Navigation.IsEnabled = !busy;
+        LibraryView.IsEnabled = !busy;
+        ResourcesView.IsEnabled = !busy;
         CancelButton.IsVisible = busy;
         CancelButton.IsEnabled = busy;
         Progress.IsVisible = busy;
@@ -186,4 +195,34 @@ public sealed partial class MainWindow : Window
     }
 
     private void ShowError(Exception ex) => Status.Text = "未完成：" + ex.Message;
+
+    internal PortableLauncher GameLauncher => launcher;
+    internal IProgress<InstallProgress> TaskProgress() => CreateProgress();
+    internal void SetStatus(string message) => Status.Text = message;
+    internal void InstancesChanged(string name) => ReloadInstances(name);
+    internal void OpenInstance(string name)
+    {
+        ReloadInstances(name);
+        ShowPage("launch");
+    }
+    private void Navigate(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string page })
+        {
+            if (page == "library")
+            {
+                try { LibraryView.Reload(); }
+                catch (Exception error) { ShowError(error); }
+            }
+            ShowPage(page);
+        }
+    }
+    internal void ShowPage(string page)
+    {
+        LaunchView.IsVisible = page == "launch";
+        LibraryView.IsVisible = page == "library";
+        ResourcesView.IsVisible = page == "resources";
+        foreach (var button in Navigation.Children.OfType<Button>())
+            button.Classes.Set("current", (string?)button.Tag == page);
+    }
 }

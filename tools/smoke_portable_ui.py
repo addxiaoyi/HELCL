@@ -18,6 +18,11 @@ def smoke(executable: Path, root: Path) -> None:
     report = json.loads((root / "ui-smoke.json").read_text(encoding="utf-8"))
     if not report.get("ok") or not all((root / f"ui-{width}.png").is_file() for width in (800, 1060)):
         raise ValueError("GUI smoke did not produce its report and both screenshots.")
+    if not report.get("library") or not report.get("resources"):
+        raise ValueError("Workspace UI checks did not complete.")
+    for page in ("library", "covers", "resources", "resource-detail"):
+        if not all((root / f"ui-{page}-{width}.png").is_file() for width in (800, 1060)):
+            raise ValueError(f"Missing {page} workspace screenshots.")
     print(json.dumps(report))
 
 

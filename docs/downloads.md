@@ -1,12 +1,12 @@
 # 下载与首次运行
 
-Avalonia 跨平台版目前为 **3.2.0-preview.2 迁移预览版**，不是 Windows WPF 完整版的直接替代。提供原版实例创建、正式版本下载、Java 检测/选择、缺少 Java 时自动下载、微软设备码登录、授权刷新和游戏/试玩启动。模组/资源管理、AI、插件、存档管理和旧版外观设置尚未接入此界面。试玩遵循游戏自身限制。
+Avalonia 跨平台版目前为 **3.2.0-preview.3 迁移预览版**，不是 Windows WPF 完整版的直接替代。提供原版安装与启动、Java 管理、微软登录与刷新、实例列表/封面双视图、固定/分组/改名和自定义封面；资源页支持中文搜索、真实图标、版本筛选、资源包/光影下载、世界导入与向已有存档安装数据包。模组依赖需另行安装，整合包仅下载原始文件；加载器安装与启动、AI、插件、完整存档管理和旧版外观设置仍在迁移。试玩遵循游戏自身限制。
 
 发布包由仓库的 Portable preview 工作流生成。此文档不表示这些包已公开发布或已获得 SignPath 签名。请从项目维护者确认的发布仓库下载，核对版本、平台、架构和同批 SHA256SUMS；不要从陌生转发链接下载。
 
 ## 免安装便携包
 
-- Windows 10/11 x64：`HelL-3.2.0-preview.2-win-x64.zip`。完整解压到个人文件夹，双击 `HelL.Desktop.exe`。无需另装 .NET，也不要求管理员权限。
+- Windows 10/11 x64：`HelL-3.2.0-preview.3-win-x64.zip`。完整解压到个人文件夹，双击 `HelL.Desktop.exe`。无需另装 .NET，也不要求管理员权限。
 - Linux x64 / ARM64：对应 `linux-x64.tar.gz` / `linux-arm64.tar.gz`，解压后运行 `./HelL.Desktop`。依赖图形会话和系统原生库；建议 Ubuntu 24.04。缺库时安装系统提供的 fontconfig、X11、ICE/SM、libicu 与 OpenGL 驱动。中文显示需安装中文字体（如 Noto Sans CJK）。这不是静态链接程序，也不是 AppImage。
 - macOS 14+ Intel / Apple Silicon：对应 `osx-x64.zip` / `osx-arm64.zip`，解压整个文件夹，再打开 `HelL.app`。`.app` 和旁边的 `data` 保持在同一个可写文件夹中。无需安装 .NET。macOS 包由 macOS runner 生成并做 ad-hoc 完整性签名，**不具备 Apple Developer ID 身份或公证**。
 
@@ -36,7 +36,7 @@ Windows/Linux 默认把配置、实例、Java 和缓存放在程序旁的 `data/
 
 ## 校验与签名状态
 
-Windows：`Get-FileHash .\HelL-3.2.0-preview.2-win-x64.zip -Algorithm SHA256`。
+Windows：`Get-FileHash .\HelL-3.2.0-preview.3-win-x64.zip -Algorithm SHA256`。
 
 Linux：`sha256sum -c SHA256SUMS`。macOS：`shasum -a 256 -c SHA256SUMS`。校验文件与包应从同一个可信发布渠道获取；SHA-256 本身不是发布者身份证明。
 

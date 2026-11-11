@@ -9,17 +9,19 @@ internal static class Program
     internal static string DataRoot { get; private set; } = "";
     internal static string? StartupError { get; private set; }
     internal static bool UiSmoke { get; private set; }
+    internal static bool CatalogSmoke { get; private set; }
 
     [STAThread]
     public static int Main(string[] args)
     {
         bool selfTest = args.Contains("--self-test", StringComparer.Ordinal);
         UiSmoke = args.Contains("--ui-smoke", StringComparer.Ordinal);
+        CatalogSmoke = args.Contains("--catalog-ui-smoke", StringComparer.Ordinal);
         PortableHome? home = null;
         try
         {
             string requested = Environment.GetEnvironmentVariable("TIPCL_HOME") ?? "";
-            if ((selfTest || UiSmoke) && string.IsNullOrWhiteSpace(requested))
+            if ((selfTest || UiSmoke || CatalogSmoke) && string.IsNullOrWhiteSpace(requested))
                 throw new ArgumentException("自检需要独立的 TIPCL_HOME，避免改动日常数据。");
             DataRoot = PortableHome.Resolve(AppContext.BaseDirectory, requested, OperatingSystem.IsMacOS());
             home = PortableHome.Open(DataRoot);
@@ -42,7 +44,7 @@ internal static class Program
         {
             home?.Dispose();
             home = null;
-            if (selfTest || UiSmoke) { Console.Error.WriteLine(ex.Message); return 1; }
+            if (selfTest || UiSmoke || CatalogSmoke) { Console.Error.WriteLine(ex.Message); return 1; }
             StartupError = ex.Message;
         }
 

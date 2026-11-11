@@ -24,7 +24,7 @@ public sealed record InstallProgress(string Message, long Completed = 0, long To
 }
 
 /// <summary>Vanilla launch operations shared by the desktop preview and isolated verification tools.</summary>
-public sealed class PortableLauncher
+public sealed partial class PortableLauncher
 {
     public PortableLauncher(string root)
     {

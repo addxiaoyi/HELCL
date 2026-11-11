@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using HelL.Core;
 using HelL.Core.Launcher;
@@ -22,10 +23,11 @@ public sealed class AuthenticationFlowTests : IDisposable
 	private sealed class Replay : IDisposable
 	{
 		private readonly HttpListener listener = new HttpListener();
-		private readonly string previous = Environment.GetEnvironmentVariable("TIPCL_HTTP_REPLAY");
+		private readonly string? previous = Environment.GetEnvironmentVariable("TIPCL_HTTP_REPLAY");
+		private readonly CancellationTokenSource shutdown = new CancellationTokenSource();
 		private readonly Task server;
 		public Dictionary<string, int> Calls { get; } = new Dictionary<string, int>();
-		public Func<string, int, (int Status, string Body, int? RetryAfter)> Reply;
+		public Func<string, int, (int Status, string Body, int? RetryAfter)>? Reply;
 
 		public Replay()
 		{
@@ -37,24 +39,24 @@ public sealed class AuthenticationFlowTests : IDisposable
 			listener.Start();
 			Environment.SetEnvironmentVariable("TIPCL_HTTP_REPLAY", address);
 			Config.CONFIG.data["use_system_proxy"] = false;
-			server = Task.Run(Serve);
+			server = Serve();
 		}
 
-		private void Serve()
+		private async Task Serve()
 		{
-			while (listener.IsListening)
+			while (!shutdown.IsCancellationRequested)
 			{
 				HttpListenerContext context;
-				try { context = listener.GetContext(); }
-				catch (HttpListenerException) { return; }
-				catch (ObjectDisposedException) { return; }
-				catch (Exception) { return; }
+				// Windows can leave a synchronous accept blocked after HttpListener.Stop().
+				try { context = await listener.GetContextAsync().WaitAsync(shutdown.Token).ConfigureAwait(false); }
+				catch (OperationCanceledException) when (shutdown.IsCancellationRequested) { return; }
+				catch (HttpListenerException) when (shutdown.IsCancellationRequested) { return; }
+				catch (ObjectDisposedException) when (shutdown.IsCancellationRequested) { return; }
 				try
 				{
-					string raw = context.Request.Headers["X-HelL-Replay-Url"];
+					string? raw = context.Request.Headers["X-HelL-Replay-Url"];
 					if (string.IsNullOrEmpty(raw))
 					{
-						context.Response.Close();
 						continue;
 					}
 					string path = new Uri(raw).AbsolutePath;
@@ -68,11 +70,10 @@ public sealed class AuthenticationFlowTests : IDisposable
 					if (reply.RetryAfter.HasValue)
 						context.Response.Headers["Retry-After"] = reply.RetryAfter.Value.ToString();
 					context.Response.OutputStream.Write(body);
-					context.Response.Close();
 				}
-				catch
+				finally
 				{
-					try { context.Response.Close(); } catch { }
+					context.Response.Close();
 				}
 			}
 		}
@@ -91,11 +92,17 @@ public sealed class AuthenticationFlowTests : IDisposable
 
 		public void Dispose()
 		{
-			Environment.SetEnvironmentVariable("TIPCL_HTTP_REPLAY", previous);
-			try { listener.Stop(); } catch { }
-			try { listener.Abort(); } catch { }
-			try { listener.Close(); } catch { }
-			Assert.True(server.Wait(TimeSpan.FromSeconds(5)), "Replay server did not stop.");
+			try
+			{
+				shutdown.Cancel();
+				listener.Close();
+				Assert.True(server.Wait(TimeSpan.FromSeconds(5)), "Replay server did not stop.");
+			}
+			finally
+			{
+				shutdown.Dispose();
+				Environment.SetEnvironmentVariable("TIPCL_HTTP_REPLAY", previous);
+			}
 		}
 	}
 

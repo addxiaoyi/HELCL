@@ -11,7 +11,8 @@ public sealed class Application(nint reference, JniHandleOwnership transfer) : A
 {
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
-        MobileRuntime.Root = Path.Combine(FilesDir!.AbsolutePath, "HelL");
+        // Android's /data/user/0 alias is a system link; resolve it before path guards inspect instance files.
+        MobileRuntime.Root = Path.Combine(FilesDir!.CanonicalPath, "HelL");
         return base.CustomizeAppBuilder(builder);
     }
 }

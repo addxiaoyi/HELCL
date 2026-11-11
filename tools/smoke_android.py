@@ -30,6 +30,9 @@ def smoke(apk: Path, output: Path) -> None:
                 break
             time.sleep(2)
         adb("pull", evidence, str(output / "ui"))
+        failure = output / "ui/mobile-smoke-error.txt"
+        if failure.exists():
+            raise RuntimeError(failure.read_text(encoding="utf-8"))
         report = json.loads((output / "ui/mobile-smoke.json").read_text(encoding="utf-8"))
         if not report.get("ok") or not all(report.get(k) for k in ("created", "renamed", "grouped", "pinned", "resources")):
             raise ValueError("Android native UI checks did not pass.")

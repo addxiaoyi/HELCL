@@ -8,17 +8,16 @@ namespace HelL.Mobile;
 
 public sealed partial class MobileApp : Application
 {
+    private Control? activityView;
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
     public override void OnFrameworkInitializationCompleted()
     {
         PlatformServices.ImageCodec = new HelL.Desktop.Services.DesktopImages();
-        if (ApplicationLifetime is ISingleViewApplicationLifetime single)
+        if (ApplicationLifetime is IActivityApplicationLifetime activity)
+            activity.MainViewFactory = () => activityView ??= CreateHome();
+        else if (ApplicationLifetime is ISingleViewApplicationLifetime single)
         {
-            try { single.MainView = new MobileHome(MobileRuntime.Root); }
-            catch (Exception error)
-            {
-                single.MainView = new TextBlock { Text = "无法打开数据目录：" + error.Message, Margin = new Thickness(24), TextWrapping = Avalonia.Media.TextWrapping.Wrap };
-            }
+            single.MainView = CreateHome();
         }
         else if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && MobileRuntime.Smoke)
         {
@@ -33,5 +32,14 @@ public sealed partial class MobileApp : Application
             };
         }
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static Control CreateHome()
+    {
+        try { return new MobileHome(MobileRuntime.Root); }
+        catch (Exception error)
+        {
+            return new TextBlock { Text = "无法打开数据目录：" + error.Message, Margin = new Thickness(24), TextWrapping = Avalonia.Media.TextWrapping.Wrap };
+        }
     }
 }

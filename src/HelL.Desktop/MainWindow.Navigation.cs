@@ -14,7 +14,8 @@ public sealed partial class MainWindow
         ShortcutHelp.Text = $"{modifier} + 1  启动游戏\n{modifier} + 2  实例库\n{modifier} + 3  资源下载\n{modifier} + ,  设置与数据\n{modifier} + F  搜索当前页面";
         PlatformNotice.Text = OperatingSystem.IsMacOS()
             ? "macOS 预览包为 ad-hoc 签名，未获得 Apple 公证。首次打开请按系统提示，在隐私与安全性中确认。数据保存在应用旁的 data 文件夹。"
-            : "当前为预览版。Windows 包尚未获得正式发布者签名；请从项目构建页获取，并核对随包的 SHA-256。";
+            : OperatingSystem.IsWindows() ? "当前为预览版。Windows 包尚未获得正式发布者签名；请从项目构建页获取，并核对随包的 SHA-256。"
+            : "Linux 包使用系统图形库与字体。请从项目构建页获取，核对 SHA-256，并保持启动程序的可执行权限。";
         AddHandler(KeyDownEvent, DesktopShortcut, RoutingStrategies.Tunnel);
         if (!OperatingSystem.IsMacOS()) return;
         var pages = new NativeMenu();

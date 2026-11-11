@@ -75,6 +75,10 @@ public sealed class WorkspaceTests : IDisposable
         Assert.Throws<InvalidOperationException>(() => launcher.PrepareDemo("手机实例", "1.21.1", "", new Progress<InstallProgress>(), default));
         Assert.Throws<ArgumentException>(() => launcher.SetReferenceVersion("手机实例", "../escape"));
         Assert.Equal("1.21.1", launcher.ReferenceVersion("手机实例"));
+        launcher.SetReferenceVersion("手机实例", "1.21.1", "fabric");
+        Assert.Equal("fabric", new PortableCatalog().Target("手机实例", "1.21.1").Loader);
+        Assert.Empty(launcher.InstancesList().Single().Versions);
+        Assert.Throws<ArgumentException>(() => launcher.SetReferenceVersion("手机实例", "1.21.1", "unknown-loader"));
     }
 
     [Fact]

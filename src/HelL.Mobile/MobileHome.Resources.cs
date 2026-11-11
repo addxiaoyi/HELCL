@@ -77,9 +77,9 @@ public sealed partial class MobileHome
         Worlds.IsVisible = entry.Kind == "datapack";
         Worlds.ItemsSource = Worlds.IsVisible ? catalog.WorldsForTarget(selected, reference) : Array.Empty<string>();
         Worlds.SelectedIndex = -1;
-        if (entry.Kind == "mod")
+        if (entry.Kind == "mod" && CatalogLoader.Normalize(launcher.ReferenceLoader(selected)).Length == 0)
         {
-            ReleaseInfo.Text = "此版本尚未接入 Android 模组加载器，可查看项目信息；安装将在后续开放。";
+            ReleaseInfo.Text = "请在实例页选择 Fabric、Forge 等参考加载器，再搜索兼容模组。参考设置不会安装游戏内核。";
             return;
         }
         try
@@ -98,6 +98,7 @@ public sealed partial class MobileHome
         DownloadNotice.Text = project.Kind switch
         {
             "modpack" => "仅保存整合包原始文件，当前 APK 不安装加载器或运行游戏。",
+            "mod" => $"仅保存模组文件，{release.RequiredDependencies} 项必需依赖需另行下载；Android 游戏运行尚未接入。",
             "shader" => "保存光影文件，之后需在支持光影的游戏运行环境启用。",
             "datapack" => "请选择已有存档，数据包将安装到该存档。",
             "world" => "导入世界到实例存档目录，同名世界自动保留副本。",

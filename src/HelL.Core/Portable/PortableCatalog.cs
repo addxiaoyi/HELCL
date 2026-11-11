@@ -36,7 +36,10 @@ public sealed class PortableCatalog
         var game = ExistingInstance(instance);
         if (Py.S(game.Meta().Get("portable_reference_version")) == version &&
             Regex.IsMatch(version, @"\A1\.\d+(?:\.\d+)?\z"))
-            return new CatalogTarget { Version = version, GameVersion = version, Loader = "vanilla" };
+        {
+            string loader = CatalogLoader.Normalize(Py.S(game.Meta().Get("portable_reference_loader", "vanilla")));
+            return new CatalogTarget { Version = version, GameVersion = version, Loader = loader.Length == 0 ? "vanilla" : loader };
+        }
         if (!game.InstalledIds().Contains(version) || !File.Exists(Path.Combine(game.VersionsDir(), version, version + ".jar")) ||
             File.Exists(Path.Combine(game.VersionsDir(), version, ".portable-install-pending")))
             throw new InvalidOperationException("请先为目标实例安装完整的 Minecraft 版本。");
@@ -139,7 +142,7 @@ public sealed class PortableCatalog
         }
         if (project.Kind == "modpack") return "整合包已保存到实例 downloads 目录。加载器安装与整合包启动仍待迁移。";
         if (project.Kind == "datapack") return $"数据包已安装到存档「{world}」，重新进入世界后生效。";
-        if (project.Kind == "mod") return $"模组文件已保存。此版本含 {release.RequiredDependencies} 项必需依赖，请另行安装；加载器启动请使用完整版。";
+        if (project.Kind == "mod") return $"模组文件已保存。此版本含 {release.RequiredDependencies} 项必需依赖，运行前请另行安装。";
         return "下载校验完成。请进入游戏，在资源包或光影设置中启用。";
     }
 

@@ -69,8 +69,9 @@ public sealed partial class MobileHome : UserControl
             InstanceName.Text = selected;
             InstanceGroup.Text = entry.Group;
             ReferenceVersion.Text = reference;
+            ReferenceLoader.SelectedItem = ReferenceLoader.Items.OfType<ComboBoxItem>().FirstOrDefault(item => (string?)item.Tag == launcher.ReferenceLoader(selected));
             PinButton.Content = entry.Pinned ? "取消固定" : "固定实例";
-            ResourceTarget.Text = $"{selected} · 参考 {reference}\n仅筛选资源，未安装游戏运行内核。";
+            ResourceTarget.Text = $"{selected} · 参考 {reference} / {launcher.ReferenceLoader(selected)}\n仅筛选资源，未安装游戏运行内核。";
             InstanceEditor.IsVisible = true;
             ClearProjects();
         }
@@ -95,10 +96,11 @@ public sealed partial class MobileHome : UserControl
         string name = InstanceName.Text?.Trim() ?? "";
         string group = InstanceGroups.Normalize(InstanceGroup.Text ?? "");
         string version = ValidateReference(ReferenceVersion.Text);
+        string loader = (ReferenceLoader.SelectedItem as ComboBoxItem)?.Tag as string ?? "vanilla";
         launcher.RenameInstance(selected, name);
         selected = name;
         launcher.GroupInstance(name, group);
-        launcher.SetReferenceVersion(name, version);
+        launcher.SetReferenceVersion(name, version, loader);
         Reload(name);
         Status.Text = "实例设置已保存。";
         return Task.CompletedTask;

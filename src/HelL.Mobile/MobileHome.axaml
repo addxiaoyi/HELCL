@@ -31,6 +31,9 @@
             <TextBox x:Name="InstanceName" AutomationProperties.Name="实例名称" />
             <TextBox x:Name="InstanceGroup" PlaceholderText="分组，留空移出" MaxLength="32" AutomationProperties.Name="实例分组" />
             <TextBox x:Name="ReferenceVersion" AutomationProperties.Name="资源参考版本" />
+            <ComboBox x:Name="ReferenceLoader" SelectedIndex="0" HorizontalAlignment="Stretch" AutomationProperties.Name="资源参考加载器">
+              <ComboBoxItem Content="原版 · 参考加载器" Tag="vanilla" /><ComboBoxItem Content="Fabric" Tag="fabric" /><ComboBoxItem Content="Forge" Tag="forge" /><ComboBoxItem Content="NeoForge" Tag="neoforge" /><ComboBoxItem Content="Quilt" Tag="quilt" />
+            </ComboBox>
             <Button x:Name="SaveInstanceButton" Content="保存名称、分组与参考版本" Click="SaveInstance" HorizontalAlignment="Stretch" />
             <WrapPanel><Button x:Name="PinButton" Content="固定" Click="PinInstance" Margin="0,0,8,8" /><Button Content="选择封面" Click="ChooseCover" Margin="0,0,8,8" /><Button Content="恢复截图" Click="ResetCover" Margin="0,0,0,8" /></WrapPanel>
             <Button Content="导出实例备份" Click="ExportInstance" HorizontalAlignment="Stretch" />

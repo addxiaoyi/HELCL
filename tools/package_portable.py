@@ -117,6 +117,8 @@ def package(source: Path, output: Path, runtime: str, version: str, signature: s
             (folder / "HelL.Desktop").chmod(0o755)
         (folder / "data").mkdir()
         shutil.copyfile(ROOT / "docs/downloads.md", folder / "READ-ME.md")
+        shutil.copyfile(ROOT / "LICENSE", folder / "LICENSE")
+        shutil.copyfile(ROOT / "THIRD_PARTY_NOTICES.md", folder / "THIRD_PARTY_NOTICES.md")
         shutil.copytree(ROOT / "docs/licenses", folder / "licenses")
         artifact = stage / "artifacts"
         artifact.mkdir()

@@ -51,6 +51,8 @@ class PortablePackageTests(unittest.TestCase):
         with zipfile.ZipFile(archive) as bundle:
             self.assertTrue(any(name.endswith("/data/") for name in bundle.namelist()))
             self.assertTrue(any(name.endswith("/READ-ME.md") for name in bundle.namelist()))
+            self.assertTrue(any(name.endswith("/LICENSE") for name in bundle.namelist()))
+            self.assertTrue(any(name.endswith("/licenses/TipCL-MIT.txt") for name in bundle.namelist()))
         for line in (self.output / "SHA256SUMS").read_text().splitlines():
             checksum, name = line.split("  ")
             self.assertEqual(checksum, packaging.sha256(self.output / name))

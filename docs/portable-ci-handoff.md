@@ -36,7 +36,7 @@ Windows 的一次复验在认证测试清理阶段报 `Replay server did not sto
 - macOS 的 ad-hoc 签名有效，但 `spctl` 仍返回 `rejected`；没有 Developer ID 或公证，也没有完成真实桌面的首次下载隔离与“仍要打开”交互验收。
 - Linux ARM64 尚未进行原生启动验收；本轮也不声明 Windows ARM64 支持。
 - .NET 构建仍有上游遗留的 Windows 专用 API 与过时网络 API 警告；本轮结果不是零警告承诺。
-- SignPath 材料已准备，尚未提交。HELCL 根许可证及原创版权归属待确认；当前公开 fork 签名条件要求上游发布已签名构建，已核实的 TipCL v1.1.0 EXE 为 `NotSigned`。详见 [申请材料](signpath-application.md) 和 [许可证来源](license-provenance.md)。
+- SignPath 材料已准备，尚未提交。本次后续工作中维护者已确认原创代码使用 MIT 并署名 `addxiaoyi`，根许可证已加入分支；当前公开 fork 签名条件仍要求上游发布已签名构建，已核实的 TipCL v1.1.0 EXE 为 `NotSigned`。详见 [申请材料](signpath-application.md) 和 [许可证来源](license-provenance.md)。
 
 ## 分支范围与实现
 
@@ -48,4 +48,4 @@ Windows 的一次复验在认证测试清理阶段报 `Replay server did not sto
 
 账号使用设备码授权和官方 Minecraft 身份链；令牌加密保存在 `portable-account.json`，AES-GCM 密钥位于当前用户的系统凭据库。密钥库不可用时明确提示仅在内存保留，换电脑后需重新登录。测试均使用虚构凭据，不读日常账户。
 
-许可证来源见 `docs/license-provenance.md`，上游 MIT 声明附在 `docs/licenses/TipCL-MIT.txt`。HELCL 当前仍缺根许可证，且 TipCL v1.1.0 发布的 EXE 未签名；按 SignPath Foundation 的 fork 规则，当前不具备申请条件。工作流不提交 SignPath 请求、不上传正式发行版，也不改动 HELL 插件市场。
+许可证来源见 `docs/license-provenance.md`，上游 MIT 声明附在 `docs/licenses/TipCL-MIT.txt`，原创贡献采用维护者确认的根 MIT 许可证。TipCL v1.1.0 发布的 EXE 尚未签名，SignPath Foundation 的 fork 条件仍不满足。工作流不提交 SignPath 请求、不上传正式发行版，也不改动 HELL 插件市场。

@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using HelL.Contracts;
 using HelL.Remote;
 using Xunit;
@@ -28,6 +29,32 @@ public sealed class RemotePairingTests : IDisposable
         using var identity = reopened.OpenIdentity();
         Assert.True(identity.HasPrivateKey);
         Assert.Equal(store.Offer.Fingerprint, DeviceTunnel.Fingerprint(identity));
+    }
+
+    [Fact]
+    public void ReopenedIdentityCanSignAndExportWithTheOriginalPublicKey()
+    {
+        var store = new RemotePairingStore(root, "desktop", secrets);
+        string fingerprint = store.Offer.Fingerprint;
+        byte[] publicCertificate;
+        using (var original = store.OpenIdentity()) publicCertificate = original.RawData;
+        using var verifierCertificate = X509CertificateLoader.LoadCertificate(publicCertificate);
+        using ECDsa verifier = verifierCertificate.GetECDsaPublicKey()!;
+        using var reopened = new RemotePairingStore(root, "desktop", secrets).OpenIdentity();
+        using ECDsa signing = reopened.GetECDsaPrivateKey()!;
+        byte[] challenge = RandomNumberGenerator.GetBytes(32);
+        byte[] signature = signing.SignData(challenge, HashAlgorithmName.SHA256);
+        Assert.True(verifier.VerifyData(challenge, signature, HashAlgorithmName.SHA256));
+        Assert.Equal(fingerprint, DeviceTunnel.Fingerprint(reopened));
+        byte[] exported = reopened.Export(X509ContentType.Pkcs12);
+        try
+        {
+            using var imported = X509CertificateLoader.LoadPkcs12(exported, null, X509KeyStorageFlags.Exportable);
+            using ECDsa importedKey = imported.GetECDsaPrivateKey()!;
+            Assert.True(verifier.VerifyData(challenge, importedKey.SignData(challenge, HashAlgorithmName.SHA256), HashAlgorithmName.SHA256));
+            Assert.Equal(fingerprint, DeviceTunnel.Fingerprint(imported));
+        }
+        finally { CryptographicOperations.ZeroMemory(exported); }
     }
 
     [Fact]

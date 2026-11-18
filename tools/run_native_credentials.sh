@@ -55,6 +55,27 @@ artifacts="${2:-$repo/artifacts/native-credentials}"
 if [[ "$artifacts" != /* ]]; then echo 'The artifacts directory must be absolute.' >&2; exit 2; fi
 dotnet build "$repo/tools/HelL.Credentials.Verify/HelL.Credentials.Verify.csproj" -c Release --artifacts-path "$artifacts" --nologo
 verifier="$artifacts/bin/HelL.Credentials.Verify/release/HelL.Credentials.Verify.dll"
+probe="$report.failure-probe.json"
+if dotnet "$verifier" invalid-platform "$probe" >/dev/null 2>/dev/null; then
+    echo 'Invalid verifier input unexpectedly succeeded.' >&2
+    exit 1
+fi
+python3 - "$probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    report = json.load(stream)
+assert report["ok"] is False
+assert report["stage"] == "arguments"
+assert report["error_type"] == "ArgumentException"
+assert report["completed_checks"] == []
+assert report["failures"] == [{"stage": "arguments", "type": "ArgumentException"}]
+assert report["native_entries_cleaned"] is False
+assert report["temporary_files_cleaned"] is False
+PY
+rm -f -- "$probe"
+echo 'Verifier failure-report contract passed.'
 
 case "$(uname -s)" in
     Linux)

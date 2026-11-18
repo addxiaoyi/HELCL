@@ -18,11 +18,18 @@ public static class DeviceTunnel
         byte[] pkcs12 = generated.Export(X509ContentType.Pkcs12);
         try
         {
-            // Schannel cannot acquire the ephemeral ECDSA key returned by CreateSelfSigned.
-            return X509CertificateLoader.LoadPkcs12(pkcs12, null,
-                OperatingSystem.IsWindows() ? X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.Exportable : X509KeyStorageFlags.EphemeralKeySet | X509KeyStorageFlags.Exportable);
+            return LoadIdentity(pkcs12);
         }
         finally { CryptographicOperations.ZeroMemory(pkcs12); }
+    }
+
+    internal static X509Certificate2 LoadIdentity(byte[] pkcs12)
+    {
+        ArgumentNullException.ThrowIfNull(pkcs12);
+        // Schannel needs a user key; macOS uses a runtime-owned temporary keychain and rejects EphemeralKeySet.
+        X509KeyStorageFlags storage = OperatingSystem.IsWindows() ? X509KeyStorageFlags.UserKeySet
+            : OperatingSystem.IsMacOS() ? X509KeyStorageFlags.DefaultKeySet : X509KeyStorageFlags.EphemeralKeySet;
+        return X509CertificateLoader.LoadPkcs12(pkcs12, null, storage | X509KeyStorageFlags.Exportable);
     }
 
     public static string Fingerprint(X509Certificate2 identity) => identity.GetCertHashString(HashAlgorithmName.SHA256);

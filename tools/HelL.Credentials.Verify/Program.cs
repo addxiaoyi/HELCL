@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using HelL.Contracts;
 using HelL.Core;
@@ -11,69 +12,99 @@ using HelL.Remote;
 internal static class Program
 {
     private static string stage = "arguments";
+    private static readonly HashSet<string> checks = new(StringComparer.Ordinal);
+    private sealed record Failure(string Stage, string Type);
 
     private static int Main(string[] args)
     {
+        string platform = OperatingSystem.IsLinux() ? "linux" : OperatingSystem.IsMacOS() ? "macos" : "unsupported";
+        string reportPath = args.Length == 2 && Path.IsPathFullyQualified(args[1])
+            ? args[1] : Path.GetFullPath("artifacts/native-credentials-report.json");
+        string? root = null;
+        ScopedSecrets? secrets = null;
+        ISecretStore previousSecrets = null!;
+        string previousRoot = "";
+        bool captured = false, entriesCleaned = false, filesCleaned = false;
+        var failures = new List<Failure>();
         try
         {
             if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
                 throw new PlatformNotSupportedException("Run this verifier on Linux or macOS.");
-            string platform = OperatingSystem.IsLinux() ? "linux" : OperatingSystem.IsMacOS() ? "macos" : "unsupported";
             if (args.Length != 2 || args[0] != platform || platform == "unsupported" || !Path.IsPathFullyQualified(args[1]))
                 throw new ArgumentException("Use linux|macos <absolute-report-path> on the matching native host.");
-            string root = Path.Combine(Path.GetTempPath(), "hell-native-credentials-" + Guid.NewGuid().ToString("N"));
+            stage = "temporary-directory-create";
+            root = Path.Combine(Path.GetTempPath(), "hell-native-credentials-" + Guid.NewGuid().ToString("N"));
             if (!OperatingSystem.IsWindows())
                 Directory.CreateDirectory(root, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
-            var secrets = new ScopedSecrets(SystemSecretStore.Create());
-            ISecretStore previousSecrets = PlatformServices.SecretStore;
-            string previousRoot = Utils.ROOT;
-            try
+            stage = "native-secret-store-create";
+            secrets = new ScopedSecrets(SystemSecretStore.Create());
+            previousSecrets = PlatformServices.SecretStore;
+            previousRoot = Utils.ROOT;
+            captured = true;
+            stage = "native-secret-roundtrip";
+            VerifySecretStore(secrets);
+            checks.Add("native_secret_roundtrip");
+            stage = "native-account-restart-and-failed-write";
+            VerifyVault(Path.Combine(root, "vault"), secrets);
+            stage = "account-file-failure";
+            VerifyAccountMutations(Path.Combine(root, "accounts"), secrets);
+            checks.Add("account_file_failure_preserves_state");
+            VerifyIdentity(Path.Combine(root, "pairing"), secrets);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        { failures.Add(new(stage, ex.GetType().Name)); }
+        finally
+        {
+            if (captured)
             {
-                stage = "native-secret-roundtrip";
-                VerifySecretStore(secrets);
-                stage = "native-account-restart-and-failed-write";
-                VerifyVault(Path.Combine(root, "vault"), secrets);
-                stage = "account-file-failure";
-                VerifyAccountMutations(Path.Combine(root, "accounts"), secrets);
-                stage = "native-device-identity-recovery";
-                VerifyIdentity(Path.Combine(root, "pairing"), secrets);
+                try { PlatformServices.SecretStore = previousSecrets; Utils.SetRoot(previousRoot); Config.Reset(); }
+                catch (Exception ex) when (ex is not OutOfMemoryException) { failures.Add(new("configuration-cleanup", ex.GetType().Name)); }
             }
-            finally
+            if (secrets is not null)
             {
-                PlatformServices.SecretStore = previousSecrets;
-                Utils.SetRoot(previousRoot);
-                Config.Reset();
-                string checkedStage = stage;
-                stage = "native-secret-cleanup";
-                try { secrets.Cleanup(); }
-                finally { Directory.Delete(root, recursive: true); }
-                stage = checkedStage;
+                try { secrets.Cleanup(); entriesCleaned = true; }
+                catch (Exception ex) when (ex is not OutOfMemoryException) { failures.Add(new("native-secret-cleanup", ex.GetType().Name)); }
             }
-            stage = "report";
+            if (root is not null)
+            {
+                try { Directory.Delete(root, recursive: true); filesCleaned = true; }
+                catch (Exception ex) when (ex is not OutOfMemoryException) { failures.Add(new("temporary-file-cleanup", ex.GetType().Name)); }
+            }
+        }
+        try
+        {
             var report = new
             {
                 schema = 1,
-                ok = true,
+                ok = failures.Count == 0,
                 platform,
                 framework = RuntimeInformation.FrameworkDescription,
-                native_secret_roundtrip = true,
-                account_restart = true,
-                failed_key_write_injected = true,
-                account_file_failure_preserves_state = true,
-                device_identity_restart = true,
-                failed_pairing_write_injected = true,
-                native_entries_cleaned = true
+                stage = failures.FirstOrDefault()?.Stage ?? "complete",
+                error_type = failures.FirstOrDefault()?.Type,
+                completed_checks = checks.Order().ToArray(),
+                failures = failures.Select(failure => new { stage = failure.Stage, type = failure.Type }).ToArray(),
+                native_secret_roundtrip = checks.Contains("native_secret_roundtrip"),
+                account_restart = checks.Contains("account_restart"),
+                failed_key_write_injected = checks.Contains("failed_key_write_injected"),
+                account_file_failure_preserves_state = checks.Contains("account_file_failure_preserves_state"),
+                device_identity_restart = checks.Contains("device_identity_restart"),
+                device_private_key_signature_export = checks.Contains("device_private_key_signature_export"),
+                failed_pairing_write_injected = checks.Contains("failed_pairing_write_injected"),
+                native_entries_cleaned = entriesCleaned,
+                temporary_files_cleaned = filesCleaned
             };
-            Directory.CreateDirectory(Path.GetDirectoryName(args[1])!);
+            Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!);
             string json = JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(args[1], json);
+            File.WriteAllText(reportPath, json);
             Console.WriteLine(json);
-            return 0;
+            if (failures.Count == 0) return 0;
+            Console.Error.WriteLine("Native credential verification failed at " + failures[0].Stage + " (" + failures[0].Type + ").");
+            return 1;
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            // Native error payloads and encrypted records may contain secret material.
-            Console.Error.WriteLine("Native credential verification failed at " + stage + " (" + ex.GetType().Name + ").");
+            // Native error payloads and encrypted records must never enter diagnostics or failure reports.
+            Console.Error.WriteLine("The native verification report could not be written (" + ex.GetType().Name + ").");
             return 1;
         }
     }
@@ -101,6 +132,7 @@ internal static class Program
             "access_token", token, "refresh_token", "fictional-refresh", "expires_at", 0L);
         vault.Save(account);
         Require(new AccountVault(root, secrets).Load()?["access_token"] as string == token, "The encrypted account did not survive reopening.");
+        checks.Add("account_restart");
         string path = Path.Combine(root, "portable-account.json");
         byte[] saved = File.ReadAllBytes(path);
         Require(!File.ReadAllText(path).Contains("fictional", StringComparison.Ordinal), "The account file contains plaintext credentials.");
@@ -109,6 +141,7 @@ internal static class Program
         finally { secrets.RejectWrites = false; }
         Require(saved.SequenceEqual(File.ReadAllBytes(path)), "A failed vault write changed the account file.");
         Require(new AccountVault(root, secrets).Load()?["access_token"] as string == token, "A failed vault write removed the previous key.");
+        checks.Add("failed_key_write_injected");
         vault.Remove();
         Require(vault.Load() == null && vault.CleanupWarning == null, "The vault did not remove its native key cleanly.");
     }
@@ -143,24 +176,47 @@ internal static class Program
 
     private static void VerifyIdentity(string root, ScopedSecrets secrets)
     {
+        stage = "native-device-identity-create";
         var native = new PairingSecrets(secrets);
         var pairings = new RemotePairingStore(root, "Native verification", native);
         RemotePairingOffer identity = pairings.Offer;
         using var peer = DeviceTunnel.CreateIdentity("Fictional peer");
         var offer = new RemotePairingOffer(Guid.NewGuid().ToString("N"), "Fictional peer", DeviceTunnel.Fingerprint(peer));
         pairings.Trust(offer, [HostPermission.Read]);
+        stage = "native-device-identity-reopen";
         var reopened = new RemotePairingStore(root, "Native verification", native);
         Require(reopened.Offer == identity && reopened.Find(offer.DeviceId)?.Fingerprint == offer.Fingerprint, "The device identity or pairing did not survive reopening.");
         using (var restored = reopened.OpenIdentity())
+        {
             Require(restored.HasPrivateKey && DeviceTunnel.Fingerprint(restored) == identity.Fingerprint, "The restored device private key does not match its fingerprint.");
+            checks.Add("device_identity_restart");
+            stage = "native-device-private-key-signature-export";
+            using ECDsa signing = restored.GetECDsaPrivateKey()!;
+            using ECDsa verifier = restored.GetECDsaPublicKey()!;
+            byte[] challenge = RandomNumberGenerator.GetBytes(32);
+            Require(verifier.VerifyData(challenge, signing.SignData(challenge, HashAlgorithmName.SHA256), HashAlgorithmName.SHA256), "The restored private key could not sign a challenge.");
+            byte[] exported = restored.Export(X509ContentType.Pkcs12);
+            try
+            {
+                using var imported = X509CertificateLoader.LoadPkcs12(exported, null, X509KeyStorageFlags.Exportable);
+                using ECDsa importedKey = imported.GetECDsaPrivateKey()!;
+                Require(DeviceTunnel.Fingerprint(imported) == identity.Fingerprint &&
+                    verifier.VerifyData(challenge, importedKey.SignData(challenge, HashAlgorithmName.SHA256), HashAlgorithmName.SHA256), "The exported private key did not survive reimporting.");
+            }
+            finally { CryptographicOperations.ZeroMemory(exported); }
+            checks.Add("device_private_key_signature_export");
+        }
         string path = Path.Combine(root, "remote-pairing.json");
         byte[] saved = File.ReadAllBytes(path);
+        stage = "native-device-failed-write";
         secrets.RejectWrites = true;
         try { ExpectIoFailure(() => reopened.Trust(offer, [HostPermission.Read, HostPermission.CancelTasks]), "A rejected pairing write unexpectedly succeeded."); }
         finally { secrets.RejectWrites = false; }
         Require(saved.SequenceEqual(File.ReadAllBytes(path)), "A failed pairing write changed the saved identity.");
         var retained = new RemotePairingStore(root, "Native verification", native);
         Require(retained.Offer == identity && retained.Find(offer.DeviceId)!.Permissions.SequenceEqual([HostPermission.Read]), "A failed pairing write changed the restored identity or permissions.");
+        checks.Add("failed_pairing_write_injected");
+        stage = "native-device-revocation";
         retained.Revoke(offer.DeviceId);
         Require(new RemotePairingStore(root, "Native verification", native).Find(offer.DeviceId) == null, "Device revocation did not survive reopening.");
     }

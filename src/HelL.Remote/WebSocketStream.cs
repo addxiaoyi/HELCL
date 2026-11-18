@@ -67,7 +67,17 @@ public sealed class WebSocketStream : Stream
         try
         {
             await sendLock.WaitAsync(operation.Token).ConfigureAwait(false);
-            try { await socket.SendAsync(source, WebSocketMessageType.Binary, true, operation.Token).ConfigureAwait(false); }
+            try
+            {
+                Task sending;
+                lock (gate)
+                {
+                    if (disposed) throw new OperationCanceledException(lifetime.Token);
+                    operation.Token.ThrowIfCancellationRequested();
+                    sending = socket.SendAsync(source, WebSocketMessageType.Binary, true, operation.Token);
+                }
+                await sending.ConfigureAwait(false);
+            }
             finally { sendLock.Release(); }
         }
         finally { EndOperation(operation); }

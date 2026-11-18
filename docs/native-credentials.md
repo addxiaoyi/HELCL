@@ -21,7 +21,8 @@ credentials, private-key exports, pairing fingerprints or session tokens.
   switch operations, then verify the file, selected account, in-memory collection
   and native-stored account credentials are unchanged.
 - Reopen a native-backed encrypted device identity and pairing, check that the
-  private key matches its original identity, inject a rejected permission update,
+  private key signs a challenge, exports and reimports with the original public
+  key and fingerprint, inject a rejected permission update,
   and verify the old identity and read-only permissions still restore.
 - Persist revocation and remove all native verification entries before reporting
   success.
@@ -53,8 +54,16 @@ HELL_NATIVE_KEYCHAIN_ISOLATED=1 bash tools/run_native_credentials.sh \
 ```
 
 The build uses an independent artifacts directory. `ok: true` is emitted only
-after native credential cleanup succeeds. An unsupported OS or mismatched
-platform argument fails rather than silently skipping native verification.
+after native credential cleanup succeeds. Failures also write a JSON report with
+the failing stage, exception type, completed checks and cleanup status; exception
+messages, stack traces and secret payloads are excluded. The launcher first checks
+this failure-report contract using invalid CLI input. An unsupported OS or
+mismatched platform argument fails rather than skipping native verification.
+
+macOS PFX imports use the runtime-owned temporary keychain, without
+`EphemeralKeySet` or `PersistKeySet`. Linux retains ephemeral imports; Windows
+retains the user-key import required by Schannel. The fingerprint and TLS peer
+validation policy is identical on all three platforms.
 
 ## Evidence boundary
 

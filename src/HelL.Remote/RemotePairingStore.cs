@@ -223,9 +223,7 @@ public sealed class RemotePairingStore
         byte[] bytes = Convert.FromBase64String(encoded);
         try
         {
-            return X509CertificateLoader.LoadPkcs12(bytes, null, OperatingSystem.IsWindows()
-                ? X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.Exportable
-                : X509KeyStorageFlags.EphemeralKeySet | X509KeyStorageFlags.Exportable);
+            return DeviceTunnel.LoadIdentity(bytes);
         }
         finally { CryptographicOperations.ZeroMemory(bytes); }
     }

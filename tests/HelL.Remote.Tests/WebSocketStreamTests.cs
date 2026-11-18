@@ -1,4 +1,5 @@
 using System.Net.WebSockets;
+using System.Reflection;
 using HelL.Contracts;
 using Xunit;
 
@@ -35,6 +36,29 @@ public sealed class WebSocketStreamTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => sending);
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => queued);
         Assert.Equal(1, socket.SendCalls);
+    }
+
+    [Fact]
+    public async Task DisposalRejectsAWriterWhoseLockIsGrantedBeforeItsLinkedCancellation()
+    {
+        using var socket = new StubSocket();
+        using var stream = new WebSocketStream(socket, leaveOpen: true);
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var sendLock = Assert.IsType<SemaphoreSlim>(typeof(WebSocketStream).GetField("sendLock", flags)!.GetValue(stream));
+        var lifetime = Assert.IsType<CancellationTokenSource>(typeof(WebSocketStream).GetField("lifetime", flags)!.GetValue(stream));
+        await sendLock.WaitAsync();
+        Task queued = stream.WriteAsync(new byte[1], 0, 1, CancellationToken.None);
+        bool completedBeforeLinkedCancellation = false;
+        // LIFO cancellation grants the lock while the writer's linked token has not yet been notified.
+        using CancellationTokenRegistration releaseFirst = lifetime.Token.Register(() =>
+        {
+            sendLock.Release();
+            completedBeforeLinkedCancellation = Task.WhenAny(queued, Task.Delay(TimeSpan.FromSeconds(5))).GetAwaiter().GetResult() == queued;
+        });
+        stream.Dispose();
+        Assert.True(completedBeforeLinkedCancellation, "The controlled writer did not finish before cancellation propagation resumed.");
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => queued);
+        Assert.Equal(0, socket.SendCalls);
     }
 
     [Fact]

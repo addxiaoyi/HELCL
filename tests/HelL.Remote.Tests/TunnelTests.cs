@@ -142,7 +142,8 @@ public sealed class TunnelTests
         try
         {
             return X509CertificateLoader.LoadPkcs12(pkcs12, null,
-                OperatingSystem.IsWindows() ? X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.Exportable : X509KeyStorageFlags.EphemeralKeySet | X509KeyStorageFlags.Exportable);
+                X509KeyStorageFlags.Exportable | (OperatingSystem.IsWindows() ? X509KeyStorageFlags.UserKeySet
+                    : OperatingSystem.IsMacOS() ? X509KeyStorageFlags.DefaultKeySet : X509KeyStorageFlags.EphemeralKeySet));
         }
         finally { CryptographicOperations.ZeroMemory(pkcs12); }
     }

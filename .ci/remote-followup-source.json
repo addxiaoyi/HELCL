@@ -1,6 +1,6 @@
 {
   "repository": "addxiaoyi/HELCL",
-  "baseCommit": "ccef7d15a31fee6887a9b966992bde5039237f4b",
+  "baseCommit": "37eff5e203eaaaa14ad962a387a146520003b821",
   "files": [
     {
       "path": ".github/workflows/native-credentials.yml",
@@ -44,8 +44,8 @@
     },
     {
       "path": "docs/native-credentials.md",
-      "sha256": "5f85c1ae45aa999547dff4f84d68e1c1d888e5fef7fdb6af35740585d65034dc",
-      "bytes": 3319
+      "sha256": "1e2886c82dfe810e7593ace8d6db1b74c96d3a2f76c566ee281aa39760107137",
+      "bytes": 3908
     },
     {
       "path": "docs/remote-companion.md",
@@ -1929,8 +1929,8 @@
     },
     {
       "path": "src/HelL.Remote/DeviceTunnel.cs",
-      "sha256": "f06c4d12e242510b1a4297b2148719b9430c90e3d6da2c09b2a743ec1350e220",
-      "bytes": 4074
+      "sha256": "3b24b5a488a092d60babb308ce54973a2101d8c686dcf2732752ef8da51adb2a",
+      "bytes": 4334
     },
     {
       "path": "src/HelL.Remote/HelL.Remote.csproj",
@@ -1984,13 +1984,13 @@
     },
     {
       "path": "src/HelL.Remote/RemotePairingStore.cs",
-      "sha256": "2efbc66e931e7b983fa667f78096761500d9d51913d9b2a008dbf2513318113d",
-      "bytes": 12464
+      "sha256": "c0b6ae90bbdfc09d83327f72a8ddcf2b721882ca5bc7d7f2af51e1d5a5e65cdf",
+      "bytes": 12253
     },
     {
       "path": "src/HelL.Remote/WebSocketStream.cs",
-      "sha256": "3fb168105c25bfc6f6cf913ee22dd06dc79198407c78994efd96d01f383748b7",
-      "bytes": 4895
+      "sha256": "db8b6692b1a2caeb28a75e7cf69ecc18e6d82f9e62dcc86b48fd6f8f97c59e8a",
+      "bytes": 5224
     },
     {
       "path": "tests/HelL.Mobile.Tests/CredentialEnvelopeTests.cs",
@@ -2154,18 +2154,18 @@
     },
     {
       "path": "tests/HelL.Remote.Tests/RemotePairingTests.cs",
-      "sha256": "d7dcd4566dbb8d35a3290c7c944ce219cc8888a06317d2e98a1561309e219d7a",
-      "bytes": 4550
+      "sha256": "a213c0cd4ab35c2c6709e316895e6a1c85cdc458ae1fff42c9d937f4c4843a1f",
+      "bytes": 6150
     },
     {
       "path": "tests/HelL.Remote.Tests/TunnelTests.cs",
-      "sha256": "c2ae34e993778d37e82e7f989f85614916949068240220b957cff2f3b141a409",
-      "bytes": 7968
+      "sha256": "9c17508faec7d677644f5659f08aaa9daed9e32c6ab10d5dd2daad1745084d66",
+      "bytes": 8021
     },
     {
       "path": "tests/HelL.Remote.Tests/WebSocketStreamTests.cs",
-      "sha256": "34cf832fd9b1cffe86ada337353eceabca08b7ac1fba055afbd515f2e80c9d95",
-      "bytes": 5606
+      "sha256": "c8b04ccfc49e7c360bde1f7c4d77d4f533f921af72772707d441bbeb276761ec",
+      "bytes": 7041
     },
     {
       "path": "tests/HelL.Tests/AccountRefreshTests.cs",
@@ -2609,8 +2609,8 @@
     },
     {
       "path": "tools/HelL.Credentials.Verify/Program.cs",
-      "sha256": "47fd28c2df7de9c41972293102dc676a222ef333877024641bb17c7fa28d6be3",
-      "bytes": 12004
+      "sha256": "17ff3d24e27dbe559efaaf4f918fcd9e5feb5e122105deb74efbf9f17ed18bd6",
+      "bytes": 15849
     },
     {
       "path": "tools/HelL.MinecraftMcp/dist/activities.js",
@@ -2694,8 +2694,8 @@
     },
     {
       "path": "tools/run_native_credentials.sh",
-      "sha256": "92a590966cea45327205db0a2f0b33744055d6e5aa6874e7777f09efd9cf2bb4",
-      "bytes": 4723
+      "sha256": "883940e452654c9f056b978cdc712bc6337e257760f6d8e0839ba7a5f6d17ebe",
+      "bytes": 5453
     },
     {
       "path": "tools/verify_relay_container.py",

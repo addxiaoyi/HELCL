@@ -32,6 +32,7 @@ FILES = (
     ".github/workflows/relay-acceptance.yml", ".github/workflows/remote-mobile-acceptance.yml",
     "docs/native-credentials.md", "docs/remote-companion.md", "docs/backend-hardening-2026-11-18.md",
     "docs/remote-followup-2026-11-18.md",
+    "docs/backend-reliability-2026-11-18.md",
     "LICENSE", "THIRD_PARTY_NOTICES.md",
 )
 SUFFIXES = {".cs", ".csproj", ".axaml", ".xaml", ".json", ".png", ".jpg", ".jpeg", ".svg", ".otf", ".ttf", ".md", ".txt", ".js", ".yml", ".yaml", ".sh", ".py"}

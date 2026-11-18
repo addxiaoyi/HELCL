@@ -17,6 +17,8 @@ public sealed class InvitationFeedPublisher
     private readonly string storageKey;
     private readonly SemaphoreSlim writes = new(1, 1);
     private Saved state;
+    private Saved? retired;
+    private string persisted;
     private bool revoked;
     public InvitationFeedDescriptor Descriptor => state.Descriptor;
 
@@ -33,6 +35,7 @@ public sealed class InvitationFeedPublisher
         string origin = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(relay.AbsoluteUri)))[..16];
         storageKey = "invitation-feed:" + hostDeviceId + ":" + clientDeviceId + ":" + origin;
         string saved = secrets.Read(storageKey);
+        persisted = saved;
         if (saved.Length > 4096) throw Corrupt();
         if (saved.Length != 0)
         {
@@ -42,9 +45,14 @@ public sealed class InvitationFeedPublisher
                 || state.Host != hostDeviceId || state.Client != clientDeviceId) throw Corrupt();
             if (!state.Revoked && state.Descriptor.Expires > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
             { InvitationFeedCodec.Validate(state.Descriptor); return; }
+            if (state.Revoked && state.Descriptor.Expires > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            {
+                InvitationFeedCodec.Validate(state.Descriptor);
+                retired = state;
+            }
         }
         state = new(InvitationFeedCodec.Create(DateTimeOffset.UtcNow.AddDays(7)), 0, relay.AbsoluteUri, hostDeviceId, clientDeviceId);
-        Save(state);
+        if (retired is null) Save(state);
     }
 
     public async Task<RemoteHostInvite> PublishAsync(RemoteHostInvite invitation, CancellationToken cancellation)
@@ -58,6 +66,13 @@ public sealed class InvitationFeedPublisher
                 || InvitationFeedCodec.Relay(invitation.Relay) != relay) throw new UnauthorizedAccessException("The invitation belongs to a different device pairing.");
             using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
             budget.CancelAfter(TimeSpan.FromSeconds(15));
+            if (retired is not null)
+            {
+                await DeleteChannelAsync(retired.Descriptor.Channel, budget.Token).ConfigureAwait(false);
+                // Keep the retired snapshot durable until its reader credential is confirmed unusable.
+                Save(state);
+                retired = null;
+            }
             long revision = checked(state.Revision + 1);
             InvitationFeedEnvelope encrypted = InvitationFeedCodec.Protect(invitation, state.Descriptor, revision);
             Saved next = state with { Revision = revision };
@@ -83,27 +98,35 @@ public sealed class InvitationFeedPublisher
         {
             revoked = true;
             var failures = new List<Exception>();
-            if (!state.Revoked)
+            if (retired is null && !state.Revoked)
             {
                 Saved retired = state with { Revoked = true };
                 try { Save(retired); state = retired; }
                 catch (Exception error) when (error is not OutOfMemoryException)
                 { failures.Add(new IOException("The key store could not record the invitation revocation (" + error.GetType().Name + ").")); }
             }
+            bool confirmed = false;
             try
             {
                 using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
                 budget.CancelAfter(TimeSpan.FromSeconds(15));
-                using var request = new HttpRequestMessage(HttpMethod.Delete, new Uri(relay, "v1/invitations/" + state.Descriptor.Channel));
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", operatorToken);
-                using HttpResponseMessage response = await http.SendAsync(request, budget.Token).ConfigureAwait(false);
-                if (response.StatusCode != HttpStatusCode.NotFound) response.EnsureSuccessStatusCode();
+                await DeleteChannelAsync((retired ?? state).Descriptor.Channel, budget.Token).ConfigureAwait(false);
+                confirmed = true;
             }
             catch (Exception error) when (error is not OutOfMemoryException)
             { failures.Add(new IOException("The relay could not confirm the invitation revocation (" + error.GetType().Name + ").")); }
-            try { secrets.Delete(storageKey); }
-            catch (Exception error) when (error is not OutOfMemoryException)
-            { failures.Add(new IOException("The retired invitation key could not be removed (" + error.GetType().Name + ").")); }
+            if (confirmed)
+            {
+                try
+                {
+                    EnsureSnapshot();
+                    secrets.Delete(storageKey);
+                    if (secrets.Read(storageKey).Length != 0) throw new IOException("The key store did not remove the retired invitation subscription.");
+                    persisted = "";
+                }
+                catch (Exception error) when (error is not OutOfMemoryException)
+                { failures.Add(new IOException("The retired invitation key could not be removed (" + error.GetType().Name + ").")); }
+            }
             if (failures.Count != 0) throw new IOException("Invitation revocation needs cleanup. This publisher has stopped sending updates.", new AggregateException(failures));
         }
         finally { writes.Release(); }
@@ -113,8 +136,26 @@ public sealed class InvitationFeedPublisher
 
     private void Save(Saved next)
     {
+        EnsureSnapshot();
         string encoded = JsonSerializer.Serialize(next);
         secrets.Write(storageKey, encoded);
         if (secrets.Read(storageKey) != encoded) throw new IOException("The system key store did not retain the invitation subscription.");
+        persisted = encoded;
+    }
+
+    private void EnsureSnapshot()
+    {
+        if (secrets.Read(storageKey) != persisted)
+            throw new IOException("The invitation subscription changed in another publisher. Reopen it before saving or cleaning up.");
+    }
+
+    private async Task DeleteChannelAsync(string channel, CancellationToken cancellation)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Delete, new Uri(relay, "v1/invitations/" + channel));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", operatorToken);
+        using HttpResponseMessage response = await http.SendAsync(request, cancellation).ConfigureAwait(false);
+        if (response.StatusCode is HttpStatusCode.NoContent or HttpStatusCode.NotFound) return;
+        response.EnsureSuccessStatusCode();
+        throw new InvalidDataException("The relay did not confirm the invitation revocation.");
     }
 }

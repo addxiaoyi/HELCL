@@ -3,6 +3,11 @@
 Workspace: `D:\qwq\qdq`. This records local source changes and verification, not
 a release, remote commit, public deployment or Android device acceptance.
 
+This is the earlier hardening checkpoint. Subsequent mobile pairing, encrypted
+invitation delivery and actual GitHub Linux/Intel-macOS/container acceptance are
+recorded in `remote-followup-2026-11-18.md`; the historical boundaries below should
+not be mistaken for that follow-up's final status.
+
 ## Delivered scope
 
 1. Restored the Portable regression gate by separating `DesktopTask` state from

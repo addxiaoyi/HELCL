@@ -77,7 +77,7 @@ internal static class Program
         {
             using var startup = CancellationTokenSource.CreateLinkedTokenSource(stopped.Token);
             startup.CancelAfter(TimeSpan.FromSeconds(15));
-            string bootstrapLine = await Console.In.ReadLineAsync(startup.Token)
+            string bootstrapLine = await CompanionProcessLoop.ReadLineAsync(Console.In, startup.Token)
                 ?? throw new InvalidDataException("The launcher did not supply a companion session.");
             if (bootstrapLine.Length > 8192) throw new InvalidDataException("The companion session is too large.");
             Bootstrap bootstrap = JsonSerializer.Deserialize<Bootstrap>(bootstrapLine)
@@ -96,10 +96,7 @@ internal static class Program
             }, stopped.Token);
             Task input = WaitForStopAsync(host, deviceId, stopped);
             Task session = host.Completion(deviceId);
-            await Task.WhenAny(input, session);
-            stopped.Cancel();
-            try { await Task.WhenAll(input, session); }
-            catch (OperationCanceledException) when (stopped.IsCancellationRequested) { }
+            await CompanionProcessLoop.WaitForExitAsync(input, session, stopped);
         }
         finally
         {
@@ -116,7 +113,7 @@ internal static class Program
     {
         while (!stopped.IsCancellationRequested)
         {
-            string? command = await Console.In.ReadLineAsync(stopped.Token);
+            string? command = await CompanionProcessLoop.ReadLineAsync(Console.In, stopped.Token);
             if (command is null or "stop") return;
             if (command == "renew") { await host.RenewAsync(deviceId, stopped.Token); continue; }
             if (command == "revoke") { await host.RevokeAsync(deviceId, stopped.Token); return; }

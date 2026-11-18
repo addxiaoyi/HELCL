@@ -86,6 +86,7 @@ internal static class Program
                 native_secret_roundtrip = checks.Contains("native_secret_roundtrip"),
                 account_restart = checks.Contains("account_restart"),
                 failed_key_write_injected = checks.Contains("failed_key_write_injected"),
+                lost_key_receipt_preserves_state = checks.Contains("lost_key_receipt_preserves_state"),
                 account_file_failure_preserves_state = checks.Contains("account_file_failure_preserves_state"),
                 device_identity_restart = checks.Contains("device_identity_restart"),
                 device_private_key_signature_export = checks.Contains("device_private_key_signature_export"),
@@ -142,6 +143,14 @@ internal static class Program
         Require(saved.SequenceEqual(File.ReadAllBytes(path)), "A failed vault write changed the account file.");
         Require(new AccountVault(root, secrets).Load()?["access_token"] as string == token, "A failed vault write removed the previous key.");
         checks.Add("failed_key_write_injected");
+        stage = "native-key-write-lost-receipt";
+        int previousKeys = secrets.OwnedCount;
+        secrets.LoseNextWriteReceipt = true;
+        ExpectIoFailure(() => vault.Save(account), "A lost native write receipt unexpectedly committed the vault.");
+        Require(secrets.OwnedCount == previousKeys, "A native key remained after its failed write receipt.");
+        Require(saved.SequenceEqual(File.ReadAllBytes(path)), "A lost write receipt changed the saved account.");
+        Require(new AccountVault(root, secrets).Load()?["access_token"] as string == token, "A lost write receipt removed the previous native key.");
+        checks.Add("lost_key_receipt_preserves_state");
         vault.Remove();
         Require(vault.Load() == null && vault.CleanupWarning == null, "The vault did not remove its native key cleanly.");
     }
@@ -245,12 +254,19 @@ internal static class Program
         private readonly string prefix = "HelL native verification " + Guid.NewGuid().ToString("N") + " ";
         private readonly HashSet<(string Service, string Key)> owned = [];
         public bool RejectWrites { get; set; }
+        public bool LoseNextWriteReceipt { get; set; }
+        public int OwnedCount => owned.Count;
         public string GetPassword(string service, string username) => native.GetPassword(prefix + service, username);
         public void SetPassword(string service, string username, string password)
         {
             if (RejectWrites) throw new IOException("The verification fixture rejected this key write.");
             owned.Add((prefix + service, username));
             native.SetPassword(prefix + service, username, password);
+            if (LoseNextWriteReceipt)
+            {
+                LoseNextWriteReceipt = false;
+                throw new IOException("The verification fixture lost the completed native key write receipt.");
+            }
         }
         public void DeletePassword(string service, string username)
         {

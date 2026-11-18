@@ -53,13 +53,14 @@ public sealed class AccountVault
         byte[] plain = Encoding.UTF8.GetBytes(PyJson.Dumps(account));
         byte[] cipher = new byte[plain.Length];
         string temporary = path + "." + id + ".tmp";
-        bool stored = false, committed = false;
+        bool storeAttempted = false, committed = false;
         try
         {
             using var aes = new AesGcm(key, 16);
             aes.Encrypt(nonce, plain, cipher, tag, Aad(id));
+            // A key store can commit the key and then lose its write receipt.
+            storeAttempted = true;
             store.SetPassword(Service, id, Convert.ToBase64String(key));
-            stored = true;
             if (store.GetPassword(Service, id) != Convert.ToBase64String(key))
                 throw new IOException("系统凭据库未能保存应用密钥，本次账号仅保留在内存。");
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -74,8 +75,8 @@ public sealed class AccountVault
         {
             CryptographicOperations.ZeroMemory(key);
             CryptographicOperations.ZeroMemory(plain);
-            if (File.Exists(temporary)) File.Delete(temporary);
-            if (stored && !committed) DeleteKey(id);
+            try { if (File.Exists(temporary)) File.Delete(temporary); }
+            finally { if (storeAttempted && !committed) DeleteKey(id); }
         }
     }
 
@@ -93,7 +94,7 @@ public sealed class AccountVault
         try { return ReadEnvelope(); }
         catch (InvalidDataException)
         {
-            CleanupWarning = "已替换或移除损坏的账号记录；无法识别的旧钥匙环条目可在系统中手动清理。";
+            CleanupWarning = "账号记录损坏，无法识别的旧钥匙环条目可能需要在系统中手动清理。";
             return null;
         }
     }
@@ -101,7 +102,7 @@ public sealed class AccountVault
     private void DeleteKey(string id)
     {
         try { store.DeletePassword(Service, id); }
-        catch (Exception) { CleanupWarning = "账号密文已移除或替换，但旧的系统密钥未清理，可稍后在系统钥匙环中清理 HelL 条目。"; }
+        catch (Exception) { CleanupWarning = "账号密钥清理未完成，请稍后在系统钥匙环中检查并清理 HelL 条目。"; }
     }
 
     private Envelope ReadEnvelope()

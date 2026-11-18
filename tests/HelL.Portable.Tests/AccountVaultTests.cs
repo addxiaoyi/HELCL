@@ -14,13 +14,20 @@ public sealed class AccountVaultTests : IDisposable
     {
         public Dictionary<string, string> Keys { get; } = new();
         public bool FailWrites;
+        public bool FailAfterWrites;
+        public bool FailDeletes;
         public string GetPassword(string service, string username) => Keys.GetValueOrDefault(username, "");
         public void SetPassword(string service, string username, string password)
         {
             if (FailWrites) throw new IOException("Test keyring locked");
             Keys[username] = password;
+            if (FailAfterWrites) throw new IOException("The test key store lost the write receipt.");
         }
-        public void DeletePassword(string service, string username) => Keys.Remove(username);
+        public void DeletePassword(string service, string username)
+        {
+            if (FailDeletes) throw new IOException("The test key store cannot remove a key.");
+            Keys.Remove(username);
+        }
     }
 
     internal static PyDict Account(string token = "fictional-access-token") => PyDict.Of("type", "microsoft",
@@ -61,6 +68,23 @@ public sealed class AccountVaultTests : IDisposable
         Assert.Equal("replacement-token", vault.Load()!["access_token"]);
         Assert.Single(store.Keys);
         Assert.DoesNotContain(oldId, store.Keys.Keys);
+    }
+
+    [Fact]
+    public void AKeyWrittenBeforeAStoreFailureIsReclaimedWithoutTouchingTheSavedAccount()
+    {
+        var store = new MemoryStore();
+        var vault = new AccountVault(root, store);
+        vault.Save(Account());
+        string previousKey = store.Keys.Single().Key;
+        byte[] saved = File.ReadAllBytes(Path.Combine(root, "portable-account.json"));
+        store.FailAfterWrites = true;
+        Assert.Throws<IOException>(() => vault.Save(Account("uncommitted-replacement")));
+        // Failure output must not serialize the encryption key values.
+        Assert.Single(store.Keys.Select(_ => true));
+        Assert.Contains(previousKey, store.Keys.Keys);
+        Assert.Equal(saved, File.ReadAllBytes(Path.Combine(root, "portable-account.json")));
+        Assert.Equal("fictional-access-token", vault.Load()!["access_token"]);
     }
 
     [Fact]

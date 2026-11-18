@@ -1,6 +1,6 @@
 {
   "repository": "addxiaoyi/HELCL",
-  "baseCommit": "83e2b2b8dfbe5c5d9c0d1298d2b3017a5838544d",
+  "baseCommit": "938f12c7716dd7a2716be144672e668497c1933b",
   "files": [
     {
       "path": ".github/workflows/native-credentials.yml",
@@ -39,8 +39,8 @@
     },
     {
       "path": "docs/backend-reliability-2026-11-18.md",
-      "sha256": "915ce492d15f11986b1a8b71c75bfcc356767d7b5ca987e5ac64c3e4235f16c6",
-      "bytes": 3962
+      "sha256": "4bfe4a4bf6217c5937ac3934a531280735a8145185fb72d9715d36aec3a3ae32",
+      "bytes": 5413
     },
     {
       "path": "docs/licenses/TipCL-MIT.txt",

@@ -54,8 +54,29 @@ mandatory for success.
 
 ## Verification
 
-Final local counts and GitHub run/artifact receipts are recorded after execution.
-Previous green runs are a baseline, not evidence for this changed implementation.
+The final local gate for this continuation passed:
+
+- Remote: **89/89** (`TestResults/backend-next/remote-all.trx`).
+- Portable: **275/275** (`TestResults/backend-next/portable-final.trx`).
+- Original suite: **816/816** (`TestResults/backend-next/legacy-final.trx`),
+  including the Companion process-loop tests; its net48 WPF output built with
+  **0 warnings / 0 errors**.
+- Companion helper build succeeded; the pre-existing Core analyzer warnings remain.
+- Native WSL key store: **8/8 checks**, including `lost_key_receipt_preserves_state`,
+  signature/export identity recovery and native/temp cleanup:
+  `artifacts/backend-next/native-linux-report.json`.
+- GitHub `codex/remote-followup-ci-20261118-02`: run `44332333025` passed on
+  Ubuntu 24.04 and Intel macOS 15 with the native system key store and the lost
+  write-receipt check. The previous source head was `938f12c`; this continuation
+  also fixes deterministic HTTP and lifecycle cases not included in that run.
+- Remote/code boundary and account changes were failure-first, with owned TRX
+  evidence under `TestResults/backend-next`, `TestResults/rpc-boundary-20261118`,
+  `TestResults/remote-recovery-20261118` and
+  `TestResults/backend-hardening/account-session-next-*`.
+
+The current scoped test snapshot is being refreshed for the new deterministic
+HTTP/session fixes. Previous green runs are a baseline, not evidence for those
+changed files until the new GitHub runs complete.
 
 ## Scope boundaries
 
@@ -63,3 +84,7 @@ This round changes backend code and tests. It does not add a new UI design or
 claim Android-device, macOS-ARM, public dual-device or production acceptance.
 Container tests run in the hosted runner's isolated private network. The local
 Docker Desktop recovery limitation from the previous checkpoint remains separate.
+
+The finalized update is on `codex/remote-followup-ci-20261118-02` only. The
+original checkout remains on its existing dirty `master`; `main` is not merged or
+deployed.

@@ -1,0 +1,113 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Dark">
+      <Color x:Key="SystemAccentColor">#E2E8F0</Color>
+      <!-- 真实 AcrylicBlur 透底冰晶黑底色（58% 不透明度，透出桌面磨砂壁纸） -->
+      <SolidColorBrush x:Key="HelL.Window">#940D0F14</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Chrome">#4D08090D</SolidColorBrush>
+      <LinearGradientBrush x:Key="HelL.BackdropMesh" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#1ACBD5E1" Offset="0" />
+        <GradientStop Color="#0494A3B8" Offset="0.42" />
+        <GradientStop Color="#00000000" Offset="0.7" />
+        <GradientStop Color="#1264748B" Offset="1" />
+      </LinearGradientBrush>
+
+      <!-- VisionOS / macOS 半透明磨砂玻璃层（非实色漆面） -->
+      <LinearGradientBrush x:Key="HelL.Surface" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#21FFFFFF" Offset="0" />
+        <GradientStop Color="#11FFFFFF" Offset="1" />
+      </LinearGradientBrush>
+      <SolidColorBrush x:Key="HelL.SurfaceRaised">#2BFFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Field">#17FFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Hover">#26FFFFFF</SolidColorBrush>
+
+      <!-- 1px 对角高光镜面折射边缘 -->
+      <LinearGradientBrush x:Key="HelL.GlassBorder" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#3AFFFFFF" Offset="0" />
+        <GradientStop Color="#12FFFFFF" Offset="0.5" />
+        <GradientStop Color="#24FFFFFF" Offset="1" />
+      </LinearGradientBrush>
+      <SolidColorBrush x:Key="HelL.Line">#16FFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.SubtleLine">#0DFFFFFF</SolidColorBrush>
+
+      <SolidColorBrush x:Key="HelL.Ink">#F8FAFC</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.InkSoft">#DCE2EC</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Muted">#9AA4B4</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Accent">#F8FAFC</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.AccentStrong">#F8FAFC</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.AccentHover">#E2E8F0</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.AccentPressed">#CBD5E1</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.OnAccent">#0F1115</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Selection">#20FFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.BadgeBorder">#32FFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Error">#FF6B6B</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Success">#E2E8F0</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Warning">#FCD34D</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.ScrollThumb">#30FFFFFF</SolidColorBrush>
+
+      <SolidColorBrush x:Key="TextControlBackgroundFocused">#24FFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="TextControlBorderBrushFocused">#58FFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="TextControlBackgroundPointerOver">#20FFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="TextControlBorderBrushPointerOver">#2EFFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="ComboBoxDropDownBackground">#EE181B22</SolidColorBrush>
+      <SolidColorBrush x:Key="ComboBoxBackground">#17FFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver">#24FFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="ComboBoxBackgroundPressed">#2EFFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="ComboBoxBorderBrush">#1AFFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver">#30FFFFFF</SolidColorBrush>
+    </ResourceDictionary>
+
+    <ResourceDictionary x:Key="Light">
+      <Color x:Key="SystemAccentColor">#0F172A</Color>
+      <!-- 真实 AcrylicBlur 透底冰晶浅色（68% 不透明度，透出柔和浅色磨砂） -->
+      <SolidColorBrush x:Key="HelL.Window">#ADEEF1F6</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Chrome">#66FFFFFF</SolidColorBrush>
+      <LinearGradientBrush x:Key="HelL.BackdropMesh" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#66FFFFFF" Offset="0" />
+        <GradientStop Color="#1464748B" Offset="1" />
+      </LinearGradientBrush>
+
+      <LinearGradientBrush x:Key="HelL.Surface" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#BDFFFFFF" Offset="0" />
+        <GradientStop Color="#8CFFFFFF" Offset="1" />
+      </LinearGradientBrush>
+      <SolidColorBrush x:Key="HelL.SurfaceRaised">#E6FFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Field">#120F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Hover">#1A0F172A</SolidColorBrush>
+
+      <LinearGradientBrush x:Key="HelL.GlassBorder" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#CCFFFFFF" Offset="0" />
+        <GradientStop Color="#1A0F172A" Offset="0.55" />
+        <GradientStop Color="#80FFFFFF" Offset="1" />
+      </LinearGradientBrush>
+      <SolidColorBrush x:Key="HelL.Line">#140F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.SubtleLine">#0B0F172A</SolidColorBrush>
+
+      <SolidColorBrush x:Key="HelL.Ink">#0F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.InkSoft">#334155</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Muted">#64748B</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Accent">#0F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.AccentStrong">#0F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.AccentHover">#1E293B</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.AccentPressed">#334155</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.OnAccent">#FFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Selection">#120F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.BadgeBorder">#220F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Error">#DC2626</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Success">#334155</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.Warning">#D97706</SolidColorBrush>
+      <SolidColorBrush x:Key="HelL.ScrollThumb">#260F172A</SolidColorBrush>
+
+      <SolidColorBrush x:Key="TextControlBackgroundFocused">#CCFFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="TextControlBorderBrushFocused">#400F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="TextControlBackgroundPointerOver">#180F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="TextControlBorderBrushPointerOver">#240F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="ComboBoxDropDownBackground">#F5FFFFFF</SolidColorBrush>
+      <SolidColorBrush x:Key="ComboBoxBackground">#100F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver">#180F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="ComboBoxBackgroundPressed">#220F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="ComboBoxBorderBrush">#140F172A</SolidColorBrush>
+      <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver">#260F172A</SolidColorBrush>
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

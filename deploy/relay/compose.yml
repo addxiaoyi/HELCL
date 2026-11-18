@@ -1,0 +1,30 @@
+services:
+  relay:
+    build:
+      context: ../..
+      dockerfile: deploy/relay/Dockerfile
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 128
+    environment:
+      Relay__OperatorToken: ${HELL_RELAY_OPERATOR_TOKEN:?Set a private operator token}
+      Relay__SigningKey: ${HELL_RELAY_SIGNING_KEY:?Set a Base64 32-byte signing key}
+      ASPNETCORE_URLS: http://+:8080
+      Relay__KnownProxies__0: ${HELL_RELAY_TRUSTED_PROXY_IP:?Set the literal IP of the trusted reverse proxy as seen inside the container}
+      Relay__StatePath: /state/rooms.json
+    ports: ["127.0.0.1:8080:8080"]
+    volumes: [relay-state:/state]
+    tmpfs: ["/tmp:size=32m,mode=1777"]
+    healthcheck:
+      test: [CMD, dotnet, HelL.Relay.dll, --healthcheck]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+volumes:
+  relay-state:

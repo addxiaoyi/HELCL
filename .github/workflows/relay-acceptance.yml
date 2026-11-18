@@ -1,0 +1,46 @@
+name: Relay container acceptance
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['codex/remote-followup-ci-*']
+    paths:
+      - '.github/workflows/relay-acceptance.yml'
+      - 'deploy/relay/**'
+      - 'src/HelL.Contracts/**'
+      - 'src/HelL.Remote/**'
+      - 'src/HelL.Relay/**'
+      - 'tests/HelL.Remote.Tests/**'
+      - 'tools/HelL.Relay.Acceptance/**'
+      - 'tools/verify_relay_container.py'
+      - 'tests/test_verify_relay_container.py'
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-relay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '10.0.x'
+      - name: Test encrypted invitations and relay boundaries
+        run: dotnet test tests/HelL.Remote.Tests/HelL.Remote.Tests.csproj --artifacts-path "$RUNNER_TEMP/relay-unit" --logger 'trx;LogFileName=remote.trx' --results-directory artifacts/relay-acceptance --nologo
+      - name: Check container cleanup and local-only safeguards
+        run: python3 -m unittest discover -s tests -p test_verify_relay_container.py
+      - name: Build and exercise isolated HTTPS and WSS containers
+        run: python3 tools/verify_relay_container.py
+      - name: Upload test results and credential-free container receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: relay-acceptance-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/relay-acceptance/report.json
+            artifacts/relay-acceptance/*.trx
+          if-no-files-found: warn

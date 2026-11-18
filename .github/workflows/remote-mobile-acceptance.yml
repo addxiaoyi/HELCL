@@ -1,0 +1,46 @@
+name: Remote mobile pairing acceptance
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['codex/remote-followup-ci-*']
+
+permissions:
+  contents: read
+
+jobs:
+  mobile-pairing:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install desktop-hosted preview prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y xvfb libx11-6 libice6 libsm6 libfontconfig1 libgl1
+      - name: Run mobile pairing and invitation lifecycle tests
+        run: dotnet test tests/HelL.Mobile.Tests -c Release --artifacts-path "$RUNNER_TEMP/mobile-tests" --logger 'trx;LogFileName=mobile.trx' --results-directory artifacts/mobile-acceptance
+      - name: Run portable owner and account regressions
+        run: dotnet test tests/HelL.Portable.Tests -c Release --artifacts-path "$RUNNER_TEMP/portable-tests" --logger 'trx;LogFileName=portable.trx' --results-directory artifacts/mobile-acceptance
+      - name: Build real mobile preview host and companion
+        run: |
+          dotnet build tools/HelL.Mobile.Preview -c Release --artifacts-path "$RUNNER_TEMP/mobile-preview"
+          dotnet build tools/HelL.Companion.Host -c Release --artifacts-path "$RUNNER_TEMP/companion-host"
+      - name: Exercise mobile pairing UI at three sizes
+        run: |
+          for size in '320 720' '390 844' '844 390'; do
+            read -r width height <<< "$size"
+            output="$GITHUB_WORKSPACE/artifacts/mobile-acceptance/preview-${width}x${height}"
+            xvfb-run -a dotnet "$RUNNER_TEMP/mobile-preview/bin/HelL.Mobile.Preview/release/HelL.Mobile.Preview.dll" "$output" "$width" "$height" --remote
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: mobile-pairing-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/mobile-acceptance
+          if-no-files-found: warn

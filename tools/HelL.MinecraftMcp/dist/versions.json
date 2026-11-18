@@ -1,0 +1,93 @@
+{
+  "component": "4.39.0",
+  "versions": [
+    {
+      "version": "1.20",
+      "protocol": 763
+    },
+    {
+      "version": "1.20.1",
+      "protocol": 763
+    },
+    {
+      "version": "1.20.2",
+      "protocol": 764
+    },
+    {
+      "version": "1.20.3",
+      "protocol": 765
+    },
+    {
+      "version": "1.20.4",
+      "protocol": 765
+    },
+    {
+      "version": "1.20.5",
+      "protocol": 766
+    },
+    {
+      "version": "1.20.6",
+      "protocol": 766
+    },
+    {
+      "version": "1.21",
+      "protocol": 767
+    },
+    {
+      "version": "1.21.1",
+      "protocol": 767
+    },
+    {
+      "version": "1.21.2",
+      "protocol": 768
+    },
+    {
+      "version": "1.21.3",
+      "protocol": 768
+    },
+    {
+      "version": "1.21.4",
+      "protocol": 769
+    },
+    {
+      "version": "1.21.5",
+      "protocol": 770
+    },
+    {
+      "version": "1.21.6",
+      "protocol": 771
+    },
+    {
+      "version": "1.21.7",
+      "protocol": 772
+    },
+    {
+      "version": "1.21.8",
+      "protocol": 772
+    },
+    {
+      "version": "1.21.9",
+      "protocol": 773
+    },
+    {
+      "version": "1.21.10",
+      "protocol": 773
+    },
+    {
+      "version": "1.21.11",
+      "protocol": 774
+    },
+    {
+      "version": "26.1",
+      "protocol": 775
+    },
+    {
+      "version": "26.1.1",
+      "protocol": 775
+    },
+    {
+      "version": "26.1.2",
+      "protocol": 775
+    }
+  ]
+}

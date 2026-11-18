@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+    <ProjectReference Include="../../src/HelL.Core/HelL.Core.csproj" />
+    <ProjectReference Include="../../src/HelL.Companion/HelL.Companion.csproj" />
+    <ProjectReference Include="../../src/HelL.Relay/HelL.Relay.csproj" />
+    <Compile Include="../HelL.Tests/AuthenticationFlowTests.cs" Link="Regression/AuthenticationFlowTests.cs" />
+    <Compile Include="../HelL.Tests/TestHome.cs" Link="Regression/TestHome.cs" />
+    <Compile Include="../HelL.Tests/BackendRpcContractTests.cs" Link="Regression/BackendRpcContractTests.cs" />
+    <Compile Include="../HelL.Tests/RpcDispatcherTests.cs" Link="Regression/RpcDispatcherTests.cs" />
+    <Compile Include="../HelL.Tests/BackendEventTests.cs" Link="Regression/BackendEventTests.cs" />
+    <Compile Include="../HelL.Tests/BackendFixture.cs" Link="Regression/BackendFixture.cs" />
+    <Compile Include="../HelL.Tests/BulkWorkspaceTests.cs" Link="Regression/BulkWorkspaceTests.cs" />
+    <Compile Include="../HelL.Tests/SaveProtectionTests.cs" Link="Regression/SaveProtectionTests.cs" />
+    <Compile Include="../HelL.Tests/WorldFixture.cs" Link="Regression/WorldFixture.cs" />
+    <Compile Include="../../src/HelL.Desktop/Models/DesktopTask.cs" Link="Desktop/DesktopTask.cs" />
+  </ItemGroup>
+</Project>

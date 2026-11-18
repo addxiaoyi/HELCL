@@ -1,0 +1,2691 @@
+{
+  "repository": "addxiaoyi/HELCL",
+  "baseCommit": "e82bf4a48db6b12d4851015000e112122287c9bb",
+  "files": [
+    {
+      "path": ".github/workflows/native-credentials.yml",
+      "sha256": "472fe35a0c23515b72ea152523caf808c47340090112c675db17e1b275efc2f2",
+      "bytes": 1736
+    },
+    {
+      "path": ".github/workflows/relay-acceptance.yml",
+      "sha256": "db3089c00c2897da1e5161e1441be49d73a6c87b5811f3b95e850338ddc059f4",
+      "bytes": 1775
+    },
+    {
+      "path": ".github/workflows/remote-mobile-acceptance.yml",
+      "sha256": "9f5c17d15b2d94c62980b3486043c4828ddc59f7eddf5af17d14282d4d4909d3",
+      "bytes": 2199
+    },
+    {
+      "path": "deploy/relay/compose.yml",
+      "sha256": "d4c213b190c4cf47d52f5fcb7ba219cb1957c10d93ce227acfab46765beb707f",
+      "bytes": 951
+    },
+    {
+      "path": "deploy/relay/README.md",
+      "sha256": "acef622a0cda7eac0068c8bfe9e4b3a4b699b9de1330c460eeb51437255c2a11",
+      "bytes": 6735
+    },
+    {
+      "path": "docs/backend-hardening-2026-11-18.md",
+      "sha256": "906e5369824b73862968d61fc9c62d96937e954d17c0efe0e7f577323888aa0c",
+      "bytes": 9088
+    },
+    {
+      "path": "docs/licenses/TipCL-MIT.txt",
+      "sha256": "597eb74c2d55107819f7b31a972a74aec51488621147c4ed86778af1158dec3d",
+      "bytes": 1083
+    },
+    {
+      "path": "docs/native-credentials.md",
+      "sha256": "5f85c1ae45aa999547dff4f84d68e1c1d888e5fef7fdb6af35740585d65034dc",
+      "bytes": 3319
+    },
+    {
+      "path": "docs/remote-companion.md",
+      "sha256": "e6ea50b2741b059ceb8a05ab48f6b8775b4b5d9093d52719a24bc44612dbeeab",
+      "bytes": 9046
+    },
+    {
+      "path": "docs/remote-followup-2026-11-18.md",
+      "sha256": "c3878f03d41295fe780be44867a229bc1b2b523983af5d0ca5e741f5ca0a85ea",
+      "bytes": 3296
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "70f5106ef2128c7179665f755067bef1af908f452e0ce3469a86d82834a6401c",
+      "bytes": 1144
+    },
+    {
+      "path": "src/HelL/Core/AttributeError.cs",
+      "sha256": "48636fb08bbdf78a681848936f3e1c4e270b21b9a50eed4d3c5624327d2278da",
+      "bytes": 137
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.Appearance.cs",
+      "sha256": "be6d3c14e785361bdb7736284eb525b54d9def10a1dc80d7043c5b5f20e5433a",
+      "bytes": 759
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.CatalogDocuments.cs",
+      "sha256": "939e33b386abe06919270e9e7185422a941491dc785fbde3d3e8920e593d7a8d",
+      "bytes": 3837
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.CatalogPresentation.cs",
+      "sha256": "c4619c9f40088c6af756f4b081b379c0f9d5e030d6b582d2352323e56e2d55e2",
+      "bytes": 9785
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.CatalogSearch.cs",
+      "sha256": "c7b875eb2df9a5dcc114062b3a1651440bb128bf742b32637f1b74bc337cd196",
+      "bytes": 916
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.CatalogTarget.cs",
+      "sha256": "8a23993d5af5baa076a8b3844f26ba1243357dd1a9367d5110990cd7051a7507",
+      "bytes": 387
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.cs",
+      "sha256": "deccd0bf99f81fe3cee666250c4a7356b09a3d0ceca8a17756960f29aa5dd03d",
+      "bytes": 146976
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.Dashboard.cs",
+      "sha256": "2e22afa39124106d7f65ed20e5b807c463ee07ec5a86b2595501e9c0d2701478",
+      "bytes": 3720
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.DependencyInstall.cs",
+      "sha256": "5b96f46df11447a09386b338d68afbee55111d4428df9b5363441a6cea9d92a7",
+      "bytes": 8777
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.InstanceGroups.cs",
+      "sha256": "0f88d5d6489729707797a0cc7ba3af7bb47332eac78ae778987583022b3de1f9",
+      "bytes": 1299
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.LaunchRecovery.cs",
+      "sha256": "5b2f05efa53c32cab988d4d929e7dfc147bd047f08f09d7857dc1935d46e7ca2",
+      "bytes": 1861
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.Library.cs",
+      "sha256": "b6d2f92894b05ef57c73ffb336903ec89d962c7a555127f534579ebe097636ca",
+      "bytes": 2741
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.LocalAi.cs",
+      "sha256": "4d085dd004427cd7767185c738fb8ee467abc3f78810d45290a2f0bf5b69dad9",
+      "bytes": 9569
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.Minecraft.cs",
+      "sha256": "f970f965e7111bd317eec1a4c83888c0b36d5f36db5a67be44de11782f4fdfc2",
+      "bytes": 3663
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.Mirrors.cs",
+      "sha256": "d1f16f56717d8b77f221a6baa9f2fd492d1d8f77a85e6a95bde269757996404d",
+      "bytes": 196
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.News.cs",
+      "sha256": "5a955665270c54e7ae543879ba7ae052c9f037fd6c580047f4d9113381fe90a4",
+      "bytes": 1152
+    },
+    {
+      "path": "src/HelL/Core/BackendApi.ResourceNames.cs",
+      "sha256": "cc9c559079900471f7a77993df1f0e5c247ccb88c17e64d9259efad85338e4f0",
+      "bytes": 2773
+    },
+    {
+      "path": "src/HelL/Core/BackendWorker.cs",
+      "sha256": "1feeec6b7ff8e2422a484723c0e323babd22ddb1eec3a0c1b0d026577e25a4fe",
+      "bytes": 3439
+    },
+    {
+      "path": "src/HelL/Core/BridgeRpcResponse.cs",
+      "sha256": "cc9c6cea39de48c30005b99bee9392a7ae97b625c58ec3c4f4dbf183599e47b2",
+      "bytes": 3039
+    },
+    {
+      "path": "src/HelL/Core/BridgeServer.cs",
+      "sha256": "282537f5174914fdd98b4ee6da5bade0232a017c1306543ed526f4e14772078a",
+      "bytes": 27619
+    },
+    {
+      "path": "src/HelL/Core/CoreResources.cs",
+      "sha256": "114a5a1dd5e8f9b8014d51c6ddffc26d489faf0ea7d7385e8ba0427f06396ee4",
+      "bytes": 1408
+    },
+    {
+      "path": "src/HelL/Core/DefAttribute.cs",
+      "sha256": "22e56a8965043d5e5ffcecd4e3e8b091b4992cd1637f24c42cefab8a7d1b4119",
+      "bytes": 265
+    },
+    {
+      "path": "src/HelL/Core/EventBus.cs",
+      "sha256": "d032f828738f126c19a058ffc2d135a1d8ab85a146e3177de9a1bba4c4f08203",
+      "bytes": 1712
+    },
+    {
+      "path": "src/HelL/Core/FileNotFoundError.cs",
+      "sha256": "847ab425df7d62ec910935db7f3880f6cf07abfbbc8b1b1dc8b7e921b7b87ff7",
+      "bytes": 292
+    },
+    {
+      "path": "src/HelL/Core/HostCommandService.cs",
+      "sha256": "1fc5d0dfc840660ba59a6914c154d8fd06a440d39f90b163c3c3d5df6012fd30",
+      "bytes": 4753
+    },
+    {
+      "path": "src/HelL/Core/HostPipeServer.cs",
+      "sha256": "1e16f2af78913c32a6313ca32d371ff1a684648794c29db17ac14f15f56910bc",
+      "bytes": 7846
+    },
+    {
+      "path": "src/HelL/Core/ICrashReportException.cs",
+      "sha256": "ee48a5c81216049906afd30df4421ec4aa0240abac756792183ecee28b4998fe",
+      "bytes": 89
+    },
+    {
+      "path": "src/HelL/Core/IndexError.cs",
+      "sha256": "52d7773e6e201a598f5965add6bee8ec02df6459707788c7cffab1fe85be06ee",
+      "bytes": 125
+    },
+    {
+      "path": "src/HelL/Core/JSONDecodeError.cs",
+      "sha256": "ada3380223e1df6e2062e0ea5d02dd5dd30a3fae798bfc42126f77929d91fba9",
+      "bytes": 489
+    },
+    {
+      "path": "src/HelL/Core/KeyError.cs",
+      "sha256": "bc2b3ef9d36fd1ba5181e652c7a67a778f8df2f5705b5e82c7f065f8459acb11",
+      "bytes": 174
+    },
+    {
+      "path": "src/HelL/Core/Launcher/AccountManager.cs",
+      "sha256": "c94114e5410c8b56b409271d2642619a25a5b2b9ad68d6d186f9ee0e7685925b",
+      "bytes": 9953
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Agent.cs",
+      "sha256": "af50c376eff8c142754623e02dfedf759a6b3657419d0cf10c44237a666ce2da",
+      "bytes": 56508
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/AgentCancelled.cs",
+      "sha256": "3d2682f52491f5462f5736de8bc5bc410c7aee1d234f9bc6d951e81073c83f95",
+      "bytes": 142
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/AgentResult.cs",
+      "sha256": "ee0e585978e956e700f801f61035e21c82b66a62227fff58bddec60261da0f95",
+      "bytes": 930
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/AIClientError.cs",
+      "sha256": "9d3088adc0c93c660f30e480305fd1df5e557081b7e0f72559dec212269ad00c",
+      "bytes": 802
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/AiData.cs",
+      "sha256": "3ba2ba1000aa4d97eefc0aa38e3c3c780ccffbd6799115880f22fe5d3dd5911d",
+      "bytes": 22911
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/AiFs.cs",
+      "sha256": "fc4853ba8917f184bd495ccb6d7a8b6784b52596403e16aff78f3606861d1e2d",
+      "bytes": 1811
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/AiRequestException.cs",
+      "sha256": "2870edb2bec854114e92e73ff67bba6cc20f1a69329e791aff887e89409fdad9",
+      "bytes": 183
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/AiResponse.cs",
+      "sha256": "8ab4728a9bdff49bbc9e8dcae700117aca264b41f9b55a4e755f39545ada371a",
+      "bytes": 2618
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/AiRule.cs",
+      "sha256": "7fccdedd0fd3c8d16ab5fb8cc7c03521ee014508eb86ee04f614d22a322fdb1e",
+      "bytes": 528
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/AiSession.cs",
+      "sha256": "aa48679aeb06d08e12803607465bb0c9702e8ea6fabb2ddaae9d940e6ad8bfbd",
+      "bytes": 3850
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/AiStreamBroken.cs",
+      "sha256": "f98c1f8afeca8f947b76281df4c0d3abb283096aa8fdf37bb6acb6ff4aadb3a3",
+      "bytes": 175
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Artifacts.cs",
+      "sha256": "83583a1a6663b09da712605889453d5b83a78bb72c7c50c438276faf05f46fd3",
+      "bytes": 3860
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/AutoConfig.cs",
+      "sha256": "1e57f7b7fb07cdb77b2159a5ce26d616b285109c7b25118f03f821034c044beb",
+      "bytes": 352
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Builtin.cs",
+      "sha256": "bb63f7268f172b7598a66139b754fb785985640c1bd18b9f4dfedb3ec73a9e24",
+      "bytes": 563
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Checkpoint.cs",
+      "sha256": "1b8db9891261bfaf840302fc6c961f58765beea35bded0c7286d61222590e2f1",
+      "bytes": 13959
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Client.cs",
+      "sha256": "144760b6dabe327c9b0feec1135b414e7da6d8312a7dc3e42a275d16ad88be7c",
+      "bytes": 26996
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Compact.cs",
+      "sha256": "4280f0fb01bea2ac6acfdf611c63f438e27c682b0057bde7c670cd89a114cbec",
+      "bytes": 7031
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/CompactionResult.cs",
+      "sha256": "d6e11d17f3bffe9d39d5cad444368d6efbabf527028ed7fc316bd073953b8147",
+      "bytes": 278
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/CompactState.cs",
+      "sha256": "d7f139e4c5071399db45d5884b6f1027967ba1e933a16df8ee87a8d4db1fd0fb",
+      "bytes": 189
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/ConfigEditError.cs",
+      "sha256": "d7a68394ec4c7b04381f2a34fbced6c304f448731c075628f1ffde18be1aec91",
+      "bytes": 152
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Conflict.cs",
+      "sha256": "ac276cabb51c45cfb98b22fef681675f14d5d7f520dccec67b252876dc51e2fa",
+      "bytes": 14765
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Decision.cs",
+      "sha256": "0d255749f304024a741bc045356c89b95d5a6ed35e47425577699ea350c45333",
+      "bytes": 263
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Defaults.cs",
+      "sha256": "b42fa7daaab5c6ab9e78e0ed4c2d44c224dc1a84360d97fa810b06cfc8789f10",
+      "bytes": 1722
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Diagnose.cs",
+      "sha256": "8221da2df55307a862e613276a32f6b2759be77890ed495bd7c6f78b10c0dcb0",
+      "bytes": 3231
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/ExtraTools.cs",
+      "sha256": "e7cced483346ef7c8e010bd5b074b13e6e72b0a7b5c1574be23b13a418cfd9eb",
+      "bytes": 25971
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/FileMemory.cs",
+      "sha256": "15026993c0dee48cea0227a911abc8318aafed37dd01e99fbf9efbc5618f3317",
+      "bytes": 5840
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Hook.cs",
+      "sha256": "3229dd075058ed41339f1713f59e6cb6793c6fc24e6d4bc48a9dce3824d33ed3",
+      "bytes": 376
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Hooks.cs",
+      "sha256": "38b1929aa4d794ab16ba7ce0f6fb45b6a33f81826bf20488789be64978e8a95b",
+      "bytes": 3326
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/HttpCancel.cs",
+      "sha256": "057e39724ab4510bdd088b7347e0eccbd15e4d219b36710061c79bd14c78cdc3",
+      "bytes": 1374
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/IllegalTransition.cs",
+      "sha256": "04112be53aff988c16804df7956517ed47860d5e99719d280ad6812061f180f0",
+      "bytes": 158
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/ImageError.cs",
+      "sha256": "9ba8ec2cf44321c240c3f2c9241cb5c724e03f17bb67911d1afa6c9b33cb77e6",
+      "bytes": 183
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Images.cs",
+      "sha256": "a912481a4618249259f0ec19468d392038037034b6622b57dc2e8a76637429b9",
+      "bytes": 6139
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Local/GgufParts.cs",
+      "sha256": "8ce088e852750b83fd5b1e2a476d4104b1dc1e7d93b69eaf93f23f76a74d9d5f",
+      "bytes": 4470
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Local/LocalChat.cs",
+      "sha256": "5a84fb9955fb9fedcd62295e2ab394c50b143e0029940ec109824d0601e779be",
+      "bytes": 5585
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Local/LocalModelDiscovery.cs",
+      "sha256": "8f35e8073607ddcf324237e6e3205d0c69e242ea73974d1d12b1783999a9090a",
+      "bytes": 3020
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Local/LocalModelInfo.cs",
+      "sha256": "ea88def48ba729e1dac4bbbaa0b7793d50478452e9fb896c72c3bd3596704e3e",
+      "bytes": 8845
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Local/LocalModelService.cs",
+      "sha256": "ec881fce2b5f1c54f6679dffb78ea666d1d4f26b7dadd7824243f1ab29004f0b",
+      "bytes": 11734
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Local/LocalRuntime.cs",
+      "sha256": "45d2df74433dd5122ec1732b6e7edb578d813f073647e95ae0617ef2d1697c76",
+      "bytes": 13003
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Local/LocalTools.cs",
+      "sha256": "1b874b735877f8328ed1036358aedb3f2d89c95d017199379aea5a02328514c0",
+      "bytes": 6919
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Local/ModelDownload.cs",
+      "sha256": "17532db4c37460e72d5ceae624e44dbe0ad052aa74d14161621963dd14289655",
+      "bytes": 4991
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Local/ModelHttp.cs",
+      "sha256": "ad446ae54c937e6ca534c7e5e94cce21d512521779fabeaedc88d008a5735d37",
+      "bytes": 1499
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Local/ModelQueue.cs",
+      "sha256": "2e2556e7a1f8e9edaae782539a22cad9f9a5d8267a7d6de80a8c8fada497e3d2",
+      "bytes": 9697
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Local/ModelRepository.cs",
+      "sha256": "61d26fe8053fa5dd2cefec7dabf3436391cf007da1745f847604967f35081815",
+      "bytes": 5180
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Local/ModelStorage.cs",
+      "sha256": "4d5343da91b618b250e848f589e3e0e9ac9b45cdcda56a5754ec20dbd00ea620",
+      "bytes": 4700
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Local/OllamaClient.cs",
+      "sha256": "ab57dd4a733392e3dba2c7ffda66adca6f181b71a66c5ea0a975ef656f8ac74f",
+      "bytes": 7533
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Mcp.cs",
+      "sha256": "3156588ffc8bf8f10311febef1258968085b5afec76ecf3aab815bf9958a1940",
+      "bytes": 3664
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/McpClient.cs",
+      "sha256": "ca9c5d4f6e87cb8f1a6ce5793a202127105704a877698708bb73449a2048b925",
+      "bytes": 7505
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/McpError.cs",
+      "sha256": "69bd4415658eb5ff6743655cbe0d5af5f8791ccb038a6ace12feb4d027eb2466",
+      "bytes": 131
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/McpServer.cs",
+      "sha256": "da5a013b45be3629094bb6eb8cd2da09e907d673ba5e43cc5532856fc3864f88",
+      "bytes": 12339
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Memory.cs",
+      "sha256": "6f870c5dbe5aa56f5d646121832eb29e39fa50a07b0f3d0dc2f6eda76949ce2d",
+      "bytes": 378
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/MicroConfig.cs",
+      "sha256": "fdc0e60c8b70e4be780c336dd5cf566401e26dfb466a876ac4096e296d4e5350",
+      "bytes": 262
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/MicroResult.cs",
+      "sha256": "68401019f0f7877164285aad78043ef9aa7afe89408d004cd00f9181358690f7",
+      "bytes": 275
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Minecraft/FeiyuLink.cs",
+      "sha256": "1d1fa0827e2ecdff03da7ca3d8a0449d8a18a55a2db2d49d73850186c5704668",
+      "bytes": 7001
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Minecraft/MinecraftActionHistory.cs",
+      "sha256": "2c117a980a9150df4f08da839c3dd6445d55e0c3151a39cacd36672ece9fa606",
+      "bytes": 4660
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Minecraft/MinecraftConnectionError.cs",
+      "sha256": "f10a8efa8a7b839494549896b2ae290b92d2ce2d9fdf8d14c2635249b7a97642",
+      "bytes": 340
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Minecraft/MinecraftExtensions.cs",
+      "sha256": "3d1ace338fc163e5467ffdb28d8787696ece1f80dc2703f57ebb6c4a08336d04",
+      "bytes": 1194
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Minecraft/MinecraftLanDiscovery.cs",
+      "sha256": "6214db9345d68ec38e89c88088195132e18ca37e380385d7e01abe59c92790ba",
+      "bytes": 9601
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Minecraft/MinecraftModels.cs",
+      "sha256": "a06590b7129d9defbf7f81877695653bb45b56fd5006a4298cac9dd07a9bd124",
+      "bytes": 3365
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Minecraft/MinecraftOptions.cs",
+      "sha256": "2cd60938e227b121450082fd296e3fecaf14f8ab43756c78a4b38053ae819e84",
+      "bytes": 1490
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Minecraft/MinecraftProcessError.cs",
+      "sha256": "a9c32ab58d4fa0120c0eab5728a8d2689c76dc48636d96e10ab7bf5bc5ca23e0",
+      "bytes": 875
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Minecraft/MinecraftRuntime.cs",
+      "sha256": "f4886f88a82d1586086827a3a40615d0ee82190834ca3b8cf885d723a0700974",
+      "bytes": 9540
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Minecraft/MinecraftServerProbe.cs",
+      "sha256": "bf4f7cd49910e4c722682d8b307f13b403e4923139b42f0ac6ea93981732df7b",
+      "bytes": 8511
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Minecraft/MinecraftSession.cs",
+      "sha256": "5d11ff7fa12744e51de4738010982e46d0230b781b0550ea5290c3cb15a95295",
+      "bytes": 16137
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Minecraft/MinecraftVersions.cs",
+      "sha256": "3c95346d9a7fcbd58e1336eea8c1fbccc525badad053c7fd8321a0fc0ff31096",
+      "bytes": 915
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/ModConfig.cs",
+      "sha256": "7c163dad6e988566a67ec136efacda1b0f0119a74c6d8014cae58ef9511f45df",
+      "bytes": 3321
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/ModelCaps.cs",
+      "sha256": "c4516b4b6cf7e7787ee57a2d8409a47a6e3d4b81a05d366863b0abb91158392e",
+      "bytes": 6413
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/NoopMemory.cs",
+      "sha256": "c551f96d05b0cbc29fa8bd1999c01166dcd384064bd8d2d4c1dae0156143e843",
+      "bytes": 332
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Permission.cs",
+      "sha256": "15f118475ceedfa582dae320e4a9a385cfc70785084f05e565bc7d31a6ed6e22",
+      "bytes": 14280
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/PermissionResult.cs",
+      "sha256": "1353ad85ac0b6742c03b38345945fd04fa3ec893c6e163f28bf516e4b82ddd10",
+      "bytes": 352
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Preview.cs",
+      "sha256": "28ac0813265a5d77602ed9404c04ef9cd9a60cda6813d7e78d111b8c0e7d9ac7",
+      "bytes": 14357
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Prompt.cs",
+      "sha256": "c3aca9f0a95823a4cc50f72340259ba928ebbb8cc93a6fb68e42390addd65cd1",
+      "bytes": 5492
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/RapidRefillBlocked.cs",
+      "sha256": "32980c93c2f0947aa7745b440f526500fb12a219e8501a9bdfaa488f0c44a2e8",
+      "bytes": 161
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Rewind.cs",
+      "sha256": "d6c4ca7c9b3ffb7e5a0d50f010232e027063ead741d327386760d2f80bfd23dd",
+      "bytes": 4158
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Scheduler.cs",
+      "sha256": "76bcf9fa68e66b3a7b766e0643704d495784e69b16d69b963380a454172f2dfa",
+      "bytes": 3045
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/StopReason.cs",
+      "sha256": "2476283ffc3f0d05b823315b13e329cc7981d2e013dad7d36e5a5c2c27fcde94",
+      "bytes": 568
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Store.cs",
+      "sha256": "1be6c254110f9ef615d04aca4a0cd9db7b3c8a6c822399d4a9ada912aa10a5e7",
+      "bytes": 9775
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Tokens.cs",
+      "sha256": "b73c9930647c8a57bbd8410892822ffce982468ecf861746d034da18d3fc8f76",
+      "bytes": 2157
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/TokenState.cs",
+      "sha256": "7644b2667a029cc2b6a3267e9d1e9105b532ec752c97cc2f4d9806d230c62f6c",
+      "bytes": 249
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/TomlLite.cs",
+      "sha256": "ff207d9e584699b8c4b6e9ce927b7c8751dd1b3f596b74dbb34207f08e495f8c",
+      "bytes": 8934
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/ToolCall.cs",
+      "sha256": "e897351fb904ca96de7b943011d78bdc3d327ef87b2422b5ab90e187b3f6c590",
+      "bytes": 844
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/ToolCallStatus.cs",
+      "sha256": "d2a4ee46f9d506ff89cdd6e900e90fec1357853990332bae5f7bb618a28d59d0",
+      "bytes": 356
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/ToolCancelled.cs",
+      "sha256": "3cf36e12da68a815b67c77a9cd9803f05e813e4ae72ff3fc72806a2d9cd82dfe",
+      "bytes": 160
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/ToolErrorCode.cs",
+      "sha256": "1543fff84d18c72e2bb3ff32943043ed287ba642666bee700510c2796bf9960d",
+      "bytes": 471
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/ToolMeta.cs",
+      "sha256": "9f9818b157d7369092129acbb1720b22ea3042246ce598ddd5940b1b37ca04b2",
+      "bytes": 3683
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/ToolMetaInfo.cs",
+      "sha256": "583b79a5f11dcc0e03cac68a864666e2a7938b27ea4f1f027c63a7c3ba2f579c",
+      "bytes": 427
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Tools.cs",
+      "sha256": "07f0a1d706a04c3dc139f2ac6220805d2f3c42dad19e2409b57c9f5e915932d4",
+      "bytes": 52861
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Trace.cs",
+      "sha256": "64b772676eea2dec47544c99f2377ed7e191c8eb406c3715fb67bbc52b128139",
+      "bytes": 3020
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/TurnPhase.cs",
+      "sha256": "62a253e4d761f91fd26ed141f79398417b2c55b5a754d2c440d91688f3ead1bc",
+      "bytes": 1378
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/TurnState.cs",
+      "sha256": "5b0894a70a2e08a9dfe56bd1f51ba288d755e19eca3fcc826189b69889bd634d",
+      "bytes": 1719
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/Usage.cs",
+      "sha256": "dd0d9038af88565f2a7d8edde1f5990f1935ba0dfb392dbafdd3446df0fbfdfa",
+      "bytes": 1886
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Ai/VisionCaps.cs",
+      "sha256": "4f49f68c642c42293c59b2fc20fd9fd245309b0657394c05137e9d7e72732e85",
+      "bytes": 10992
+    },
+    {
+      "path": "src/HelL/Core/Launcher/AppearanceProfiles.cs",
+      "sha256": "63ab2cb3caf5599b5c7274cbd8ac75874b7932ac4e8ff4a3d599844f654a66cf",
+      "bytes": 3073
+    },
+    {
+      "path": "src/HelL/Core/Launcher/AppInfo.cs",
+      "sha256": "9b5f0da300a69adc0c497d1b02fe381ed73837f03e4e7caaf2868214be276a53",
+      "bytes": 855
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ArgSplit.cs",
+      "sha256": "b7482477151458bcf5b9acc612c2893220c39badba4621374ee54af162fbb025",
+      "bytes": 2718
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Auth.cs",
+      "sha256": "4751b0b8fb2ac9433d258b6bd9bff4eddb73a8eb424df94eb00eaf09c18ed72a",
+      "bytes": 9641
+    },
+    {
+      "path": "src/HelL/Core/Launcher/AuthError.cs",
+      "sha256": "0fbb27fbc51c8d4f52054790998058cd3ff897b457fdfe69c6316c862710f4f6",
+      "bytes": 131
+    },
+    {
+      "path": "src/HelL/Core/Launcher/AuthHttp.cs",
+      "sha256": "b0834a8457ea566c19740fe51332000fe0098d3003e0e28f0d0925dfd51c1f2c",
+      "bytes": 6591
+    },
+    {
+      "path": "src/HelL/Core/Launcher/AuthHttpException.cs",
+      "sha256": "f3a5a67df4870c49fd1fbce9679ff82ee084773c54fa9282d670bf7cccf301bd",
+      "bytes": 200
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Authlib.cs",
+      "sha256": "005780289a980ec59715a45ecbcf7fae0051916e824c629df11ddf37fdcf6c9a",
+      "bytes": 6126
+    },
+    {
+      "path": "src/HelL/Core/Launcher/AuthResponse.cs",
+      "sha256": "415257558d43c09dd9c8a4238323fdf38ae6f75aad9ce75827c43714c87009e9",
+      "bytes": 474
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Catalog.cs",
+      "sha256": "38b70798402b2a59abf80779982a8e98d9c4bf801d4b13fc4b8b53c21d484f11",
+      "bytes": 45831
+    },
+    {
+      "path": "src/HelL/Core/Launcher/CatalogDocument.cs",
+      "sha256": "56c8c3978b2271973f30ebe9ef15e9f671cf8cbacb7b43bcca9f820cf646797e",
+      "bytes": 7394
+    },
+    {
+      "path": "src/HelL/Core/Launcher/CatalogDownload.cs",
+      "sha256": "54524a16fc3d0c976b950e3706078767f9f09304c9870dca23ef9d1fba8e0ba0",
+      "bytes": 2316
+    },
+    {
+      "path": "src/HelL/Core/Launcher/CatalogFiles.cs",
+      "sha256": "e1ca208507d92151cd9070432f7498174250e98f09e2e21b31108cd6fc71113f",
+      "bytes": 14407
+    },
+    {
+      "path": "src/HelL/Core/Launcher/CatalogLoader.cs",
+      "sha256": "2ecefb0f592bf20bc0ff6f18a8139e25f37caeffc0b0a8cf4e1245a25c235185",
+      "bytes": 546
+    },
+    {
+      "path": "src/HelL/Core/Launcher/CatalogOrdering.cs",
+      "sha256": "23b203fa519d65b3f77b8db2d9942dfdce29d67170ddd5918f66d1d4eee14b81",
+      "bytes": 938
+    },
+    {
+      "path": "src/HelL/Core/Launcher/CatalogPresentation.cs",
+      "sha256": "9463be7f084e2db07641943ab90938fd42c647c2bf7eeb915397d31f1f50be20",
+      "bytes": 11505
+    },
+    {
+      "path": "src/HelL/Core/Launcher/CatalogSearch.cs",
+      "sha256": "6d831f7856c2a8e0c32419b0d20850dabb48b0908466d1e9e2f122b8197ec78f",
+      "bytes": 4151
+    },
+    {
+      "path": "src/HelL/Core/Launcher/CatalogTarget.cs",
+      "sha256": "197cbcb60af7e1a2dd8a1131aa6974edb7985a809ea62ddbc7d2d69590e8c08f",
+      "bytes": 4649
+    },
+    {
+      "path": "src/HelL/Core/Launcher/CatalogVersions.cs",
+      "sha256": "34472c9183c3b73e65b3663dab1ec3a924e2719bd0d60a58eb14528765ad3685",
+      "bytes": 3131
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Cleaner.cs",
+      "sha256": "a5ad9f9df6de92d78fd173cb381f68364848b7a7d20535bc91b5af077f708381",
+      "bytes": 5162
+    },
+    {
+      "path": "src/HelL/Core/Launcher/CommunityNames.cs",
+      "sha256": "e61c6d065c3d8fe125e8a1e138e91954487f3ae67b67bf35efca4a2c0ba97bdb",
+      "bytes": 7406
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Config.cs",
+      "sha256": "2d105af467a1453ef09ce6acaadc37cca49dd9f843e4e13fcbccd03cc3153f9b",
+      "bytes": 8127
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ContentExport.cs",
+      "sha256": "490d00f93b0e5b00ab4b4a3784ae0ed354762f16e923e7047258a39442832679",
+      "bytes": 7586
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Crash.cs",
+      "sha256": "787fd3a031ebc82d8a4254294da6d9fc9f14a49e0669be3981b6bd7d77e4649a",
+      "bytes": 63309
+    },
+    {
+      "path": "src/HelL/Core/Launcher/CustomResourceNames.cs",
+      "sha256": "8b458a595ba706ae49403189f37c3bd666047fbac815bd482e66220d0beaf8c0",
+      "bytes": 6367
+    },
+    {
+      "path": "src/HelL/Core/Launcher/DashboardGeometry.cs",
+      "sha256": "321ac1569b0c1b616842ebec9c1be158db002873100a9b2da430259eb4d5a028",
+      "bytes": 4624
+    },
+    {
+      "path": "src/HelL/Core/Launcher/DashboardLibrary.cs",
+      "sha256": "74c239ef2d7aa60dfd3f15d08d9f8f5a1a1da089de3dc2a645651ba1e3d72dcd",
+      "bytes": 1568
+    },
+    {
+      "path": "src/HelL/Core/Launcher/DashboardPresets.cs",
+      "sha256": "b7c8a51dd9783fa40e512cb6aeda04efb3529ba4ee562f60a0255c3605e20320",
+      "bytes": 1376
+    },
+    {
+      "path": "src/HelL/Core/Launcher/DependencyTarget.cs",
+      "sha256": "9bf0cbb4c5c2ed7be8a25e475f585108de26539da64a7df597aa3ef773726db3",
+      "bytes": 3384
+    },
+    {
+      "path": "src/HelL/Core/Launcher/DocumentCorrections.cs",
+      "sha256": "27889b1d76981759eee18b09afaa530e29fd170e2582bf72457af3d1832b6c54",
+      "bytes": 2796
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Downloader.cs",
+      "sha256": "26002b6b71019b7bc1e3733459d21222b7f39641473a4ef733ab13e18f4f6816",
+      "bytes": 6224
+    },
+    {
+      "path": "src/HelL/Core/Launcher/DownloadError.cs",
+      "sha256": "c42ddbe0423adf0d4c634a91e8ab260141972184f813185878cf5eebeac51474",
+      "bytes": 189
+    },
+    {
+      "path": "src/HelL/Core/Launcher/DownloadManager.cs",
+      "sha256": "874a739005d58027c55fefdc996b82d32173dc8176c62bbdd9069d989bf43b4f",
+      "bytes": 33912
+    },
+    {
+      "path": "src/HelL/Core/Launcher/DownloadSnapshot.cs",
+      "sha256": "64d889a89b88e9d1fa1f7638f277f6745582cbb3bf0d4787d3d7d3c3f1801d2a",
+      "bytes": 2702
+    },
+    {
+      "path": "src/HelL/Core/Launcher/DownloadStatus.cs",
+      "sha256": "8d087dafc0006b4e383f3bd19a5fefa89a0050fdbff4bec15a9ed2ccdf477dcc",
+      "bytes": 1461
+    },
+    {
+      "path": "src/HelL/Core/Launcher/DownloadTask.cs",
+      "sha256": "b5c9ac6dff1bd66a14a9e083063520131d3d1ffb9f6a4f100cfe1a24b4bbc33f",
+      "bytes": 368
+    },
+    {
+      "path": "src/HelL/Core/Launcher/DownloadTracker.cs",
+      "sha256": "a900c275c4096acec34bb66084fab941db90f7855b3fbf89fcda22e91ed8e2af",
+      "bytes": 10457
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ExportError.cs",
+      "sha256": "28b9917a517d1be52e6c0f46147b562975659f32272e8454bc9b902f09fdfa48",
+      "bytes": 137
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ExportPack.cs",
+      "sha256": "24cf34a6facf96525f8035ea211ed105a12c5bcbf44d56d45b2074904c058351",
+      "bytes": 4698
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Feedback.cs",
+      "sha256": "b15745dbe236dab6b2927d32c2dc1243eef368fe888aeddfa5906632e00aed43",
+      "bytes": 7735
+    },
+    {
+      "path": "src/HelL/Core/Launcher/FeedbackDefaults.cs",
+      "sha256": "cd23b4bb932e94df34b4f28cb0abbd577fcd294280601358e15b9c8fae46a6f8",
+      "bytes": 610
+    },
+    {
+      "path": "src/HelL/Core/Launcher/FeedbackError.cs",
+      "sha256": "5f1d2c88efb264efdb4b6f3aaf4e587d6892231e1ee89686c2ef3875b38f5802",
+      "bytes": 189
+    },
+    {
+      "path": "src/HelL/Core/Launcher/FileExistsError.cs",
+      "sha256": "80a49e2d932308c4051119b1b05e4198b9aadc43f3f0efc8363f1096101cd44c",
+      "bytes": 151
+    },
+    {
+      "path": "src/HelL/Core/Launcher/FileMirrors.cs",
+      "sha256": "c306e57e1a5a72888150466485e1abae51d75636179e3ab2e32934f068118d59",
+      "bytes": 5797
+    },
+    {
+      "path": "src/HelL/Core/Launcher/GameCrashError.cs",
+      "sha256": "a3405835868db3b637cc2637b477f72d498203a84275326666d6baef548ee4e8",
+      "bytes": 310
+    },
+    {
+      "path": "src/HelL/Core/Launcher/GameInstall.cs",
+      "sha256": "90425afea0d7358a53198bc6209acf9eb2de11a58bb8f6f416c97328adabda56",
+      "bytes": 3585
+    },
+    {
+      "path": "src/HelL/Core/Launcher/GameProcess.cs",
+      "sha256": "20668bd7a3a86419f401c56b5320909478e5903aff3ca67d9633fb3e8e6b328d",
+      "bytes": 2355
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Gc.cs",
+      "sha256": "94fb1b9eab686d7b3c8504ecebe6286e50d0d87c49bf147d6e02ab10489cf013",
+      "bytes": 1607
+    },
+    {
+      "path": "src/HelL/Core/Launcher/GlobalMods.cs",
+      "sha256": "d638fa8a2c603878c8fc948ec22f7bf7f9e0b45c5942c3921bd566387d943efd",
+      "bytes": 3588
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Guard.cs",
+      "sha256": "912a4ec8188c32dc414fa61f8bffe1ece610bdf0c240e0f269980a86b39f23a4",
+      "bytes": 2147
+    },
+    {
+      "path": "src/HelL/Core/Launcher/HelpContent.cs",
+      "sha256": "4a2b78ef41e62083e41fc8fa6e2c8e73d35c51371328ec92071fe1a7f3a5b128",
+      "bytes": 3255
+    },
+    {
+      "path": "src/HelL/Core/Launcher/HomePreferences.cs",
+      "sha256": "1d161e8912832aaeed9f8e474ef4e28fb37aabce4ca74f0cd4162ea3b3cf0dda",
+      "bytes": 1904
+    },
+    {
+      "path": "src/HelL/Core/Launcher/HTTPError.cs",
+      "sha256": "3336d3c707fcf5da736195b4a2bee3f9cd67e44197454b830673ddac2773ae39",
+      "bytes": 197
+    },
+    {
+      "path": "src/HelL/Core/Launcher/I18nCore.cs",
+      "sha256": "28384d09e807f8b021a7d99692a0d080e6dc60fef294ac7f585330e0992df23a",
+      "bytes": 3940
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Installer.cs",
+      "sha256": "6b01f76119cff5d49c4c474cbba7a644e87f9c3aa3d0b75395b75f586397410b",
+      "bytes": 66199
+    },
+    {
+      "path": "src/HelL/Core/Launcher/InstallError.cs",
+      "sha256": "a10dd8ef6cc3f8b1a0d8634d2485ce59f336bdf243fa72fc43b074c9f4f7f390",
+      "bytes": 140
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Instance.cs",
+      "sha256": "9a885a59d742f7056abbc25fbca341d9e3dedaae2b6f10b4acc37bc3774330cc",
+      "bytes": 5409
+    },
+    {
+      "path": "src/HelL/Core/Launcher/InstanceArtwork.cs",
+      "sha256": "5ce6ed4d3fcad0a634e0c31eacb960e4892b5166282108bf50f52d586962ee3a",
+      "bytes": 5148
+    },
+    {
+      "path": "src/HelL/Core/Launcher/InstanceError.cs",
+      "sha256": "7a5d7222d29e4fe4e17ce23ca8c376bb1c24f452ccd45169343917b7ad80d415",
+      "bytes": 143
+    },
+    {
+      "path": "src/HelL/Core/Launcher/InstanceGroups.cs",
+      "sha256": "d382876a3970bd1e741c718148c3f4eb58c8c5c64a32e915d914a4421af88ac5",
+      "bytes": 4445
+    },
+    {
+      "path": "src/HelL/Core/Launcher/InstanceMedia.cs",
+      "sha256": "34153b8e02e178b2832da39675b15cd536dc81a78df385a90e81b9f0742885a7",
+      "bytes": 3922
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Instances.cs",
+      "sha256": "f2554e5ff41042cf468ff91470cf8bffec3320494eb1e8b16a2411436c5f8688",
+      "bytes": 4622
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Java.cs",
+      "sha256": "194a40ae1c208b9f853d0299e724f0d5a9f52cd196195e0dda73bbca6033c4ed",
+      "bytes": 33772
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Lan.cs",
+      "sha256": "3b7085b2e08d30aa5e3b8118a9e894458c020241f778e0aeed74bafb95d43c99",
+      "bytes": 2089
+    },
+    {
+      "path": "src/HelL/Core/Launcher/LauncherConfig.cs",
+      "sha256": "4241c10d02e3a391fea37ff791820390eef5f86a3008c38965676245e1f6ed61",
+      "bytes": 4549
+    },
+    {
+      "path": "src/HelL/Core/Launcher/LaunchError.cs",
+      "sha256": "29255243462620bd8448c8b163efddcd4a506359145794134f9c77ca3a9a671b",
+      "bytes": 137
+    },
+    {
+      "path": "src/HelL/Core/Launcher/LaunchFlow.cs",
+      "sha256": "be99acfa45ae496d8f446a72b5ade53162b6fca5ecc30ba6391cfb99a5c3eb4a",
+      "bytes": 8759
+    },
+    {
+      "path": "src/HelL/Core/Launcher/LaunchJava.cs",
+      "sha256": "2fb5dd5fbbd695021ab5ebe7aaee76da4d5dc4dce1486489e0d8d464e34a32c4",
+      "bytes": 2258
+    },
+    {
+      "path": "src/HelL/Core/Launcher/LayoutDoc.cs",
+      "sha256": "e8ae584fe81b1638c2a2f276b45eecb9b48be076f31d03dbb86e3f65a14456c9",
+      "bytes": 2337
+    },
+    {
+      "path": "src/HelL/Core/Launcher/LayoutItem.cs",
+      "sha256": "6b627f4381cd8a8bfdeb7b4e167123428236012516a362fbc51b3ad8c21d01da",
+      "bytes": 2667
+    },
+    {
+      "path": "src/HelL/Core/Launcher/LearnedResourceNames.cs",
+      "sha256": "f607956f39e42bb646da293bb6c9891ba3fe1673bb4ec1278d274f8838d8794a",
+      "bytes": 2848
+    },
+    {
+      "path": "src/HelL/Core/Launcher/LegacyCredential.cs",
+      "sha256": "29b1fbb20ef83779cb5ea0b3b53b8c8d01f700988452b5ab2296388d63f00402",
+      "bytes": 862
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Liteloader.cs",
+      "sha256": "bdf5e4e292329aedebdba2ab7ad50c8e05a35f7794c6258a0994fd98c292c5cb",
+      "bytes": 4113
+    },
+    {
+      "path": "src/HelL/Core/Launcher/LoaderMeta.cs",
+      "sha256": "9940a12032ec89ff7a297954185d2eecf9021fd60e8a13336cf5a0aeb8197306",
+      "bytes": 6987
+    },
+    {
+      "path": "src/HelL/Core/Launcher/LocalCatalogTranslator.cs",
+      "sha256": "d75ff89d5f8db16fd5117aab73fcb4077f72d36d92a156e7b22b3eb7246d1d7f",
+      "bytes": 4232
+    },
+    {
+      "path": "src/HelL/Core/Launcher/LocalFs.cs",
+      "sha256": "1b7601c6ee63489453ae6c9563d2d5fc7a1e6fac71241f63cd2c2b41fa2156d4",
+      "bytes": 3689
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Manifest.cs",
+      "sha256": "a7c2e5830c6fc269b37e2d32eeba67820a8d4eb1794ea68ebcae5bebf8b782fc",
+      "bytes": 12401
+    },
+    {
+      "path": "src/HelL/Core/Launcher/McLauncher.cs",
+      "sha256": "cf7af69457fd8bb8f829761742388bbdc067e6cf49000dc144f64b5c31a8b7d7",
+      "bytes": 21621
+    },
+    {
+      "path": "src/HelL/Core/Launcher/MicrosoftAuthenticator.cs",
+      "sha256": "db178c830923318b0c5ff9eec3fe4778c5548f31c08a3d2a3b5d9ab1cd17e731",
+      "bytes": 14125
+    },
+    {
+      "path": "src/HelL/Core/Launcher/MirrorHealth.cs",
+      "sha256": "ce9d1cd2b3b3488e2f897e7d1fd09cfc52834a34c1280f96c25c8d2963d4a8e1",
+      "bytes": 10162
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Mirrors.cs",
+      "sha256": "ccbc1928c62c89e1592d1291c290c8677c300a54b63bbed792df2ce523fb8db1",
+      "bytes": 1489
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ModError.cs",
+      "sha256": "8d11bb9c0ec89b381bd311a78eab2b6b7d4f64c732d5feb6d4bab88e3287401c",
+      "bytes": 128
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Modpack.cs",
+      "sha256": "78c6b91af59f8020b41e0e49a9f5f3f76ee2d62f1514f7ed1dce9add7f43dd9b",
+      "bytes": 53521
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ModpackError.cs",
+      "sha256": "92ba3251445ded362e6d4cfa308b745816f7f105dedeb1d0bfc26f00b328606d",
+      "bytes": 140
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Mods.cs",
+      "sha256": "8d3ea8ec1148d5f8d2a58a6df8d76d330b309fcb162ee4b8216395e6dad67a45",
+      "bytes": 56193
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ModUpdate.cs",
+      "sha256": "7d13addb6c266ccded390808e51842298b6cab43f3974adb7b2dc597223ac7a8",
+      "bytes": 8953
+    },
+    {
+      "path": "src/HelL/Core/Launcher/MultiHasher.cs",
+      "sha256": "2a4b8ae6991f60dd276134f5dc00e0103faeb9ec13d14aa781ae6a8eac6af1be",
+      "bytes": 2021
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Net.cs",
+      "sha256": "6cb1ddd6c6f16e7938b874b5dd64fe0e3241983f7e3a30d285e7da7f2a464103",
+      "bytes": 11226
+    },
+    {
+      "path": "src/HelL/Core/Launcher/NetError.cs",
+      "sha256": "de827fff0d878fc5f9ae1d4d1bb95acc89d92b0afa3f98a605448953dabcf217",
+      "bytes": 185
+    },
+    {
+      "path": "src/HelL/Core/Launcher/NetResponse.cs",
+      "sha256": "f41cf77b75c0faf80057a9d21cd18be648ffde27ff25e9ed6f471cd787606ab0",
+      "bytes": 5558
+    },
+    {
+      "path": "src/HelL/Core/Launcher/News.cs",
+      "sha256": "539850b42187d626210536e4ba46372fc06ec7cec1e470a0116b2fe804d70115",
+      "bytes": 4926
+    },
+    {
+      "path": "src/HelL/Core/Launcher/NewsLocalization.cs",
+      "sha256": "cbd5a4303a792532cf91fb743a9780d5c9c2e52243ec32d86dd9b46de3986e74",
+      "bytes": 7979
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Nide8.cs",
+      "sha256": "c1c6ae5de2f44cb13d679293afd041d93bb15d17f0cba531a43b95a6f7d99e3f",
+      "bytes": 5177
+    },
+    {
+      "path": "src/HelL/Core/Launcher/NoSegment.cs",
+      "sha256": "528680b33f769e0f47614fe87f513d2f0c24c44d1a1334a29d1de267bc29dcd8",
+      "bytes": 94
+    },
+    {
+      "path": "src/HelL/Core/Launcher/OfficialMigrate.cs",
+      "sha256": "8da30bad93580a66fe3340247f98a3623087512bec9623d61fb75fe1cb241bc5",
+      "bytes": 10889
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Optifine.cs",
+      "sha256": "1012b854befc97add2c6e7f947239a92fc6b0f0ac5b09384e572a2317a74aacd",
+      "bytes": 10736
+    },
+    {
+      "path": "src/HelL/Core/Launcher/OverflowError.cs",
+      "sha256": "d6ef737b7dffc9d63ecae1d47015f45a24314a6143727703b19cf72c4cc7dfce",
+      "bytes": 143
+    },
+    {
+      "path": "src/HelL/Core/Launcher/PathEscapeError.cs",
+      "sha256": "376c0e5b416b6530ee5793305a57620b27f1699a2eee6710c03ac71a472b512c",
+      "bytes": 154
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Playtime.cs",
+      "sha256": "7d99cc7433d5a30f9a519df40d321b887e2305d897b20c5e6f976b69c20e6e1b",
+      "bytes": 5614
+    },
+    {
+      "path": "src/HelL/Core/Launcher/PlaytimeTracker.cs",
+      "sha256": "adb6be84a175cd03e6ee9ed627aaec691e01c30c11136330d3a5a4b03f4d56a0",
+      "bytes": 572
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Plugins/PluginCatalog.cs",
+      "sha256": "784bdda8955c05fe7c918f8453535f29ea61d7a2b060c0907e1a94542c297b83",
+      "bytes": 6711
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Plugins/PluginManifest.cs",
+      "sha256": "46ea6508453b43df1dcf299904043334dc61cd82af97ed55ea5caaf1c213620f",
+      "bytes": 5330
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Plugins/PluginStore.cs",
+      "sha256": "f7f70d80f013552f57123fb12a72185ec9d9821de9ef76b91f185a2f2996c4f5",
+      "bytes": 9630
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Preflight.cs",
+      "sha256": "d806ed3d77b0f40d014b795ac3f2145240cc327da459f93a264a422a4bc86291",
+      "bytes": 17346
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ProjectCompatibility.cs",
+      "sha256": "af278ecec82cd4517d3de68f0ed0b2b9f7da2c9246e514642550a6427c54b6cb",
+      "bytes": 2707
+    },
+    {
+      "path": "src/HelL/Core/Launcher/PyLog.cs",
+      "sha256": "84c4e7e0748f80edea46481b780a9262b23818027b76f5625b28717a825ba929",
+      "bytes": 1828
+    },
+    {
+      "path": "src/HelL/Core/Launcher/RecentPlay.cs",
+      "sha256": "d069ab485323b2ffe77871cc623fadeeb5aecd2f399ac4cc2d57bcfe3d023359",
+      "bytes": 1358
+    },
+    {
+      "path": "src/HelL/Core/Launcher/RecentWorlds.cs",
+      "sha256": "323578770906badb08888132a0e8e0946722a43065c1fc465e4ab3b3d30ec9eb",
+      "bytes": 2864
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ReError.cs",
+      "sha256": "a86636366376c4b53d26a96cbb56f5aa90279d7fcc8d4f0150d5533e0098d74c",
+      "bytes": 123
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Repair.cs",
+      "sha256": "eae16b9b9e527714ee7d9bc001d00a363e01d3ae04fd9dc89b7f3a4eb0a0fe6a",
+      "bytes": 591
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ResourceNames.cs",
+      "sha256": "4d1d7f1861563022afa8d6bdfe2db0261582c1f4c3d028fe3f001986cf48fcd2",
+      "bytes": 6734
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ResourceNameTransfer.cs",
+      "sha256": "1a13383462273ff7d55ba0c7481c7a6f26d8394fdcb024e2456bfea0f619b236",
+      "bytes": 6454
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ResourceTerms.cs",
+      "sha256": "a63f3d17105c6746782fabc2e96582de9b0e23f1cdef9e6c78cb03d3b0ff9b3e",
+      "bytes": 9629
+    },
+    {
+      "path": "src/HelL/Core/Launcher/RSAKey.cs",
+      "sha256": "26feff402d451b59e31c78fc500a11b9e1f62fae9200836b3124e0eef4498604",
+      "bytes": 2487
+    },
+    {
+      "path": "src/HelL/Core/Launcher/RsaLite.cs",
+      "sha256": "77419aa5e61a6b579416dc2e21adfe4599b0a1ef827bb946e4c4c2c0030c83b1",
+      "bytes": 8035
+    },
+    {
+      "path": "src/HelL/Core/Launcher/SaveArchive.cs",
+      "sha256": "c3f6a600f96bc0db4f7c529c6e7f0cb80212eb9d62cf5c6a6d94e6c650dd81ec",
+      "bytes": 4200
+    },
+    {
+      "path": "src/HelL/Core/Launcher/SaveError.cs",
+      "sha256": "2e2c78b8939d8d4b03ba192d0a5c74677565d802d40adc333ab168df299ac804",
+      "bytes": 131
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Saves.cs",
+      "sha256": "6c11d021fb0a8ca2925bcfdf23bdc02c7cbc74aab6f383ea0ec4ebd1d58cc6a1",
+      "bytes": 13483
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ServerError.cs",
+      "sha256": "746b44a3160d97471a9dad147f37c89705ec1c48f4fb7a984a8920bfd586c350",
+      "bytes": 137
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Servers.cs",
+      "sha256": "40eda8780267a08f09991fcd426401e4968ab9301cc022f7f93fad2df8519269",
+      "bytes": 10283
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Shortcut.cs",
+      "sha256": "66e5f4d60db8d8e890a01e281212011a2fd7951cfd35c71ff20751c2f9544bba",
+      "bytes": 7428
+    },
+    {
+      "path": "src/HelL/Core/Launcher/ShortcutError.cs",
+      "sha256": "37023005da6ddbf847c9980e869f6c889e114cdee96a2ffd461f7e9c2f4a9dfb",
+      "bytes": 143
+    },
+    {
+      "path": "src/HelL/Core/Launcher/SingleRoot.cs",
+      "sha256": "0512e17caecf5984180faaccee08c2158cba3664ef77852afb054e80f89488c1",
+      "bytes": 1344
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Skin.cs",
+      "sha256": "9c9b6da80b7ba0fa3169fa5b6d77ab37d9a4287baf8e301aa2f5670dec7faf51",
+      "bytes": 8415
+    },
+    {
+      "path": "src/HelL/Core/Launcher/SkinError.cs",
+      "sha256": "1c845cc266de898fd059089c23abb178f89197f07a3053113f840bd9d5d44372",
+      "bytes": 136
+    },
+    {
+      "path": "src/HelL/Core/Launcher/SkinServer.cs",
+      "sha256": "f83efc2f0b21e4ffe854e974adc6c10635cf8d1be71d5ee30a4c9a79795168da",
+      "bytes": 15805
+    },
+    {
+      "path": "src/HelL/Core/Launcher/SkinServerError.cs",
+      "sha256": "40ffb5653a881525ae7b4e4b5368237b02b10798127f26d7d1c4d31caee9c680",
+      "bytes": 156
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Source.cs",
+      "sha256": "c7c3a69a732c891ad55a6d710a2fc7f20257f7a32d79c982495c90cbe9b39643",
+      "bytes": 8652
+    },
+    {
+      "path": "src/HelL/Core/Launcher/SpeedMeter.cs",
+      "sha256": "dc64dd531d225d21b16f51059af5c1843502da66029b61adad7721eb1a77ccb2",
+      "bytes": 1207
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Sync/LevelDat.cs",
+      "sha256": "066ebe2114f9516c31cdcc01bdb4965d7dda15db8e8173c2b837a02f0ac1afaa",
+      "bytes": 4373
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Sync/PhoneClient.cs",
+      "sha256": "b3a90cf146789fdfb937e4c9eff188831a722f8d9060531fe503b9898e9acf1c",
+      "bytes": 13704
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Sync/PhoneLink.cs",
+      "sha256": "07c2609ac92485f58d52f91f8cabcae5de2cfff610e283aee852ef0d278fbfb7",
+      "bytes": 11935
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Sync/SaveSync.cs",
+      "sha256": "5c8c2346badfd49ec77d6e65d05646171fa8049b913c64899702607dca993dc4",
+      "bytes": 11312
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Sysinfo.cs",
+      "sha256": "25a220a81133d63cc3d2a5bd9ccb3d4db68f168c6f99bc137feb5f4b9141753c",
+      "bytes": 25853
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Terracotta.cs",
+      "sha256": "051ce1f4ae716276e55bfb16e31b9643b6523d6797e42f8f6e7fdb9859af7c7f",
+      "bytes": 46885
+    },
+    {
+      "path": "src/HelL/Core/Launcher/TerracottaError.cs",
+      "sha256": "65fef4efaa0ef87db1fa6497136d6af640025f2e5f14cdd6fb5c680f4718f297",
+      "bytes": 149
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Themes.cs",
+      "sha256": "99db86a978000c36c6fd0891d64459f6e8e89d630865f1b30c01240a5fe698e4",
+      "bytes": 5917
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Thumbnails.cs",
+      "sha256": "99b523ec651e33e71b92c180e249b2e2e04028d98cd656142de0baa2322cd63f",
+      "bytes": 6674
+    },
+    {
+      "path": "src/HelL/Core/Launcher/UiLayout.cs",
+      "sha256": "b331c67e238f0850cb501e7ddd74fab32774bf741dee0fb8f46abc659f0e636c",
+      "bytes": 8283
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Updater.cs",
+      "sha256": "98b101c92ab9d886105dab704a4481ed909d41e6427cf7281a2c1fc13db1a183",
+      "bytes": 8837
+    },
+    {
+      "path": "src/HelL/Core/Launcher/UpdateVersion.cs",
+      "sha256": "3b11d17725b159ee632f29cb3514b5b2c8b46292cab8f7f5b5b89fec33ffffb0",
+      "bytes": 2694
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Utils.cs",
+      "sha256": "6bbd11df0a3c4d169eff9b0af09e1af942f5ef06073bd5980e891ffe48193180",
+      "bytes": 35269
+    },
+    {
+      "path": "src/HelL/Core/Launcher/VersionNotFound.cs",
+      "sha256": "6c33db86ee9d43e7d4d053b55b131f081d4fddf87dffb8944ac1b5f686d75dbf",
+      "bytes": 149
+    },
+    {
+      "path": "src/HelL/Core/Launcher/VersionOpError.cs",
+      "sha256": "4223a5533a421df1bd1e7fe628b502a1aa8d696daf5740b834f7b77cd699358e",
+      "bytes": 146
+    },
+    {
+      "path": "src/HelL/Core/Launcher/VersionOps.cs",
+      "sha256": "6275c609bb23f05b0192855c840d516883e2d83c86e2aa6594923e3eb872b915",
+      "bytes": 6741
+    },
+    {
+      "path": "src/HelL/Core/Launcher/VersionSettings.cs",
+      "sha256": "4d17db52e2323833039a5c9a1524cad18e8333e9c0475e06a51c2542e8555301",
+      "bytes": 10014
+    },
+    {
+      "path": "src/HelL/Core/Launcher/WallpaperCachePolicy.cs",
+      "sha256": "e484f98eba868c56c20244b022165b3302a12ee2da4308e4c36874bb704cb751",
+      "bytes": 834
+    },
+    {
+      "path": "src/HelL/Core/Launcher/WallpaperEngine.cs",
+      "sha256": "a462ea9649f4c7fc107bc94fa21f4dadfea2b3a9a60ebcdc6e3211b6e096933f",
+      "bytes": 7072
+    },
+    {
+      "path": "src/HelL/Core/Launcher/WallpaperVideoCache.cs",
+      "sha256": "4ae7ea1350283461180ff4477694ffa42ca084dee5927fedb9758a0cec9c69fd",
+      "bytes": 6998
+    },
+    {
+      "path": "src/HelL/Core/Launcher/WallpaperVideoCache.Management.cs",
+      "sha256": "82af9694828e360e72c0cec54c60c77744fd5087985cdaf7dde0b17575dba7cc",
+      "bytes": 6391
+    },
+    {
+      "path": "src/HelL/Core/Launcher/WorldError.cs",
+      "sha256": "ad85f95ea95e53d393868f92bdab126fae9f7ec3c233509190d130583cc487b9",
+      "bytes": 134
+    },
+    {
+      "path": "src/HelL/Core/Launcher/Worlds.cs",
+      "sha256": "c2a0dffb4a332ff4676e2c9c7303b888de4c13778c3fc7f4e47783b23557a538",
+      "bytes": 6007
+    },
+    {
+      "path": "src/HelL/Core/NotImplementedError.cs",
+      "sha256": "5ae6ff515aee49377d05d5fc23ce86b037c9d100dc4ba0807a2f8a20c8c76bc4",
+      "bytes": 159
+    },
+    {
+      "path": "src/HelL/Core/OSError.cs",
+      "sha256": "1aa235c5d01050661d0534d9cc54b51aabf4df12dbef2a904e5928e605374a68",
+      "bytes": 247
+    },
+    {
+      "path": "src/HelL/Core/PermissionError.cs",
+      "sha256": "fa1bd9b3293536c5245b80c5c608dfee561f7224a201955b325204508b1526ee",
+      "bytes": 142
+    },
+    {
+      "path": "src/HelL/Core/Platform/IDecodedImage.cs",
+      "sha256": "872ecc4c390ce61582e40aeaa050840e9357f3d3c822378b34c410f1cef7944c",
+      "bytes": 265
+    },
+    {
+      "path": "src/HelL/Core/Platform/IImageCodec.cs",
+      "sha256": "20ce88a16c4f8659a00bda8dd8779d821309d397ca39c29ef70036a6c00fea19",
+      "bytes": 100
+    },
+    {
+      "path": "src/HelL/Core/Platform/ISecretStore.cs",
+      "sha256": "4dbc9e5dfa6ded9b63271a4e7c9eab91ea23b07a162f4e6d36702916c1545cda",
+      "bytes": 245
+    },
+    {
+      "path": "src/HelL/Core/Platform/PlatformServices.cs",
+      "sha256": "32a7530dd439683a1d16ba8bbf225b690716f36b2600b8bdafb87d25f137b157",
+      "bytes": 179
+    },
+    {
+      "path": "src/HelL/Core/Platform/SecretNotFoundException.cs",
+      "sha256": "d49fa1da3280a87f92fcaa3081449b4490576de5d6f8c00d838f914c28b1df1e",
+      "bytes": 192
+    },
+    {
+      "path": "src/HelL/Core/Platform/WinCredSecretStore.cs",
+      "sha256": "86bece3716264d3e9d925108654d9c444ea2168bc9abada24c9f925a9447031f",
+      "bytes": 6144
+    },
+    {
+      "path": "src/HelL/Core/Platform/Wpf/WpfDecodedImage.cs",
+      "sha256": "c87fa4b172a0c927011721911a690760710f7a017ed48f9c0bc97e399b60cc09",
+      "bytes": 2721
+    },
+    {
+      "path": "src/HelL/Core/Platform/Wpf/WpfImageCodec.cs",
+      "sha256": "8ce15ec6f2e89fac70fc09f9e87748938e3b8d58c4e545219384133e61e4b306",
+      "bytes": 3614
+    },
+    {
+      "path": "src/HelL/Core/PPath.cs",
+      "sha256": "5dd0ab7c4e21fd056853cb9e9093f424f55c6eb19b14e2bf02c4aecee0f2c26d",
+      "bytes": 9172
+    },
+    {
+      "path": "src/HelL/Core/Py.cs",
+      "sha256": "73a67342fcde5a9d5e4e7e5d7818aa43dbe1e7edfd91afe0e296d243038467e9",
+      "bytes": 32127
+    },
+    {
+      "path": "src/HelL/Core/PyDict.cs",
+      "sha256": "deede1fa998998ddbee489909d6801446fc99f00dc9df4de61c17f243c56dab4",
+      "bytes": 3388
+    },
+    {
+      "path": "src/HelL/Core/PyDifflib.cs",
+      "sha256": "bdcac1c4b726ad4068eb6ad4dfb522b025952405345292ad6da4bc3ffd80afbf",
+      "bytes": 3112
+    },
+    {
+      "path": "src/HelL/Core/PyException.cs",
+      "sha256": "37df09c35aeefefcf3369d0cc534111f7a22eed1f2182eb850890c76e4f4d386",
+      "bytes": 317
+    },
+    {
+      "path": "src/HelL/Core/PyJson.cs",
+      "sha256": "37ac7ab3f4548c36de86d2ca3a475c5c4ec8730a7166658278e8cc91e8c442bf",
+      "bytes": 11859
+    },
+    {
+      "path": "src/HelL/Core/RootLease.cs",
+      "sha256": "7fba932eef96a95e8ad98a33d195aa54a82ec8de415c64f3de11ce57c5dab087",
+      "bytes": 1145
+    },
+    {
+      "path": "src/HelL/Core/RpcDispatcher.cs",
+      "sha256": "2686f4ced07f82301801739da75770fcb12f6158fb9a5960aba48e39b4337c4b",
+      "bytes": 9556
+    },
+    {
+      "path": "src/HelL/Core/RpcError.cs",
+      "sha256": "21020e6001cffda90b18231b604d1ad3d2736b242dbb278e58e5cfcc2f2eed8d",
+      "bytes": 193
+    },
+    {
+      "path": "src/HelL/Core/RpcHiddenAttribute.cs",
+      "sha256": "7d3dc2b289b1309e5d45ca11c358bc66ec6411308b0e58770db08732ae5c55d9",
+      "bytes": 134
+    },
+    {
+      "path": "src/HelL/Core/RuntimeError.cs",
+      "sha256": "e0fcae9e6a28d3a802c6e4ec28b7e97e386257a273761d5f09497c9f359bb992",
+      "bytes": 267
+    },
+    {
+      "path": "src/HelL/Core/TaskCancelled.cs",
+      "sha256": "23eaa583940fd9c2fb8f6096993f0b8a8732a3b87b1617514acfb074c7ff3f42",
+      "bytes": 127
+    },
+    {
+      "path": "src/HelL/Core/TaskContext.cs",
+      "sha256": "613fd76bf7b064d1a40fdcc7334b2acade431ec1fb26f06da395f1e815f36f89",
+      "bytes": 1032
+    },
+    {
+      "path": "src/HelL/Core/TestAssemblyAccess.cs",
+      "sha256": "695eb57c220efc706ff04f8bdbe2e1b1aa144a6badd76468a5a92f3850ec3faa",
+      "bytes": 85
+    },
+    {
+      "path": "src/HelL/Core/TimeoutError.cs",
+      "sha256": "41f54836ebfb5505ecc9dbe059e554f952c7d1cb213d7bbbb7930cb69b22e11b",
+      "bytes": 133
+    },
+    {
+      "path": "src/HelL/Core/TypeError.cs",
+      "sha256": "e6564ef2fcad8631c95a928a129ddf3fb6194f5e53ce19a1a09b4c2c722d1a03",
+      "bytes": 122
+    },
+    {
+      "path": "src/HelL/Core/UnicodeDecodeError.cs",
+      "sha256": "3dc2837835cfbae840b63024a8ed77d1690f9cf478a0375acc3317e1b80df15b",
+      "bytes": 154
+    },
+    {
+      "path": "src/HelL/Core/ValueError.cs",
+      "sha256": "a43c86fe5c8642f60bc9a968b6b10f2708e8e1793807e0f4246a975ea656ccc8",
+      "bytes": 259
+    },
+    {
+      "path": "src/HelL/Core/VarArgsAttribute.cs",
+      "sha256": "929506749e8f9cdab5099b655e1bfd7997d115a397e82b3bd0c1347ee900277a",
+      "bytes": 135
+    },
+    {
+      "path": "src/HelL/Core/VarKwAttribute.cs",
+      "sha256": "d794fb34c718a525575e27dcfd4b53e422adae354b4b052ab015f1cb43e3d38d",
+      "bytes": 133
+    },
+    {
+      "path": "src/HelL/Models/CatalogItem.cs",
+      "sha256": "18cd8e31765d750a6c9f7e17fe5f61c0af9e29fd2497b65ea8ad83b79ee3b3f3",
+      "bytes": 3783
+    },
+    {
+      "path": "src/HelL/Resources/ai/model_rules.json",
+      "sha256": "152b2780d4cd08abcb0a903472f4e357080f61e6e8185bd776846b9d5bfbc4dc",
+      "bytes": 39748
+    },
+    {
+      "path": "src/HelL/Resources/Brand/Helstera.png",
+      "sha256": "d169a8ab8a4604fb8f8ebe0cab658cbe68d6055c245a09c6e1987ef7dee0a098",
+      "bytes": 359135
+    },
+    {
+      "path": "src/HelL/Resources/catalog/names-zh.json",
+      "sha256": "aaea57f0346402116bfab4dc62ae82e06b041002b45a7930c5b8fa5fb4ee7ac1",
+      "bytes": 16957
+    },
+    {
+      "path": "src/HelL/Resources/locales/en.json",
+      "sha256": "356ad5d47ba5be0abc1cf508d85cc1854a432fc9e3584f2949b2a358bba3f94c",
+      "bytes": 189107
+    },
+    {
+      "path": "src/HelL/Resources/locales/zh_CN.json",
+      "sha256": "f2b8cb674e8765541758a97b6b57c6b32a27bbbe67168147f80e99dc4a9c6b01",
+      "bytes": 180820
+    },
+    {
+      "path": "src/HelL/Resources/news/zh_CN.json",
+      "sha256": "a9bb4215ec8aef67159a122c315209aaa47d8373edb0d13f5c520040d3b2048d",
+      "bytes": 2362
+    },
+    {
+      "path": "src/HelL.Android/CredentialEnvelope.cs",
+      "sha256": "1df58e7d0e988bb017a9e85d222363887b6533caf03a6c393bab1b90ff21b7cd",
+      "bytes": 1784
+    },
+    {
+      "path": "src/HelL.Companion/CompanionRelayHost.cs",
+      "sha256": "4b7eb95e63cdf96cfaf46e8971b495d10af15b607498f7d17f6a9d2aa11b340c",
+      "bytes": 1047
+    },
+    {
+      "path": "src/HelL.Companion/HelL.Companion.csproj",
+      "sha256": "269fbf19b036f5b083eba35110e5a9abacc149793f02406a6dfdb2f5ec50e51c",
+      "bytes": 434
+    },
+    {
+      "path": "src/HelL.Companion/HostPipeClient.cs",
+      "sha256": "0af6bb5fa87303b5f4d5881c28304bf102252f3e717484af13ea38bdfebb5dd7",
+      "bytes": 2878
+    },
+    {
+      "path": "src/HelL.Contracts/FeatureAccess.cs",
+      "sha256": "445f01afa8e5f8c7f6e905945d9c2078c55a2b742ceb4faa8cfaadfa3ad0cd16",
+      "bytes": 1107
+    },
+    {
+      "path": "src/HelL.Contracts/GameSession.cs",
+      "sha256": "8c8e9c74e81c63ea212a2574abcfde871551bff9084ba1269bd4a718ba33ca2d",
+      "bytes": 1159
+    },
+    {
+      "path": "src/HelL.Contracts/HelL.Contracts.csproj",
+      "sha256": "201782556d1c0a6ceea721b4b760f737a499e63fa4ed1febfb36566a432f94a3",
+      "bytes": 260
+    },
+    {
+      "path": "src/HelL.Contracts/HostFrames.cs",
+      "sha256": "6638b79af817b1ef90c83d107186388f243f9ba1f477a7331e410d75244bddc5",
+      "bytes": 2858
+    },
+    {
+      "path": "src/HelL.Contracts/HostProtocol.cs",
+      "sha256": "bc23ff386593c2d0170625c02e9617c52cd35179426cae797c24393c1ddfa379",
+      "bytes": 1926
+    },
+    {
+      "path": "src/HelL.Core/AssemblyInfo.cs",
+      "sha256": "c275ae08563608c24f0ab1fab1470e740aa5b235dc3244361089853d74d639dc",
+      "bytes": 94
+    },
+    {
+      "path": "src/HelL.Core/HelL.Core.csproj",
+      "sha256": "29e361e79536b1e19d80379ce767724de87aca55f74f802097536dd5c5374eac",
+      "bytes": 1575
+    },
+    {
+      "path": "src/HelL.Core/Portable/AccountVault.cs",
+      "sha256": "bffa8c75dc63ba723929e4f3ca526a1a37d730a53408282e1b04ca5515c66973",
+      "bytes": 5958
+    },
+    {
+      "path": "src/HelL.Core/Portable/PortableAccount.cs",
+      "sha256": "d4e33ed988dcb5373da6d39d37e2f425df75c46770f7c408a4c8190dd08cde1a",
+      "bytes": 5067
+    },
+    {
+      "path": "src/HelL.Core/Portable/PortableCatalog.cs",
+      "sha256": "4f89494f8d7670fc90655dea693007038071db64a0451849716e663d96338a2c",
+      "bytes": 15039
+    },
+    {
+      "path": "src/HelL.Core/Portable/PortableHome.cs",
+      "sha256": "ce8732c85a254fa7ec9718bef8def4669e47f9eaf6e5052d0d9bf1d8dd79124a",
+      "bytes": 2576
+    },
+    {
+      "path": "src/HelL.Core/Portable/PortableLauncher.cs",
+      "sha256": "3b7d3e265b110c342d09a2df9cb2ffbbf8eeed6779a1c1cc05ae3e6c2ae3e611",
+      "bytes": 9298
+    },
+    {
+      "path": "src/HelL.Core/Portable/PortableLauncher.Installation.cs",
+      "sha256": "ffca7fd91f8ce0a7a3da638c23816bba7bf4901dd6361f41b630218b75d3bdf0",
+      "bytes": 8490
+    },
+    {
+      "path": "src/HelL.Core/Portable/PortableLauncher.Library.cs",
+      "sha256": "b35df5bce5ddc21762e519e15a09abd3f4e49dc2b1fd9e057a7795ca96850d89",
+      "bytes": 3550
+    },
+    {
+      "path": "src/HelL.Core/Portable/PortableLaunchOptions.cs",
+      "sha256": "e94c0154f1774460d535e7924ac9903845bdae19f2cf0a5fb4be136c901eb31c",
+      "bytes": 1921
+    },
+    {
+      "path": "src/HelL.Core/Portable/SystemSecretStore.cs",
+      "sha256": "6a9ac34a33a0c7a21a8fe49cb270714e7c909c26e4c139a78f47d4d601be46fc",
+      "bytes": 6713
+    },
+    {
+      "path": "src/HelL.Design/AvaloniaTokens.axaml",
+      "sha256": "808e36f54a9e5e87a6359e391f09e886b5edcd6d0d6dae89d7ac6c706b8b65d6",
+      "bytes": 7150
+    },
+    {
+      "path": "src/HelL.Desktop/Controls/ProjectPicture.cs",
+      "sha256": "c30712920e736d97845116316f91dffece1e76286c8abe9948c861328f656057",
+      "bytes": 6920
+    },
+    {
+      "path": "src/HelL.Desktop/Models/DesktopTask.cs",
+      "sha256": "e6cbc3988d2bf66593bc67dbc75d5ee8c9dbc49102c959d6dd644524e234ba0a",
+      "bytes": 3840
+    },
+    {
+      "path": "src/HelL.Desktop/Services/DesktopImages.cs",
+      "sha256": "02eebfa00ef552b9d84d6ee9d5f49319c5077961b550f270f0631520893f06dd",
+      "bytes": 1460
+    },
+    {
+      "path": "src/HelL.Desktop/Services/ImageBounds.cs",
+      "sha256": "58af9a9b886b345dfe4ec0b166614b0d0329786fcaf2f5fc965136066dfc94b7",
+      "bytes": 1300
+    },
+    {
+      "path": "src/HelL.Mobile/Ai/MobileAiProfile.cs",
+      "sha256": "04b06dd81f59896d6f97176ce97d3eac3f99ec2ab429fb310685a63da65f5cc0",
+      "bytes": 4574
+    },
+    {
+      "path": "src/HelL.Mobile/Ai/MobileChat.cs",
+      "sha256": "a9c7f60641aa39bf634466c85b25d90e1e542fb0160a449ab249d24d86c33c14",
+      "bytes": 4531
+    },
+    {
+      "path": "src/HelL.Mobile/Assets/Character.png",
+      "sha256": "39d241f44007f70fcca989bc60d6fe72b43397211def7c18ab57f613625c0d78",
+      "bytes": 1289243
+    },
+    {
+      "path": "src/HelL.Mobile/Assets/Fonts/NotoSansSC-Bold.otf",
+      "sha256": "c6cb5a93abaa9edc8ee7463b7ebb7f42d618d40e6ed2f7a5371c97b0b64767c0",
+      "bytes": 8543168
+    },
+    {
+      "path": "src/HelL.Mobile/Assets/Fonts/NotoSansSC-Medium.otf",
+      "sha256": "7633f5a016d4dd95e685a69633d818aabc4644c4b08e26bd35b1b30c45ed5dda",
+      "bytes": 8345436
+    },
+    {
+      "path": "src/HelL.Mobile/Assets/Fonts/NotoSansSC-Regular.otf",
+      "sha256": "faa6c9df652116dde789d351359f3d7e5d2285a2b2a1f04a2d7244df706d5ea9",
+      "bytes": 8331336
+    },
+    {
+      "path": "src/HelL.Mobile/Assets/Mark.png",
+      "sha256": "b1c56f45ad993c84ea22b6aa01d4f203f197b92db7e72013c9a4cde175a71cf7",
+      "bytes": 955690
+    },
+    {
+      "path": "src/HelL.Mobile/Assets/NotoSansSC-OFL.txt",
+      "sha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+      "bytes": 4388
+    },
+    {
+      "path": "src/HelL.Mobile/Assets/NotoSansSC.ttf",
+      "sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da",
+      "bytes": 17772300
+    },
+    {
+      "path": "src/HelL.Mobile/Assets/ReferenceLandscape.png",
+      "sha256": "e4514d557cd66513865e4cbd5c48c6979a578c8729931e1106b2f146b5e7c584",
+      "bytes": 1827596
+    },
+    {
+      "path": "src/HelL.Mobile/Assets/ReferencePortrait.png",
+      "sha256": "6b11b902b03a4b97277e86b249f5a69e80b9cc9ccda24b3fb3776abb5e842bd5",
+      "bytes": 1646337
+    },
+    {
+      "path": "src/HelL.Mobile/Controls/ReferenceArt.cs",
+      "sha256": "9e2e168727ea750a4edafefca45db39148c1da190321322c0c6500d722506505",
+      "bytes": 3664
+    },
+    {
+      "path": "src/HelL.Mobile/HelL.Mobile.csproj",
+      "sha256": "60851e9dbf7a8668c69001c888c69ced0a29f67968d9329397dc49d0b0d353a7",
+      "bytes": 1344
+    },
+    {
+      "path": "src/HelL.Mobile/MobileApp.axaml",
+      "sha256": "8e8cdd99416e64b41f6862576095e5620ae8165693cf2e53306432c48dd20ac8",
+      "bytes": 14775
+    },
+    {
+      "path": "src/HelL.Mobile/MobileApp.axaml.cs",
+      "sha256": "2e0ab629ce459888e256b04302b468d52f0a87064be9a9ba37a711633529c1a0",
+      "bytes": 2846
+    },
+    {
+      "path": "src/HelL.Mobile/MobileHome.Account.cs",
+      "sha256": "59a351d6c26f6974dc82bfd0038dfdc3fd22b08bd903b8f28edd9fedce6ca5e2",
+      "bytes": 5383
+    },
+    {
+      "path": "src/HelL.Mobile/MobileHome.Ai.cs",
+      "sha256": "7d26b933cb0010c5b18695dc77fcb3e6565d866b20a273a8686e11ab7c6c6a72",
+      "bytes": 5276
+    },
+    {
+      "path": "src/HelL.Mobile/MobileHome.Appearance.cs",
+      "sha256": "d8e512066cf713b8ab80de035d1ca03430f70bd2c384ac887347aabd4dfcfba7",
+      "bytes": 1458
+    },
+    {
+      "path": "src/HelL.Mobile/MobileHome.axaml",
+      "sha256": "37cec714f941ea6dec4277b64150952b510120e6a3052ef65d209e68c12686d9",
+      "bytes": 37416
+    },
+    {
+      "path": "src/HelL.Mobile/MobileHome.axaml.cs",
+      "sha256": "21f00b508acdea6ec3dfc7527a9a8bbab98df03d81286c84df4156cea31384fe",
+      "bytes": 14794
+    },
+    {
+      "path": "src/HelL.Mobile/MobileHome.Layout.cs",
+      "sha256": "613d7cd42ee49388c50175ebe0aa8ad8d987f21ce2ff681887b628a63c095d31",
+      "bytes": 9906
+    },
+    {
+      "path": "src/HelL.Mobile/MobileHome.Remote.cs",
+      "sha256": "168307cb238a2072bcd532471b63baffb5af578e447a647874dc1a3711253332",
+      "bytes": 15560
+    },
+    {
+      "path": "src/HelL.Mobile/MobileHome.RemotePreview.cs",
+      "sha256": "432de03cf841cab17294f20ed93637eb778ddc4f0da3ce0bb9f498ce9aa5a6d9",
+      "bytes": 5285
+    },
+    {
+      "path": "src/HelL.Mobile/MobileHome.Resources.cs",
+      "sha256": "7c661d560bad2da1b24670d11f930b7be91edc99fc4e68790a1e2e3366d52f7f",
+      "bytes": 7491
+    },
+    {
+      "path": "src/HelL.Mobile/MobileHome.Smoke.cs",
+      "sha256": "5e2e96de411b0d7c48df4f5ec84dd0831d3648f2bd46a0a86ba764bcd5bbd460",
+      "bytes": 22556
+    },
+    {
+      "path": "src/HelL.Mobile/MobileRuntime.cs",
+      "sha256": "02efd13afe767bc32061a7e62a73ebf610cbbe3c036e37e9caca352c93c0d41c",
+      "bytes": 853
+    },
+    {
+      "path": "src/HelL.Mobile/MobileSession.cs",
+      "sha256": "33784353a347b7733021b5cea422246b1595832227d75643a232362e98a5af85",
+      "bytes": 2213
+    },
+    {
+      "path": "src/HelL.Mobile/Remote/MobileRemoteController.cs",
+      "sha256": "ad82ec22c981b42052995fd2e3ffde3dee7ae3fb6a27f4692326f5385491de9c",
+      "bytes": 16320
+    },
+    {
+      "path": "src/HelL.Mobile/Remote/MobileRemoteSecrets.cs",
+      "sha256": "5997e0185e7ff070845a8be74d918769b924240a5bf7e282deb8061c5d531e4f",
+      "bytes": 474
+    },
+    {
+      "path": "src/HelL.Relay/HelL.Relay.csproj",
+      "sha256": "3ec4680a09559f47909865c2195c6e56c02a919bcb9ef04b5fa5d5d63e5a3726",
+      "bytes": 355
+    },
+    {
+      "path": "src/HelL.Relay/InvitationFeedEndpoints.cs",
+      "sha256": "cd24134fe725d53343ca13d449885c330462bd31a89f4a2ff107831634d077ab",
+      "bytes": 3423
+    },
+    {
+      "path": "src/HelL.Relay/InvitationFeedStore.cs",
+      "sha256": "569023a8db2446b7b135c128e739bd81ec1cd8616c8dec3392b010e8b3696ab2",
+      "bytes": 7119
+    },
+    {
+      "path": "src/HelL.Relay/Program.cs",
+      "sha256": "40e790a0f44d829755942211cef1b378a2bf84f43c39d212bb24136c592b9e58",
+      "bytes": 503
+    },
+    {
+      "path": "src/HelL.Relay/RelayApp.cs",
+      "sha256": "aef98728cb0055054f6a335724c91ceb28db3ec837041dfb32daeb30d5fae274",
+      "bytes": 8399
+    },
+    {
+      "path": "src/HelL.Relay/RelayLimits.cs",
+      "sha256": "de13a981b27c94966f58608bdf3d07d313eff0d716160e0e1c8718170769a244",
+      "bytes": 1998
+    },
+    {
+      "path": "src/HelL.Relay/RelayRooms.cs",
+      "sha256": "166d14860a7bb75173a73708f439de1e88ffbcdb717151d59a0379b36c2394b5",
+      "bytes": 13040
+    },
+    {
+      "path": "src/HelL.Remote/DeviceTunnel.cs",
+      "sha256": "f06c4d12e242510b1a4297b2148719b9430c90e3d6da2c09b2a743ec1350e220",
+      "bytes": 4074
+    },
+    {
+      "path": "src/HelL.Remote/HelL.Remote.csproj",
+      "sha256": "2757d3c9d7aa619a7428b9387d4404d47d126095380d39c9d35d9e56d3ec5dcb",
+      "bytes": 357
+    },
+    {
+      "path": "src/HelL.Remote/InvitationFeedClient.cs",
+      "sha256": "2953ac1fb3170fff290389477e80438fad6777203856bd7950c405240cb0f8ea",
+      "bytes": 4383
+    },
+    {
+      "path": "src/HelL.Remote/InvitationFeedCodec.cs",
+      "sha256": "b50ed1cb76cb8ab0bb1496dd5c5963a33abdd6d742c09c6973e8d1a82134bb8e",
+      "bytes": 6739
+    },
+    {
+      "path": "src/HelL.Remote/InvitationFeedContracts.cs",
+      "sha256": "103e3ae10271f89cf3717542052cd8abb994917f6e8cf10b872ddd2966926b46",
+      "bytes": 545
+    },
+    {
+      "path": "src/HelL.Remote/InvitationFeedPublisher.cs",
+      "sha256": "5fd22ebea44680dfc8e26a09b2cec5f3d6bb2838137033c86b19ba96df73a601",
+      "bytes": 7211
+    },
+    {
+      "path": "src/HelL.Remote/PairedRemoteClient.cs",
+      "sha256": "014be1ab409eee59b0e23b5e353f9bfb263c45068f2ae5f239089940b83d62c6",
+      "bytes": 2328
+    },
+    {
+      "path": "src/HelL.Remote/PairedRemoteHost.cs",
+      "sha256": "3821b89d0cc50685e15c202c76ad805befdd84493d72eb4a745f40fb441b8ec3",
+      "bytes": 13124
+    },
+    {
+      "path": "src/HelL.Remote/RelayTickets.cs",
+      "sha256": "c59db4cafda792fd2f87c2f8b8d2a671c1113604ae669c0461bdf6dbc398acb7",
+      "bytes": 2744
+    },
+    {
+      "path": "src/HelL.Remote/RemoteConnectionOptions.cs",
+      "sha256": "13c325a6c7de0655406dc8b31d479f011eb167a9f8ad3e0c2fc8611cc6581e04",
+      "bytes": 770
+    },
+    {
+      "path": "src/HelL.Remote/RemoteHostChannel.cs",
+      "sha256": "c312cd721a2c971ead4e5f017cceef53236449ba8021ed83ca524cabcfbae7da",
+      "bytes": 9621
+    },
+    {
+      "path": "src/HelL.Remote/RemotePairingStore.cs",
+      "sha256": "2efbc66e931e7b983fa667f78096761500d9d51913d9b2a008dbf2513318113d",
+      "bytes": 12464
+    },
+    {
+      "path": "src/HelL.Remote/WebSocketStream.cs",
+      "sha256": "3fb168105c25bfc6f6cf913ee22dd06dc79198407c78994efd96d01f383748b7",
+      "bytes": 4895
+    },
+    {
+      "path": "tests/HelL.Mobile.Tests/CredentialEnvelopeTests.cs",
+      "sha256": "78dd738557c432536c7661be206cea7cbfdf78fd0a7d5a242488a38df62d9347",
+      "bytes": 1691
+    },
+    {
+      "path": "tests/HelL.Mobile.Tests/HelL.Mobile.Tests.csproj",
+      "sha256": "d23e9f796aa2fe74de136bfddcc9637674d0cd8fd5931a6f3478a2d7047645f8",
+      "bytes": 975
+    },
+    {
+      "path": "tests/HelL.Mobile.Tests/MobileChatTests.cs",
+      "sha256": "e82ddcbaadbe85daf2c2c6b2b75e7bd3562dd4a824064cc7b62345d358a99bcd",
+      "bytes": 9592
+    },
+    {
+      "path": "tests/HelL.Mobile.Tests/MobileRemoteTests.cs",
+      "sha256": "c081b6ac73d078d6fd690feba9c2621005756c4e1a367f884212a1479a637c52",
+      "bytes": 10665
+    },
+    {
+      "path": "tests/HelL.Mobile.Tests/TestAssembly.cs",
+      "sha256": "3f7edd72eac91614fcf49f709dd4e560c74ebef8da68a53a02947e5611cd1869",
+      "bytes": 80
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/AccountMutationTests.cs",
+      "sha256": "bc42c73d3f9e12d7c451e804a2ccb51760c890c067fb7ec5e085ee565ac778d1",
+      "bytes": 5684
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/AccountVaultTests.cs",
+      "sha256": "3b17cb2d3c58c181e6bef2f6a05f49bd82e358c2b3bdd4b2b1c5310c2d0ae793",
+      "bytes": 6466
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/BackendBridgeHardeningTests.cs",
+      "sha256": "86abadab66b2d2cb6a081fe305304e756e81a96593b5b6b05565e9c355ea0e08",
+      "bytes": 9119
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/BridgeRpcResponseTests.cs",
+      "sha256": "959c49bf869cbade2eb3df550ded4de1f49c5e4343687a68a3af0f62438ac5c0",
+      "bytes": 3540
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/CatalogDownloadFlowTests.cs",
+      "sha256": "7e56c38cc535b05ff11870c4ecca9e010b565374ecd49b9a03377ae41ff261f9",
+      "bytes": 11926
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/CatalogOrderTests.cs",
+      "sha256": "c5feac94778b20a52e62635ce689f26a1e513280f9ccfe70d7e41ab674d42238",
+      "bytes": 1289
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/CompanionIntegrationTests.cs",
+      "sha256": "c865bfb19baf8eee053c4fd294701798b084a08163fcaa837ec732f4fb93d3e5",
+      "bytes": 4582
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/CredentialDefaultsTests.cs",
+      "sha256": "4a4126a75d03522b7541bc4ebc856766ab8126ae8bacd14b24c5461f7a4dbc0f",
+      "bytes": 753
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/DesktopTaskTests.cs",
+      "sha256": "b1e336560053f12825b6d1c2c8ada5cf452b07a79971d7656731a9d0e48c4fde",
+      "bytes": 3477
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/HelL.Portable.Tests.csproj",
+      "sha256": "44b1503d02a24b9d28298bfa8bbb9989f96409a43ab698e5ae50e299b254f854",
+      "bytes": 1766
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/HostCommandTests.cs",
+      "sha256": "f058f0983b967d961442313257826409c78ff0260d20e31032a55208993b9ea1",
+      "bytes": 3957
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/HostPipeTests.cs",
+      "sha256": "484f4b4e6b298f8f7476a463496b0bf1bae9c016de3732dffb22a652baf86b00",
+      "bytes": 5560
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/PortableAuthTests.cs",
+      "sha256": "3dd09e5ca1420d5fb2819b7b50be3d6afff9f23c624157899b513c1742f16ea9",
+      "bytes": 8296
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/PortableInstallationTests.cs",
+      "sha256": "e85512f698993f92232b52be6cd534401a19da945146be260ca41f0290c8a6c1",
+      "bytes": 7595
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/PortableLaunchOptionsTests.cs",
+      "sha256": "9e85ba4c3ae0e0f0a6323b0b4e5d4d2d0e157c8caf649e73d7abfd32bfd8496e",
+      "bytes": 2464
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/PortableTests.cs",
+      "sha256": "05987906af89e84cceb41629978b22efcadbd6a2a86a3cb66523e6b727b0d0a0",
+      "bytes": 6250
+    },
+    {
+      "path": "tests/HelL.Portable.Tests/WorkspaceTests.cs",
+      "sha256": "dff878fb89f6924ed8a7ec562f8dd84c660861e7dfd0c67f6b173142f6f1b024",
+      "bytes": 5278
+    },
+    {
+      "path": "tests/HelL.Remote.Tests/HelL.Remote.Tests.csproj",
+      "sha256": "469af78ca5c3530b1c0b229a9e80610cc7d751b71b87ab7092bbf711fe1c2810",
+      "bytes": 669
+    },
+    {
+      "path": "tests/HelL.Remote.Tests/HostFrameTests.cs",
+      "sha256": "0f20a195be86402505b957ad0a66a29a520c51894ec2033651badecf75777ee9",
+      "bytes": 1649
+    },
+    {
+      "path": "tests/HelL.Remote.Tests/InvitationFeedClientTests.cs",
+      "sha256": "8fb1b52d7232e5c688a0dca49ccf02a719d90574d94f65e821aa0905f713b96b",
+      "bytes": 10837
+    },
+    {
+      "path": "tests/HelL.Remote.Tests/InvitationFeedServerTests.cs",
+      "sha256": "ad01679b0532d6a516ec0c98d0c9b15ba74f74d33395f7456a505eb1b32cdfea",
+      "bytes": 18517
+    },
+    {
+      "path": "tests/HelL.Remote.Tests/PairedRemoteHostTests.cs",
+      "sha256": "7a37eb6b50a55989dbf289b95190316f0b14f56d7921fc9ad8aa19376fb98833",
+      "bytes": 9860
+    },
+    {
+      "path": "tests/HelL.Remote.Tests/ProtocolTests.cs",
+      "sha256": "7bebd0f6b6edd757ab7d38e37cdfb80abb16be7d376e2db1a8513608a16b6426",
+      "bytes": 2733
+    },
+    {
+      "path": "tests/HelL.Remote.Tests/RelayBudgetTests.cs",
+      "sha256": "ded0fe92dc9a3eb5d6a7de96e55c0406c0d74bc25385b9f78f20685557ddd921",
+      "bytes": 5111
+    },
+    {
+      "path": "tests/HelL.Remote.Tests/RelayRoomsTests.cs",
+      "sha256": "5ab482a1d2e375766367935b8407ba984cbfade4ae448d5439aa1ee48830e694",
+      "bytes": 3890
+    },
+    {
+      "path": "tests/HelL.Remote.Tests/RelaySecurityTests.cs",
+      "sha256": "205a31415542c5f8b55a4f6dc536c588f2420f82c6994707576b0d506716151d",
+      "bytes": 12606
+    },
+    {
+      "path": "tests/HelL.Remote.Tests/RemoteHostChannelTests.cs",
+      "sha256": "f4fa3d15fa564cdadf791f14ccb4228d86937f1d832ffadbe34c0578bb6d29fb",
+      "bytes": 3225
+    },
+    {
+      "path": "tests/HelL.Remote.Tests/RemotePairingTests.cs",
+      "sha256": "d7dcd4566dbb8d35a3290c7c944ce219cc8888a06317d2e98a1561309e219d7a",
+      "bytes": 4550
+    },
+    {
+      "path": "tests/HelL.Remote.Tests/TunnelTests.cs",
+      "sha256": "c2ae34e993778d37e82e7f989f85614916949068240220b957cff2f3b141a409",
+      "bytes": 7968
+    },
+    {
+      "path": "tests/HelL.Remote.Tests/WebSocketStreamTests.cs",
+      "sha256": "34cf832fd9b1cffe86ada337353eceabca08b7ac1fba055afbd515f2e80c9d95",
+      "bytes": 5606
+    },
+    {
+      "path": "tests/HelL.Tests/AccountRefreshTests.cs",
+      "sha256": "27bcbe32901cb040d8b0b1a65bd098699a00845a897603bf6495c36d2bb0052d",
+      "bytes": 5660
+    },
+    {
+      "path": "tests/HelL.Tests/AiChatOpsTests.cs",
+      "sha256": "2c1624f2ac7adb3de8b424bd5e59ff71116b349f68545b905985e4e6c9dede14",
+      "bytes": 4961
+    },
+    {
+      "path": "tests/HelL.Tests/AiWorkspaceSourceTests.cs",
+      "sha256": "19b7c178c40919d17afbf1dd1ef0d90603514cf6712547f37802d5fea9a8fc65",
+      "bytes": 5364
+    },
+    {
+      "path": "tests/HelL.Tests/AppearanceProfileTests.cs",
+      "sha256": "bbafae4beaced086f2b3ede6e631168588038ee9cb09fe326b590236e781fb62",
+      "bytes": 3143
+    },
+    {
+      "path": "tests/HelL.Tests/AuthenticationFlowTests.cs",
+      "sha256": "48e71a5d73f173299ed5452763a31f6a5dd2e77bd8fef0704c245a09b976ea33",
+      "bytes": 8340
+    },
+    {
+      "path": "tests/HelL.Tests/BackendEventTests.cs",
+      "sha256": "7fddda781497e5fe9f92da84c104e9835b054ce6c658edf16041ea54f0bb8c9e",
+      "bytes": 6069
+    },
+    {
+      "path": "tests/HelL.Tests/BackendFixture.cs",
+      "sha256": "e6c215371167137457a2317ff72ca3159f6880d161b594f6910488874cbdf699",
+      "bytes": 1014
+    },
+    {
+      "path": "tests/HelL.Tests/BackendRpcContractTests.cs",
+      "sha256": "d811a7f42c51f426091ef13b94a839cf4bfd0e12e7cc927eb5f11e79fe93b998",
+      "bytes": 11954
+    },
+    {
+      "path": "tests/HelL.Tests/BulkWorkspaceTests.cs",
+      "sha256": "54fc13c024c43c1ad126df6d00b0f6901545a4fec7b49b3871ac8b2226c02edf",
+      "bytes": 6060
+    },
+    {
+      "path": "tests/HelL.Tests/CatalogArtworkTests.cs",
+      "sha256": "e54eaec867be4ccc96b9570061fb618cf6d0f38b708a9fb23d5ab5444d0af5d4",
+      "bytes": 1948
+    },
+    {
+      "path": "tests/HelL.Tests/CatalogDocumentTests.cs",
+      "sha256": "b69a5adca892f729d71f63dd6250c598a3fd0542b03de26fa291fd59f0d33878",
+      "bytes": 3909
+    },
+    {
+      "path": "tests/HelL.Tests/CatalogTranslationTests.cs",
+      "sha256": "008d40b30d041216c9790b56bb9ab70ee734f6b3d4a9565f8ea40a72208b8a60",
+      "bytes": 5976
+    },
+    {
+      "path": "tests/HelL.Tests/CatalogVersionTests.cs",
+      "sha256": "c5bb1aaa00787a7520f34c675889ef754ea4641475577c376dfd04831a2f68d7",
+      "bytes": 1876
+    },
+    {
+      "path": "tests/HelL.Tests/CommunityNamesRecoveryTests.cs",
+      "sha256": "638391a563e9eba3ec8b023850ce0c15204ceaed7f9dc0b72f85aa52944658ab",
+      "bytes": 3308
+    },
+    {
+      "path": "tests/HelL.Tests/CustomizationTests.cs",
+      "sha256": "4dc44182e4343dbb37688c159963f37b5d752f8f2d5aeee18cd94dbd98085a9d",
+      "bytes": 3280
+    },
+    {
+      "path": "tests/HelL.Tests/CustomResourceNamesTests.cs",
+      "sha256": "47c83f6dcab3400c853afa2d3f0dc83f61adbd3845752fef6cd184eeb073f198",
+      "bytes": 2437
+    },
+    {
+      "path": "tests/HelL.Tests/DashboardLibraryTests.cs",
+      "sha256": "260b12bb167ac7e14ccb7d482c47daf2a7d90042e2df31c4498887bef86cd0a7",
+      "bytes": 2020
+    },
+    {
+      "path": "tests/HelL.Tests/DecompileArtifactTests.cs",
+      "sha256": "066588d94ba6f2ee2ccccb20fa99b50074ae672984abf213aebf3c3dac5b75f7",
+      "bytes": 920
+    },
+    {
+      "path": "tests/HelL.Tests/DependencyTargetTests.cs",
+      "sha256": "7b96c3db4806247c6bee5494059c3c8ff325d3fe1c04d8b79b7856c7283b5682",
+      "bytes": 2141
+    },
+    {
+      "path": "tests/HelL.Tests/DocumentCorrectionTests.cs",
+      "sha256": "303f27aad3fe0480e98c0921a2dd6eaa23ae64235f0513f9dee8ed3601801751",
+      "bytes": 2371
+    },
+    {
+      "path": "tests/HelL.Tests/DownloadRecoveryTests.cs",
+      "sha256": "18a0aed9c627ffd92c3062538d5dc21b8f3e6d3de46d91073a78511cf23a7d85",
+      "bytes": 9709
+    },
+    {
+      "path": "tests/HelL.Tests/DownloadRetryTests.cs",
+      "sha256": "06fb989bbe303c3b5c51928017891287f0134468aee1ca7aa67a74cc75f5147e",
+      "bytes": 1024
+    },
+    {
+      "path": "tests/HelL.Tests/ExtraToolsTests.cs",
+      "sha256": "99b59ce6e2f5f6207a9a8d5714a02968a43e3aea64990b458080eebac99c62f0",
+      "bytes": 1722
+    },
+    {
+      "path": "tests/HelL.Tests/FeiyuLinkTests.cs",
+      "sha256": "e3c7ec9d63b46bcfa9f077b4b3adc264ca619c75e037d41614b1731643849b76",
+      "bytes": 2446
+    },
+    {
+      "path": "tests/HelL.Tests/FileMemoryTests.cs",
+      "sha256": "6046cb4e1fe710be34a57f09bdb2bade9ed86439d87f578d12e76e51e91ec438",
+      "bytes": 1755
+    },
+    {
+      "path": "tests/HelL.Tests/FileMirrorTests.cs",
+      "sha256": "e61a6fa2357b689494a5290ae0c2294328d4344a55beeaa89656d3245abb1f9b",
+      "bytes": 9554
+    },
+    {
+      "path": "tests/HelL.Tests/FilePickerRulesTests.cs",
+      "sha256": "1befffbcf67bb767c293edda8e41005c3be4297faef8d0507c9565ed2877f919",
+      "bytes": 2088
+    },
+    {
+      "path": "tests/HelL.Tests/HomeWorkspaceTests.cs",
+      "sha256": "a4c6f63c5d803b138fd98936af55d36ded9980de1affcb1573d77e59098208d8",
+      "bytes": 4791
+    },
+    {
+      "path": "tests/HelL.Tests/ImagesTests.cs",
+      "sha256": "2a61413dc1957545cdedfe8a4209cf0fbec3727a4824222864957053e0858bfb",
+      "bytes": 971
+    },
+    {
+      "path": "tests/HelL.Tests/LaunchPageAestheticTests.cs",
+      "sha256": "20a8462ddce3618ae836981e65ef6c2786c7ae40c2b379f655c589ff2a47d8ff",
+      "bytes": 2915
+    },
+    {
+      "path": "tests/HelL.Tests/LaunchRecoveryTests.cs",
+      "sha256": "a42d0cf0cff9fb0546e3a7b1404dd4d3e7ecca4709ec65a2a84bbecede31b990",
+      "bytes": 4242
+    },
+    {
+      "path": "tests/HelL.Tests/LayoutDefaultTests.cs",
+      "sha256": "d711f065a7317aedff18997dd278724179cf2717bc377c959546d693e977b433",
+      "bytes": 696
+    },
+    {
+      "path": "tests/HelL.Tests/LibraryExperienceTests.cs",
+      "sha256": "cad1f0f2f5395979286d6a4beb4b7480c39bb2b18dcf362b47e4a190e61bd495",
+      "bytes": 5432
+    },
+    {
+      "path": "tests/HelL.Tests/LibraryPlusTests.cs",
+      "sha256": "5c7184515f3e70c0ccdd99b3ed308a65f792fade408df9d6f12759d67a329062",
+      "bytes": 6505
+    },
+    {
+      "path": "tests/HelL.Tests/LocalAiRoutingTests.cs",
+      "sha256": "e5334125b8effde10284003410f7d0d7837cadc38114f36e28b3f48424f8cbdc",
+      "bytes": 1380
+    },
+    {
+      "path": "tests/HelL.Tests/LocalModelTests.cs",
+      "sha256": "998831e6cb55af05e2157e6de54943e6bea04135c175206f0bc77df01790dd6b",
+      "bytes": 17554
+    },
+    {
+      "path": "tests/HelL.Tests/Mc26SupportTests.cs",
+      "sha256": "0d5bd91ef276c345b8553311fe0a5585e031f6a10b047b98ebc7e038041f52a2",
+      "bytes": 725
+    },
+    {
+      "path": "tests/HelL.Tests/McpServerTests.cs",
+      "sha256": "f1802c190c7be5395c8a82a8aafa9b7e169601f60df39cd0d5c7e0d372e8c723",
+      "bytes": 2122
+    },
+    {
+      "path": "tests/HelL.Tests/MemoryEditTests.cs",
+      "sha256": "c009b5f5abe4d8d0cf5a323e2c0c5c92fecc85fef1335985ad34da83ba6253dd",
+      "bytes": 2928
+    },
+    {
+      "path": "tests/HelL.Tests/MinecraftActionHistoryTests.cs",
+      "sha256": "38d3095711e4d1b53029eccb0a8738d14ef402a444ced95348f24bab45993b54",
+      "bytes": 2325
+    },
+    {
+      "path": "tests/HelL.Tests/MinecraftConnectionTests.cs",
+      "sha256": "cb2926de0abe625a4ae312afb0485fe53582838b72acf111fb3510035a325f5f",
+      "bytes": 8966
+    },
+    {
+      "path": "tests/HelL.Tests/MinecraftExtensionTests.cs",
+      "sha256": "ed1bc80320400d3d798d192285cf82595965699872ea819eeb128f2e4a5c5a8d",
+      "bytes": 1738
+    },
+    {
+      "path": "tests/HelL.Tests/MinecraftMcpTests.cs",
+      "sha256": "d5280c3d47754e291e0bb29e8875bffb4ed8ddaa804420eb1220ca31e181c0df",
+      "bytes": 3406
+    },
+    {
+      "path": "tests/HelL.Tests/MinecraftProcessErrorTests.cs",
+      "sha256": "d9374bd9007f7292c8923905c4721ff2f4759d2e9e4702e0d120cc10ff1ef6bb",
+      "bytes": 750
+    },
+    {
+      "path": "tests/HelL.Tests/ModelManagementTests.cs",
+      "sha256": "a120e4e9917ca9846b3266796b7e029e664579c3330446014fd530e424a33f61",
+      "bytes": 7357
+    },
+    {
+      "path": "tests/HelL.Tests/ModernControlStylesAndDeNativeTests.cs",
+      "sha256": "92ed83690eec04c68545d54a432b274fd7c2095eb9f63a27caeb57c50b8ce02a",
+      "bytes": 4946
+    },
+    {
+      "path": "tests/HelL.Tests/NativeThemeTests.cs",
+      "sha256": "d03d663aea9f00c7aff8d711e13a387616936a9d61a9e91de09c5ac87d98cff6",
+      "bytes": 2943
+    },
+    {
+      "path": "tests/HelL.Tests/NewsTests.cs",
+      "sha256": "fe4a9dfc9d3f9c6971e371c03112fcf71eddd72b5780f2e4df839a1ad71b5245",
+      "bytes": 4714
+    },
+    {
+      "path": "tests/HelL.Tests/Phase10DeepEnhancementTests.cs",
+      "sha256": "94aece1285cb7c4cdcef245906461df4be940b04a9a9e874ccf186e6c4731937",
+      "bytes": 11759
+    },
+    {
+      "path": "tests/HelL.Tests/Phase11ModernAestheticTests.cs",
+      "sha256": "a035a0183ffe79b687fbf7f890d66ff7bea5c53371bf505e8f96ad897cf32aee",
+      "bytes": 3089
+    },
+    {
+      "path": "tests/HelL.Tests/Phase1CoreLaunchAndSettingsTests.cs",
+      "sha256": "db5cd60f174f7cb2441f2503cb741cb8f54161f68c13d022fc7619a618d529af",
+      "bytes": 2445
+    },
+    {
+      "path": "tests/HelL.Tests/Phase2InstanceAndVersionTests.cs",
+      "sha256": "02f2943c6691a0568b711c3fdec5691e52c19e55ab38293c719d9e74a7da541f",
+      "bytes": 2044
+    },
+    {
+      "path": "tests/HelL.Tests/Phase3NetworkAndCatalogTests.cs",
+      "sha256": "502e127ce34ad87909e82077f0d38449bc87b575d7f6dda4cbd48f5de1991b41",
+      "bytes": 2396
+    },
+    {
+      "path": "tests/HelL.Tests/Phase4AccountAndJavaTests.cs",
+      "sha256": "6548d0e426d0e8a046411ae00ea989ab0f966b0068ea3d0c2f6b07db38a51c6c",
+      "bytes": 2120
+    },
+    {
+      "path": "tests/HelL.Tests/Phase5CrashAndTasksTests.cs",
+      "sha256": "abb052bdf017a7ef4d1e78d00963c52d566ee2828d3c343e5cd36a7b89462d8b",
+      "bytes": 4220
+    },
+    {
+      "path": "tests/HelL.Tests/Phase6MultiplayerAndWizardTests.cs",
+      "sha256": "79f503330e866e110b76d56eb6d7c85f8cef1f878aff5eede4c549878e937684",
+      "bytes": 3456
+    },
+    {
+      "path": "tests/HelL.Tests/Phase7OptimizationAndBeautifyTests.cs",
+      "sha256": "291cb8f1175df91aad696d8ab77035b37f8a52c2d220ff01bb317375983c92df",
+      "bytes": 12059
+    },
+    {
+      "path": "tests/HelL.Tests/Phase7UiOptimizationAndEnhancementTests.cs",
+      "sha256": "970063ce32edfc9bdb8bf1ceffe7b9dded38aeb3515ef6f4c69e05cb77dfdd41",
+      "bytes": 3354
+    },
+    {
+      "path": "tests/HelL.Tests/Phase8AdvancedIntegrationTests.cs",
+      "sha256": "e37ff9a58948f56b79abc239f44cb7f1620d2ef686e5a98eee4a2c4aca77c22b",
+      "bytes": 8249
+    },
+    {
+      "path": "tests/HelL.Tests/Phase9ModernUiAndOptimizationTests.cs",
+      "sha256": "7241d8e1b4b788dc034d47ca1ecad3b13d246765d18b73cd7e1079a3919ce2d3",
+      "bytes": 7019
+    },
+    {
+      "path": "tests/HelL.Tests/Phase9PageOptimizationTests.cs",
+      "sha256": "119c3eff7434c592b84896797eba7ab0e05b4b52e5a1f034ec472e93579b5ae0",
+      "bytes": 4846
+    },
+    {
+      "path": "tests/HelL.Tests/PhoneLinkTests.cs",
+      "sha256": "82c07fb43d306a1b3c06e497eda0f4073502afaedffd7177c2fe402b083425fb",
+      "bytes": 9624
+    },
+    {
+      "path": "tests/HelL.Tests/PluginStoreTests.cs",
+      "sha256": "069d117049c07d8d64b136b10783227807d0cce39a4b110cd38790bcffb4204b",
+      "bytes": 5136
+    },
+    {
+      "path": "tests/HelL.Tests/RemoteCompanionSessionTests.cs",
+      "sha256": "b22443fd9b67740520ce1d91358c2cbdb6cd7dc74a3c48ed9daae687e86628a2",
+      "bytes": 4196
+    },
+    {
+      "path": "tests/HelL.Tests/ResourceNamesTests.cs",
+      "sha256": "01ad7feaabe1a995121a9e84be4472a5d1595f887dbfac62b6145f61e7af2d96",
+      "bytes": 8566
+    },
+    {
+      "path": "tests/HelL.Tests/ResourceNameTransferTests.cs",
+      "sha256": "9db70e995eeab868ef996d91f54092901d85fcd7af916d8d557de23d06ec0cd4",
+      "bytes": 3433
+    },
+    {
+      "path": "tests/HelL.Tests/RpcDispatcherTests.cs",
+      "sha256": "f25c32f23d7df9c32e55f43beba3eed77053f602e3b84bfa576c8f44e70fee96",
+      "bytes": 4391
+    },
+    {
+      "path": "tests/HelL.Tests/SaveProtectionTests.cs",
+      "sha256": "093da5539db576b7375078e489b396f7b267318a9a5eb90ad48a0dd51022bdbc",
+      "bytes": 9781
+    },
+    {
+      "path": "tests/HelL.Tests/SaveSyncTests.cs",
+      "sha256": "6cc0ba18b9a41cc6d0dca175e9ef9a2da371149eb59c0f545bdd3a764b0ec924",
+      "bytes": 3548
+    },
+    {
+      "path": "tests/HelL.Tests/StaticInitOrderTests.cs",
+      "sha256": "9e5bb04c57982ea63f6f951bacccf75ce5f363467d57843ad5e5a49a58e146da",
+      "bytes": 1025
+    },
+    {
+      "path": "tests/HelL.Tests/TestHome.cs",
+      "sha256": "9dd7b21e02d891341653db356eb1dce61055a201f251b8604aaaedef15a4b068",
+      "bytes": 1019
+    },
+    {
+      "path": "tests/HelL.Tests/TestPaths.cs",
+      "sha256": "74c5f5a0ebfda4ec1c76e8c31735be700a9ed9390071e3d5b5236c59696b7b60",
+      "bytes": 827
+    },
+    {
+      "path": "tests/HelL.Tests/ToolRegistryTests.cs",
+      "sha256": "fb2552e8babf57d05e28e6e90ef8ff8f4d5a28a5e7a81fbe33c0678771323a25",
+      "bytes": 1549
+    },
+    {
+      "path": "tests/HelL.Tests/UpdateManifestTests.cs",
+      "sha256": "96e6ae6fecb48e71db16b1561da48582878777daa7958d990d6d684d73bbf5f8",
+      "bytes": 6379
+    },
+    {
+      "path": "tests/HelL.Tests/UpdaterApplyTests.cs",
+      "sha256": "abb7fb8446afa4698f3e1fb0ab9e0c5d3f3f08cf8924c91b90bd3a2dc0fe62b9",
+      "bytes": 5481
+    },
+    {
+      "path": "tests/HelL.Tests/VisionCapsTests.cs",
+      "sha256": "27096b6e92e9e526d65540d4ef78c81bd885eeb0104d5598911836a225fd6ce8",
+      "bytes": 2266
+    },
+    {
+      "path": "tests/HelL.Tests/WallpaperCacheManagementTests.cs",
+      "sha256": "6ea7688cf6bce6fc86d7c46be7da2224e6d296510ce18244faccbf21e68a4bcd",
+      "bytes": 4469
+    },
+    {
+      "path": "tests/HelL.Tests/WallpaperCachePolicyTests.cs",
+      "sha256": "6d75ea3b85fd8f7f4422e54c86e0da43619a09571ae8f4d285f7896926f6ad9d",
+      "bytes": 3863
+    },
+    {
+      "path": "tests/HelL.Tests/WallpaperEngineTests.cs",
+      "sha256": "b9139f1105d7e18a6585a52b97e2383bf7cc46d1527ee49e8a5a5a11bf569283",
+      "bytes": 2462
+    },
+    {
+      "path": "tests/HelL.Tests/WallpaperVideoCacheTests.cs",
+      "sha256": "797ae1d954243d3bfbb52dda9eb3bb99f835196d6742caf210eadbf4ab661ce5",
+      "bytes": 7520
+    },
+    {
+      "path": "tests/HelL.Tests/WorkspaceOrganizationTests.cs",
+      "sha256": "cafc043a9bd93e8932c07475149633de5ccc1608e6063c95cf4cdb07f572cc83",
+      "bytes": 3552
+    },
+    {
+      "path": "tests/HelL.Tests/WorldFixture.cs",
+      "sha256": "1ee3a1a3f85460050aad9cb43b7bd99e1a64b01db7f299b7f5a911ed2724d174",
+      "bytes": 2502
+    },
+    {
+      "path": "tests/test_verify_relay_container.py",
+      "sha256": "d445bbe46efad6d5dd5196c0cf805a94a698722be4c4c7edfac0b121165690ae",
+      "bytes": 4466
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "sha256": "3b01a7aa485cfd65b155d6cf90844c803bfe6d1990dc11833bc22ff36d002367",
+      "bytes": 3446
+    },
+    {
+      "path": "tools/HelL.Companion.Host/HelL.Companion.Host.csproj",
+      "sha256": "d8ff77a94ac59bf94dc15a99ae5b63e8b9cef3af251ebbfff5f4697538dd2451",
+      "bytes": 477
+    },
+    {
+      "path": "tools/HelL.Companion.Host/Program.cs",
+      "sha256": "56194a30083b834770951f7f03b4c32e33c8126cd6530588fe6e0ace805c6488",
+      "bytes": 8074
+    },
+    {
+      "path": "tools/HelL.Credentials.Verify/HelL.Credentials.Verify.csproj",
+      "sha256": "4723a7c77554b7c0b7d003a030b566895a5608ca88ce75228c65756f9e879460",
+      "bytes": 471
+    },
+    {
+      "path": "tools/HelL.Credentials.Verify/Program.cs",
+      "sha256": "47fd28c2df7de9c41972293102dc676a222ef333877024641bb17c7fa28d6be3",
+      "bytes": 12004
+    },
+    {
+      "path": "tools/HelL.MinecraftMcp/dist/activities.js",
+      "sha256": "77a97c5f5bd7dad9ad3c1ac50650331263789e5fe2058495aaffa8c45055c722",
+      "bytes": 5278
+    },
+    {
+      "path": "tools/HelL.MinecraftMcp/dist/crafting.js",
+      "sha256": "8f17a8eba737d80e9d7e7fe8dd5ab631ec735b6d2d70e1ae2e0b8e8dd78e5160",
+      "bytes": 1494
+    },
+    {
+      "path": "tools/HelL.MinecraftMcp/dist/game.js",
+      "sha256": "591ca17e14d933b1e3595370b402cbfb9de96dfe0a2d9ba51e38d7576e1c89d5",
+      "bytes": 15961
+    },
+    {
+      "path": "tools/HelL.MinecraftMcp/dist/server.js",
+      "sha256": "3ff09b9c6b7ef0528438b960196b9c7dd4c2ff8e76b306440001aa72fb1dbee8",
+      "bytes": 1729
+    },
+    {
+      "path": "tools/HelL.MinecraftMcp/dist/terrain.js",
+      "sha256": "95ea82ac26742b3bea64b5759277eec07dd3107874dd7ac4d3ac1d9f68f8b7f0",
+      "bytes": 1300
+    },
+    {
+      "path": "tools/HelL.MinecraftMcp/dist/tools.js",
+      "sha256": "2a107358c4f093046de7a219d0e9390f88b49a02609126cb5df54231fe50704c",
+      "bytes": 5063
+    },
+    {
+      "path": "tools/HelL.MinecraftMcp/dist/versions.json",
+      "sha256": "d410f74343679fb85dda10b02701e90ba5baa15115b92934be8bd73d2aabad00",
+      "bytes": 1408
+    },
+    {
+      "path": "tools/HelL.MinecraftMcp/package-lock.json",
+      "sha256": "b7706c8261b3bbd1ccf103f8f244b00c388d7d50ee74890745defa7595bd3598",
+      "bytes": 80774
+    },
+    {
+      "path": "tools/HelL.MinecraftMcp/package.json",
+      "sha256": "252d2e37386f3316777c1787884b41b9a1eab442de36b2b47f2c50bb0601961b",
+      "bytes": 568
+    },
+    {
+      "path": "tools/HelL.Mobile.Preview/AiReplayFixture.cs",
+      "sha256": "011f9fba480ce8374052a5db924957c9149b0586786c9b258badddd8ea2fcffa",
+      "bytes": 3975
+    },
+    {
+      "path": "tools/HelL.Mobile.Preview/HelL.Mobile.Preview.csproj",
+      "sha256": "f3e0bdeffcc3f6ec569ef2b8e96f6319075d7d919a9d485955e00cbae45fad1f",
+      "bytes": 383
+    },
+    {
+      "path": "tools/HelL.Mobile.Preview/Program.cs",
+      "sha256": "e622d27ba49e1eb030720a82833d986306b04ab282ba4dd5e288fa6740d99707",
+      "bytes": 3180
+    },
+    {
+      "path": "tools/HelL.Mobile.Preview/RemotePreviewFixture.cs",
+      "sha256": "c326418535267d03d234d9c8748fa2278f40cbe7af78bcbe7ba10ac40609b71c",
+      "bytes": 1332
+    },
+    {
+      "path": "tools/HelL.Relay.Acceptance/HelL.Relay.Acceptance.csproj",
+      "sha256": "b9bd550acfa5bc08ca53a5f4b27446755beb2f07dc3cd60a987bbfd07c867b2b",
+      "bytes": 391
+    },
+    {
+      "path": "tools/HelL.Relay.Acceptance/Program.cs",
+      "sha256": "ba6f4631bc99a05a5fb23828a8329f13c5402acb742510881dbb9df6679b29e6",
+      "bytes": 12062
+    },
+    {
+      "path": "tools/run_native_credentials.sh",
+      "sha256": "92a590966cea45327205db0a2f0b33744055d6e5aa6874e7777f09efd9cf2bb4",
+      "bytes": 4723
+    },
+    {
+      "path": "tools/verify_relay_container.py",
+      "sha256": "f3cea225a9be318ab76e2e050a648d512828a005794a96eb1997c9e9e95fd897",
+      "bytes": 17174
+    }
+  ]
+}

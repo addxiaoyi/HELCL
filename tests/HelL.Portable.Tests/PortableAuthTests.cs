@@ -118,13 +118,14 @@ public sealed class PortableAuthTests : IDisposable
     }
 
     [Fact]
-    public void LogoutClearsMemoryWhenTheSavedAccountCannotBeDeleted()
+    public void LogoutClearsMemoryWhenTheSavedAccountCannotBeRemoved()
     {
-        if (!OperatingSystem.IsWindows()) return;
         var session = new PortableAccount(vault);
         session.Login(true, _ => { }, _ => { }, default);
         string path = Path.Combine(root, "portable-account.json");
-        using (var held = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+        // Unix permits unlinking an open file; block the inventory read there, while retaining the Windows delete failure.
+        FileShare sharing = OperatingSystem.IsWindows() ? FileShare.Read : FileShare.None;
+        using (var held = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, sharing))
         {
             Assert.Throws<IOException>(session.Logout);
             Assert.False(session.IsSignedIn);

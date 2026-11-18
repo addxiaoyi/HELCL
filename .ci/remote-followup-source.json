@@ -1,16 +1,16 @@
 {
   "repository": "addxiaoyi/HELCL",
-  "baseCommit": "e82bf4a48db6b12d4851015000e112122287c9bb",
+  "baseCommit": "ccef7d15a31fee6887a9b966992bde5039237f4b",
   "files": [
     {
       "path": ".github/workflows/native-credentials.yml",
-      "sha256": "472fe35a0c23515b72ea152523caf808c47340090112c675db17e1b275efc2f2",
-      "bytes": 1736
+      "sha256": "dc267910992c8e7919c4b312a4609ac2d0ccf09f875a7fc3f8582e7425b4adff",
+      "bytes": 2033
     },
     {
       "path": ".github/workflows/relay-acceptance.yml",
-      "sha256": "db3089c00c2897da1e5161e1441be49d73a6c87b5811f3b95e850338ddc059f4",
-      "bytes": 1775
+      "sha256": "5b23a1940c1f30393f4b19db6c5aad6285a85773fe3ee1c3a0f944635b966086",
+      "bytes": 1864
     },
     {
       "path": ".github/workflows/remote-mobile-acceptance.yml",
@@ -21,6 +21,11 @@
       "path": "deploy/relay/compose.yml",
       "sha256": "d4c213b190c4cf47d52f5fcb7ba219cb1957c10d93ce227acfab46765beb707f",
       "bytes": 951
+    },
+    {
+      "path": "deploy/relay/Dockerfile",
+      "sha256": "f74f8b1e03f63a454fa65eedf2e45b55eebc9a0aab6fcac60124c69ac1c25e7f",
+      "bytes": 446
     },
     {
       "path": "deploy/relay/README.md",
@@ -1999,8 +2004,8 @@
     },
     {
       "path": "tests/HelL.Mobile.Tests/MobileChatTests.cs",
-      "sha256": "e82ddcbaadbe85daf2c2c6b2b75e7bd3562dd4a824064cc7b62345d358a99bcd",
-      "bytes": 9592
+      "sha256": "e64a4f4874b63ed40df116dce4b8dfc03bbad05298d32d807e590c86303db32f",
+      "bytes": 10119
     },
     {
       "path": "tests/HelL.Mobile.Tests/MobileRemoteTests.cs",
@@ -2014,8 +2019,8 @@
     },
     {
       "path": "tests/HelL.Portable.Tests/AccountMutationTests.cs",
-      "sha256": "bc42c73d3f9e12d7c451e804a2ccb51760c890c067fb7ec5e085ee565ac778d1",
-      "bytes": 5684
+      "sha256": "58734802b040b487a81af0f4ee72edcb6fa943f7ff2490cf01bfbcf24169177c",
+      "bytes": 7699
     },
     {
       "path": "tests/HelL.Portable.Tests/AccountVaultTests.cs",
@@ -2074,8 +2079,8 @@
     },
     {
       "path": "tests/HelL.Portable.Tests/PortableAuthTests.cs",
-      "sha256": "3dd09e5ca1420d5fb2819b7b50be3d6afff9f23c624157899b513c1742f16ea9",
-      "bytes": 8296
+      "sha256": "c52484699d969615269abaf0f1022af425d39b2b2ce3a160d9c60b7221cd5d7f",
+      "bytes": 8459
     },
     {
       "path": "tests/HelL.Portable.Tests/PortableInstallationTests.cs",
@@ -2573,6 +2578,11 @@
       "bytes": 2502
     },
     {
+      "path": "tests/test_prepare_remote_ci.py",
+      "sha256": "4e1a3c957e813f64038b40a67f68fc51dedf8e8ab25dba41ddaac7526411bca5",
+      "bytes": 1711
+    },
+    {
       "path": "tests/test_verify_relay_container.py",
       "sha256": "d445bbe46efad6d5dd5196c0cf805a94a698722be4c4c7edfac0b121165690ae",
       "bytes": 4466
@@ -2676,6 +2686,11 @@
       "path": "tools/HelL.Relay.Acceptance/Program.cs",
       "sha256": "ba6f4631bc99a05a5fb23828a8329f13c5402acb742510881dbb9df6679b29e6",
       "bytes": 12062
+    },
+    {
+      "path": "tools/prepare_remote_ci.py",
+      "sha256": "55d36d18fc4bc9668d712d25958fd387740e265ac9209d1066be6fcbc42728b2",
+      "bytes": 5396
     },
     {
       "path": "tools/run_native_credentials.sh",

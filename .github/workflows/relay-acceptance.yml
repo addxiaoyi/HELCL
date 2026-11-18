@@ -32,7 +32,9 @@ jobs:
       - name: Test encrypted invitations and relay boundaries
         run: dotnet test tests/HelL.Remote.Tests/HelL.Remote.Tests.csproj --artifacts-path "$RUNNER_TEMP/relay-unit" --logger 'trx;LogFileName=remote.trx' --results-directory artifacts/relay-acceptance --nologo
       - name: Check container cleanup and local-only safeguards
-        run: python3 -m unittest discover -s tests -p test_verify_relay_container.py
+        run: |
+          python3 -m unittest discover -s tests -p test_verify_relay_container.py
+          python3 -m unittest discover -s tests -p test_prepare_remote_ci.py
       - name: Build and exercise isolated HTTPS and WSS containers
         run: python3 tools/verify_relay_container.py
       - name: Upload test results and credential-free container receipt

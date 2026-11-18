@@ -166,8 +166,21 @@ public sealed class MobileChatTests : IDisposable
         var keys = new MemoryKeys();
         MobileAiProfile.Save(Config.CONFIG, keys, Profile);
         string oldId = Py.S(Config.CONFIG.Get("mobile_ai_key_id"));
-        using (var locked = new FileStream(Config.CONFIG_FILE, FileMode.Open, FileAccess.Read, FileShare.Read))
+        byte[] saved = File.ReadAllBytes(Config.CONFIG_FILE);
+        string previousFile = Config.CONFIG_FILE + ".rollback-fixture";
+        File.Move(Config.CONFIG_FILE, previousFile);
+        try
+        {
+            // Linux permits replacing an open file; a directory blocks file replacement on both platforms.
+            Directory.CreateDirectory(Config.CONFIG_FILE);
             Assert.ThrowsAny<Exception>(() => MobileAiProfile.Save(Config.CONFIG, keys, Profile with { Model = "different-model", ApiKey = "replacement" }));
+        }
+        finally
+        {
+            if (Directory.Exists(Config.CONFIG_FILE)) Directory.Delete(Config.CONFIG_FILE);
+            File.Move(previousFile, Config.CONFIG_FILE);
+        }
+        Assert.Equal(saved, File.ReadAllBytes(Config.CONFIG_FILE));
         Assert.Equal(oldId, Py.S(Config.CONFIG.Get("mobile_ai_key_id")));
         Assert.Equal(Profile.Model, MobileAiProfile.Read(Config.CONFIG, keys).Model);
         Assert.Equal(Profile.ApiKey, MobileAiProfile.Read(Config.CONFIG, keys).ApiKey);

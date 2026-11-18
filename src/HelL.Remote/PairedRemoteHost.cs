@@ -32,6 +32,8 @@ public sealed class PairedRemoteHost : IAsyncDisposable
         public PairedDevice Device { get; } = device;
         public RelayRoom Room { get; set; } = room;
         public CancellationTokenSource Lifetime { get; } = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+        public CancellationToken OwnerCancellation { get; } = cancellation;
+        public int StopRequested;
         public CancellationTokenSource? Connection { get; set; }
         public Func<RemoteHostInvite, CancellationToken, Task> Publish { get; } = publish;
         public DateTimeOffset RenewedAt { get; set; } = DateTimeOffset.UtcNow;
@@ -157,7 +159,7 @@ public sealed class PairedRemoteHost : IAsyncDisposable
             lock (gate)
             {
                 if (!sessions.Remove(deviceId, out session)) return;
-                session.Lifetime.Cancel();
+                RequestStop(session);
             }
             try { await session.Running.ConfigureAwait(false); }
             finally { await RemoteHostChannel.RevokeRoomAsync(http, relay, operatorToken, session.Room.Room, cancellation).ConfigureAwait(false); }
@@ -171,9 +173,13 @@ public sealed class PairedRemoteHost : IAsyncDisposable
         Task serving = ServeAsync(session, identity);
         Task monitoring = MonitorAsync(session);
         await Task.WhenAny(serving, monitoring).ConfigureAwait(false);
+        bool expectedStop = stopping.IsCancellationRequested || session.OwnerCancellation.IsCancellationRequested
+            || Volatile.Read(ref session.StopRequested) != 0;
         session.Lifetime.Cancel();
         try { await Task.WhenAll(serving, monitoring).ConfigureAwait(false); }
-        catch (OperationCanceledException) when (session.Lifetime.IsCancellationRequested) { }
+        catch (OperationCanceledException) when (expectedStop) { }
+        catch (OperationCanceledException error)
+        { throw new IOException("Remote hosting stopped because an internal operation timed out or was cancelled.", error); }
     }
 
     private async Task ServeAsync(Session session, X509Certificate2 identity)
@@ -229,7 +235,13 @@ public sealed class PairedRemoteHost : IAsyncDisposable
 
     private void PairingChanged(string deviceId)
     {
-        lock (gate) if (sessions.TryGetValue(deviceId, out Session? session)) session.Lifetime.Cancel();
+        lock (gate) if (sessions.TryGetValue(deviceId, out Session? session)) RequestStop(session);
+    }
+
+    private static void RequestStop(Session session)
+    {
+        Volatile.Write(ref session.StopRequested, 1);
+        session.Lifetime.Cancel();
     }
 
     public async ValueTask DisposeAsync()
@@ -238,14 +250,14 @@ public sealed class PairedRemoteHost : IAsyncDisposable
         stopping.Cancel();
         pairings.Changed -= PairingChanged;
         string[] devices;
-        lock (gate) foreach (Session session in sessions.Values) session.Lifetime.Cancel();
+        lock (gate) foreach (Session session in sessions.Values) RequestStop(session);
         await changes.WaitAsync().ConfigureAwait(false);
         try
         {
             lock (gate)
             {
                 devices = sessions.Keys.ToArray();
-                foreach (Session session in sessions.Values) session.Lifetime.Cancel();
+                foreach (Session session in sessions.Values) RequestStop(session);
             }
         }
         finally { changes.Release(); }

@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using HelL.Core.Launcher;
 
@@ -30,6 +31,10 @@ public sealed class BridgeServer : IDisposable
 		public List<KeyValuePair<string, string>> Headers = new List<KeyValuePair<string, string>>();
 
 		public bool CloseConnection;
+
+		public int ContentLength;
+
+		public bool BodyUnread;
 
 		public string Header(string name)
 		{
@@ -60,6 +65,10 @@ public sealed class BridgeServer : IDisposable
 	public const string TOKEN_HEADER = "X-HelL-Bridge-Token";
 
 	public const int MAX_REQUEST_BYTES = 4194304;
+
+	public const int MAX_HEADER_BYTES = 65536;
+
+	private const int MaxLineBytes = 65536;
 
 	public const int MAX_CONNECTIONS = 64;
 
@@ -390,28 +399,33 @@ public sealed class BridgeServer : IDisposable
 	}
 
 	internal static string ReadLine(Stream s, out bool eof, out bool tooLong, Action beforeRead = null)
+		=> ReadLine(s, out eof, out tooLong, out _, MaxLineBytes, beforeRead);
+
+	private static string ReadLine(Stream s, out bool eof, out bool tooLong, out int wireBytes, int maximumBytes, Action beforeRead)
 	{
 		eof = false;
 		tooLong = false;
+		wireBytes = 0;
 		MemoryStream memoryStream = new MemoryStream();
 		while (true)
 		{
+			if (wireBytes >= maximumBytes)
+			{
+				tooLong = true;
+				return null;
+			}
 			beforeRead?.Invoke();
 			int num = s.ReadByte();
 			if (num < 0)
 			{
-				eof = memoryStream.Length == 0;
+				eof = true;
 				break;
 			}
+			wireBytes++;
 			memoryStream.WriteByte((byte)num);
 			if (num == 10)
 			{
 				break;
-			}
-			if (memoryStream.Length > 65536)
-			{
-				tooLong = true;
-				return null;
 			}
 		}
 		byte[] array = memoryStream.ToArray();
@@ -439,6 +453,7 @@ public sealed class BridgeServer : IDisposable
 		string text = ReadLine(conn.In, out eof, out tooLong, () => ApplyReadDeadline(conn));
 		if (eof)
 		{
+			if (!string.IsNullOrEmpty(text)) SendError(conn, 400, "Incomplete request line", null);
 			return null;
 		}
 		if (tooLong)
@@ -470,17 +485,25 @@ public sealed class BridgeServer : IDisposable
 			request.Method = array[0];
 			request.Target = array[1];
 			int num = 0;
+			int headerBytes = 0;
 			while (true)
 			{
 				bool eof2;
 				bool tooLong2;
-				string text2 = ReadLine(conn.In, out eof2, out tooLong2, () => ApplyReadDeadline(conn));
+				string text2 = ReadLine(conn.In, out eof2, out tooLong2, out int wireBytes,
+					Math.Min(MaxLineBytes, MAX_HEADER_BYTES - headerBytes), () => ApplyReadDeadline(conn));
+				headerBytes += wireBytes;
 				if (tooLong2)
 				{
-					SendError(conn, 431, "Line too long", null);
+					SendError(conn, 431, "Request headers too large", request);
 					return null;
 				}
-				if (eof2 || text2.Length == 0)
+				if (eof2)
+				{
+					SendError(conn, 400, "Incomplete request headers", request);
+					return null;
+				}
+				if (text2.Length == 0)
 				{
 					break;
 				}
@@ -489,17 +512,18 @@ public sealed class BridgeServer : IDisposable
 					SendError(conn, 431, "Too many headers", null);
 					return null;
 				}
-				if ((text2[0] == ' ' || text2[0] == '\t') && request.Headers.Count > 0)
+				if (text2[0] == ' ' || text2[0] == '\t')
 				{
-					KeyValuePair<string, string> keyValuePair = request.Headers[request.Headers.Count - 1];
-					request.Headers[request.Headers.Count - 1] = new KeyValuePair<string, string>(keyValuePair.Key, keyValuePair.Value + " " + text2.Trim());
-					continue;
+					SendError(conn, 400, "Folded request headers are not supported", request);
+					return null;
 				}
 				int num2 = text2.IndexOf(':');
-				if (num2 > 0)
+				if (num2 <= 0 || !IsHeaderName(text2.Substring(0, num2)))
 				{
-					request.Headers.Add(new KeyValuePair<string, string>(text2.Substring(0, num2).Trim(), text2.Substring(num2 + 1).Trim(' ', '\t')));
+					SendError(conn, 400, "Invalid request header", request);
+					return null;
 				}
+				request.Headers.Add(new KeyValuePair<string, string>(text2.Substring(0, num2), text2.Substring(num2 + 1).Trim(' ', '\t')));
 			}
 			string text3 = request.Header("Connection") ?? "";
 			if (text3.Equals("close", StringComparison.OrdinalIgnoreCase))
@@ -509,6 +533,12 @@ public sealed class BridgeServer : IDisposable
 			else if (text3.Equals("keep-alive", StringComparison.OrdinalIgnoreCase) && string.CompareOrdinal(request.Version, "HTTP/1.1") >= 0)
 			{
 				request.CloseConnection = false;
+			}
+			if (!ReadFraming(conn, request)) return null;
+			if (request.ContentLength > 0 && (request.Method == "GET" || request.Method == "OPTIONS"))
+			{
+				SendError(conn, 400, "Request body is not supported for this method", request);
+				return null;
 			}
 			if ((request.Header("Expect") ?? "").Equals("100-continue", StringComparison.OrdinalIgnoreCase) && string.CompareOrdinal(request.Version, "HTTP/1.1") >= 0)
 			{
@@ -528,6 +558,53 @@ public sealed class BridgeServer : IDisposable
 		}
 		SendError(conn, 400, "Bad request syntax (" + Py.ReprStr(text) + ")", null);
 		return null;
+	}
+
+	private static bool IsHeaderName(string name)
+	{
+		foreach (char character in name)
+		{
+			if ((character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z')
+				|| (character >= '0' && character <= '9') || "!#$%&'*+-.^_`|~".IndexOf(character) >= 0) continue;
+			return false;
+		}
+		return name.Length > 0;
+	}
+
+	private bool ReadFraming(Conn conn, Request request)
+	{
+		string length = null;
+		foreach (KeyValuePair<string, string> header in request.Headers)
+		{
+			if (header.Key.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase))
+			{
+				SendError(conn, 400, "Transfer-Encoding is not supported", request);
+				return false;
+			}
+			if (!header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase)) continue;
+			if (length != null)
+			{
+				SendError(conn, 400, "Duplicate Content-Length", request);
+				return false;
+			}
+			length = header.Value;
+		}
+		if (length == null) return true;
+		bool digits = length.Length > 0;
+		foreach (char character in length) digits &= character >= '0' && character <= '9';
+		if (!digits)
+		{
+			SendError(conn, 400, "Invalid Content-Length", request);
+			return false;
+		}
+		if (!long.TryParse(length, NumberStyles.None, CultureInfo.InvariantCulture, out long bytes) || bytes > MAX_REQUEST_BYTES)
+		{
+			SendError(conn, 413, "Request body too large", request);
+			return false;
+		}
+		request.ContentLength = (int)bytes;
+		request.BodyUnread = bytes > 0;
+		return true;
 	}
 
 	internal static void SplitTarget(string target, out string path, out string query)
@@ -703,6 +780,12 @@ public sealed class BridgeServer : IDisposable
 		if (extra != null)
 		{
 			list.AddRange(extra);
+		}
+		if (req.CloseConnection || req.BodyUnread)
+		{
+			// A rejected body must never be parsed as the next keep-alive request.
+			req.CloseConnection = true;
+			list.Add(new KeyValuePair<string, string>("Connection", "close"));
 		}
 		WriteHead(conn, req, code, list);
 		if (body.Length != 0)
@@ -940,24 +1023,7 @@ public sealed class BridgeServer : IDisposable
 			{
 				return;
 			}
-			string o = req.Header("Content-Length");
-			long num;
-			try
-			{
-				num = (Py.Truthy(o) ? Py.Int(o) : 0);
-			}
-			catch (PyException)
-			{
-				SendJson(conn, req, 400, Err("invalid content length"), origin2);
-				req.CloseConnection = true;
-				return;
-			}
-			if (num < 0 || num > 4194304)
-			{
-				SendJson(conn, req, 413, Err("request body too large"), origin2);
-				req.CloseConnection = true;
-				return;
-			}
+			int num = req.ContentLength;
 			byte[] raw;
 			try
 			{
@@ -976,15 +1042,24 @@ public sealed class BridgeServer : IDisposable
 				SendJson(conn, req, 400, Err("incomplete request body"), origin2);
 				return;
 			}
+			req.BodyUnread = false;
 			object obj;
+			object requestId = null;
 			try
 			{
 				string text = Utils.DecodeUtf8Strict(raw);
-				obj = PyJson.Loads((text.Length > 0) ? text : "{}");
+				text = text.Length > 0 ? text : "{}";
+				using (JsonDocument document = JsonDocument.Parse(text)) ValidateRpcEnvelope(document.RootElement, out requestId);
+				obj = PyJson.Loads(text);
 			}
-			catch (Exception ex2) when (ex2 is UnicodeDecodeError || ex2 is JSONDecodeError)
+			catch (RpcError error)
 			{
-				SendJson(conn, req, 400, PyDict.Of("jsonrpc", "2.0", "id", null, "error", PyDict.Of("code", -32700L, "message", ex2.Message)), origin2);
+				SendJson(conn, req, 400, PyDict.Of("jsonrpc", "2.0", "id", requestId, "error", PyDict.Of("code", error.Code, "message", error.Message)), origin2);
+				return;
+			}
+			catch (Exception ex2) when (ex2 is UnicodeDecodeError || ex2 is JSONDecodeError || ex2 is JsonException || ex2 is OverflowException)
+			{
+				SendJson(conn, req, 400, PyDict.Of("jsonrpc", "2.0", "id", null, "error", PyDict.Of("code", -32700L, "message", "invalid or excessively nested JSON")), origin2);
 				return;
 			}
 			if (!(obj is PyDict pyDict))
@@ -994,7 +1069,7 @@ public sealed class BridgeServer : IDisposable
 			}
 			object obj2 = pyDict.Get("id");
 			object obj3 = pyDict.Get("method");
-			object obj4 = Py.Or(pyDict.Get("params"), new PyDict());
+			object obj4 = pyDict.ContainsKey("params") ? pyDict.Get("params") : new PyDict();
 			if (!Py.Truthy(obj3) || !(obj3 is string method))
 			{
 				SendJson(conn, req, 400, PyDict.Of("jsonrpc", "2.0", "id", obj2, "error", PyDict.Of("code", -32600L, "message", "method required")), origin2);
@@ -1026,6 +1101,48 @@ public sealed class BridgeServer : IDisposable
 				return;
 			}
 			Send(conn, req, 200, bytes, "application/json; charset=utf-8", origin2);
+		}
+	}
+
+	private static void ValidateRpcEnvelope(JsonElement request, out object id)
+	{
+		id = null;
+		if (request.ValueKind != JsonValueKind.Object) throw new RpcError(-32600, "request must be an object");
+		ValidateJsonValue(request);
+		// Existing unversioned clients remain supported; an explicit version must match.
+		if (request.TryGetProperty("jsonrpc", out JsonElement version)
+			&& (version.ValueKind != JsonValueKind.String || version.GetString() != "2.0"))
+			throw new RpcError(-32600, "unsupported jsonrpc version");
+		if (request.TryGetProperty("id", out JsonElement supplied))
+		{
+			if (supplied.ValueKind != JsonValueKind.Null && supplied.ValueKind != JsonValueKind.String && supplied.ValueKind != JsonValueKind.Number)
+				throw new RpcError(-32600, "id must be a string, number or null");
+			id = PyJson.Loads(supplied.GetRawText());
+		}
+		if (request.TryGetProperty("params", out JsonElement parameters)
+			&& parameters.ValueKind != JsonValueKind.Object && parameters.ValueKind != JsonValueKind.Array)
+			throw new RpcError(-32602, "params must be an object or array");
+	}
+
+	private static void ValidateJsonValue(JsonElement value)
+	{
+		if (value.ValueKind == JsonValueKind.Object)
+		{
+			var names = new HashSet<string>(StringComparer.Ordinal);
+			foreach (JsonProperty field in value.EnumerateObject())
+			{
+				if (!names.Add(field.Name)) throw new RpcError(-32600, "duplicate JSON object member");
+				ValidateJsonValue(field.Value);
+			}
+		}
+		else if (value.ValueKind == JsonValueKind.Array)
+			foreach (JsonElement item in value.EnumerateArray()) ValidateJsonValue(item);
+		else if (value.ValueKind == JsonValueKind.Number)
+		{
+			string number = value.GetRawText();
+			bool floatingPoint = number.IndexOf('.') >= 0 || number.IndexOf('e') >= 0 || number.IndexOf('E') >= 0;
+			if (floatingPoint && (!value.TryGetDouble(out double parsed) || double.IsNaN(parsed) || double.IsInfinity(parsed)))
+				throw new RpcError(-32600, "floating-point number is outside the supported finite range");
 		}
 	}
 

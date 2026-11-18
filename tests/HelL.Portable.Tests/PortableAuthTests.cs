@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using HelL.Core;
 using HelL.Core.Launcher;
+using HelL.Core.Platform;
 using HelL.Portable;
 using Xunit;
 
@@ -23,6 +24,9 @@ public sealed class PortableAuthTests : IDisposable
     private bool transient;
     private bool rejectRefresh;
     private bool failEntitlement;
+    private bool pauseRefresh;
+    private readonly TaskCompletionSource refreshArrived = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource resumeRefresh = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     public PortableAuthTests()
     {
@@ -51,6 +55,11 @@ public sealed class PortableAuthTests : IDisposable
             string path = new Uri(context.Request.Headers["X-HelL-Replay-Url"]!).AbsolutePath;
             Interlocked.Increment(ref calls);
             string body = new StreamReader(context.Request.InputStream).ReadToEnd();
+            if (pauseRefresh && path == "/oauth20_token.srf" && body.Contains("grant_type=refresh_token"))
+            {
+                refreshArrived.TrySetResult();
+                await resumeRefresh.Task;
+            }
             object reply;
             int status = 200;
             if (path == "/oauth20_token.srf" && rejectRefresh && body.Contains("grant_type=refresh_token"))
@@ -91,6 +100,109 @@ public sealed class PortableAuthTests : IDisposable
         restored.Logout();
         Assert.Empty(keys.Keys);
         Assert.Null(vault.Load());
+    }
+
+    [Fact]
+    public async Task ADeviceLoginFinishingAfterLogoutCannotRestoreOrPersistTheAccount()
+    {
+        var session = new PortableAccount(vault);
+        using var codeShown = new ManualResetEventSlim();
+        using var resume = new ManualResetEventSlim();
+        Task<Exception?> login = Task.Run<Exception?>(() => Record.Exception(() => session.Login(true, _ =>
+        {
+            codeShown.Set();
+            if (!resume.Wait(TimeSpan.FromSeconds(5))) throw new TimeoutException("The login test was not resumed.");
+        }, _ => { }, default)));
+        try
+        {
+            Assert.True(codeShown.Wait(TimeSpan.FromSeconds(5)));
+            session.Logout();
+        }
+        finally { resume.Set(); }
+        Exception? error = await login.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.False(session.IsSignedIn);
+        Assert.IsType<InvalidOperationException>(error);
+        Assert.Null(vault.Load());
+        Assert.Empty(keys.Keys);
+    }
+
+    [Fact]
+    public async Task ARefreshFinishingAfterLogoutFailsAsAStaleSessionWithoutRewritingCredentials()
+    {
+        var session = new PortableAccount(vault);
+        session.Login(true, _ => { }, _ => { }, default);
+        pauseRefresh = true;
+        Task<Exception?> refresh = Task.Run<Exception?>(() => Record.Exception(() => session.ForLaunch(default, forceRefresh: true)));
+        try
+        {
+            await refreshArrived.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            session.Logout();
+        }
+        finally { resumeRefresh.TrySetResult(); }
+        Exception? error = await refresh.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.False(session.IsSignedIn);
+        Assert.IsType<InvalidOperationException>(error);
+        Assert.Null(vault.Load());
+        Assert.Empty(keys.Keys);
+    }
+
+    [Fact]
+    public async Task AnOldRefreshCannotOverwriteANewerSessionForTheSamePlayer()
+    {
+        var session = new PortableAccount(vault);
+        session.Login(true, _ => { }, _ => { }, default);
+        pauseRefresh = true;
+        Task<Exception?> refresh = Task.Run<Exception?>(() => Record.Exception(() => session.ForLaunch(default, forceRefresh: true)));
+        byte[] saved;
+        try
+        {
+            await refreshArrived.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            vault.Save(AccountVaultTests.Account("newer-session-token"));
+            session.Restore();
+            saved = File.ReadAllBytes(Path.Combine(root, "portable-account.json"));
+        }
+        finally { resumeRefresh.TrySetResult(); }
+        Exception? error = await refresh.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(session.IsSignedIn);
+        Assert.IsType<InvalidOperationException>(error);
+        Assert.Equal(saved, File.ReadAllBytes(Path.Combine(root, "portable-account.json")));
+        Assert.Equal("newer-session-token", vault.Load()!["access_token"]);
+        Assert.Single(keys.Keys.Select(_ => true));
+    }
+
+    [Fact]
+    public void FailedPersistenceShowsWhenItsPartiallyWrittenKeyCannotBeCleaned()
+    {
+        keys.FailAfterWrites = true;
+        keys.FailDeletes = true;
+        var session = new PortableAccount(vault);
+        session.Login(true, _ => { }, _ => { }, default);
+        Assert.True(session.IsSignedIn);
+        Assert.NotNull(vault.CleanupWarning);
+        Assert.Contains(vault.CleanupWarning!, session.Notice);
+        Assert.False(File.Exists(Path.Combine(root, "portable-account.json")));
+    }
+
+    [Fact]
+    public async Task ARestoreFinishingAfterLogoutCannotReviveTheSavedAccount()
+    {
+        vault.Save(AccountVaultTests.Account());
+        using var delayed = new DelayedReadStore(keys);
+        var session = new PortableAccount(new AccountVault(root, delayed));
+        Task restore = Task.Run(session.Restore);
+        string notice;
+        try
+        {
+            Assert.True(delayed.Started.Wait(TimeSpan.FromSeconds(5)));
+            session.Logout();
+            notice = session.Notice;
+        }
+        finally { delayed.Resume.Set(); }
+        await restore.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.False(session.IsSignedIn);
+        Assert.Equal(notice, session.Notice);
+        Assert.Null(vault.Load());
+        Assert.Empty(keys.Keys);
     }
 
     [Fact]
@@ -183,9 +295,26 @@ public sealed class PortableAuthTests : IDisposable
 
     public void Dispose()
     {
+        resumeRefresh.TrySetResult();
         listener.Close();
         server.GetAwaiter().GetResult();
         Environment.SetEnvironmentVariable("TIPCL_HTTP_REPLAY", previous);
         Directory.Delete(root, recursive: true);
+    }
+
+    private sealed class DelayedReadStore(ISecretStore inner) : ISecretStore, IDisposable
+    {
+        public ManualResetEventSlim Started { get; } = new();
+        public ManualResetEventSlim Resume { get; } = new();
+        public string GetPassword(string service, string username)
+        {
+            string value = inner.GetPassword(service, username);
+            Started.Set();
+            if (!Resume.Wait(TimeSpan.FromSeconds(5))) throw new TimeoutException("The restore test was not resumed.");
+            return value;
+        }
+        public void SetPassword(string service, string username, string password) => inner.SetPassword(service, username, password);
+        public void DeletePassword(string service, string username) => inner.DeletePassword(service, username);
+        public void Dispose() { Started.Dispose(); Resume.Dispose(); }
     }
 }

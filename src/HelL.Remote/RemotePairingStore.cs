@@ -20,6 +20,7 @@ public sealed class RemotePairingStore
 {
     private const int MaxDevices = 16;
     private const int MaxFileBytes = 1024 * 1024;
+    private const int MaxSnapshotReloads = 2;
     private static readonly byte[] Context = Encoding.UTF8.GetBytes("HelL device pairing v1");
     private readonly object gate = new();
     private readonly string path;
@@ -117,20 +118,21 @@ public sealed class RemotePairingStore
         Changed?.Invoke(deviceId);
     }
 
-    private State Load()
+    private State Load(int reloads = 0)
     {
         byte[]? key = null;
         byte[]? plain = null;
         try
         {
-            using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
-            if (file.Length is < 1 or > MaxFileBytes) throw Corrupt();
-            Envelope envelope = JsonSerializer.Deserialize<Envelope>(file) ?? throw Corrupt();
+            Envelope envelope = ReadEnvelope();
             ValidateId(envelope.KeyId);
             if (envelope.Schema != 1) throw Corrupt();
             string storedKey = secrets.Read(envelope.KeyId);
             if (string.IsNullOrEmpty(storedKey))
+            {
+                if (reloads < MaxSnapshotReloads && ReadEnvelope().KeyId != envelope.KeyId) return Load(reloads + 1);
                 throw new InvalidOperationException("The system key for this device is unavailable. Restore the key store or pair this device again.");
+            }
             key = Convert.FromBase64String(storedKey);
             byte[] nonce = Convert.FromBase64String(envelope.Nonce);
             byte[] tag = Convert.FromBase64String(envelope.Tag);
@@ -160,6 +162,13 @@ public sealed class RemotePairingStore
             if (key is not null) CryptographicOperations.ZeroMemory(key);
             if (plain is not null) CryptographicOperations.ZeroMemory(plain);
         }
+    }
+
+    private Envelope ReadEnvelope()
+    {
+        using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
+        if (file.Length is < 1 or > MaxFileBytes) throw Corrupt();
+        return JsonSerializer.Deserialize<Envelope>(file) ?? throw Corrupt();
     }
 
     private void Commit(State next)

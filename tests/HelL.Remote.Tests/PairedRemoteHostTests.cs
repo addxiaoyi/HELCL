@@ -124,6 +124,35 @@ public sealed class PairedRemoteHostTests
         Assert.True(fixture.Host.Completion(fixture.Phone.Offer.DeviceId).IsCompleted);
     }
 
+    [Fact]
+    public async Task AnInternalRenewalCancellationCannotReportNormalHostingCompletion()
+    {
+        await using var fixture = await Setup.OpenAsync(TimeSpan.FromMilliseconds(100), new RenewalCancelledHandler());
+        await fixture.Host.StartAsync(fixture.Phone.Offer.DeviceId, (_, _) => Task.CompletedTask, fixture.Timeout.Token);
+        await Assert.ThrowsAsync<IOException>(() => fixture.Host.Completion(fixture.Phone.Offer.DeviceId).WaitAsync(fixture.Timeout.Token));
+        await Assert.ThrowsAsync<IOException>(() => fixture.Host.StopAsync(fixture.Phone.Offer.DeviceId, fixture.Timeout.Token));
+    }
+
+    [Fact]
+    public async Task AnInternalInvitationPublicationCancellationCannotReportNormalHostingCompletion()
+    {
+        await using var fixture = await Setup.OpenAsync(TimeSpan.FromMilliseconds(100));
+        int publications = 0;
+        await fixture.Host.StartAsync(fixture.Phone.Offer.DeviceId, (_, _) => ++publications == 1
+            ? Task.CompletedTask : Task.FromCanceled(new CancellationToken(true)), fixture.Timeout.Token);
+        await Assert.ThrowsAsync<IOException>(() => fixture.Host.Completion(fixture.Phone.Offer.DeviceId).WaitAsync(fixture.Timeout.Token));
+        await Assert.ThrowsAsync<IOException>(() => fixture.Host.StopAsync(fixture.Phone.Offer.DeviceId, fixture.Timeout.Token));
+    }
+
+    private sealed class RenewalCancelledHandler : DelegatingHandler
+    {
+        internal RenewalCancelledHandler() : base(new HttpClientHandler()) { }
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            request.RequestUri!.AbsolutePath.EndsWith("/renew", StringComparison.Ordinal)
+                ? Task.FromCanceled<HttpResponseMessage>(new CancellationToken(true))
+                : base.SendAsync(request, cancellationToken);
+    }
+
     private sealed class Secrets : IRemoteSecretStore
     {
         private readonly Dictionary<string, string> keys = [];
@@ -142,12 +171,14 @@ public sealed class PairedRemoteHostTests
         public PairedRemoteClient Client { get; private set; } = null!;
         public CancellationTokenSource Timeout { get; } = new(TimeSpan.FromSeconds(25));
         public int Executed;
-        private readonly HttpClient http = new();
+        private readonly HttpClient http;
         private WebApplication app = null!;
 
-        public static async Task<Setup> OpenAsync(TimeSpan? renewal = null)
+        private Setup(HttpMessageHandler? handler) => http = handler is null ? new HttpClient() : new HttpClient(handler);
+
+        public static async Task<Setup> OpenAsync(TimeSpan? renewal = null, HttpMessageHandler? handler = null)
         {
-            var fixture = new Setup();
+            var fixture = new Setup(handler);
             string token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
             fixture.app = RelayApp.Build([], builder =>
             {

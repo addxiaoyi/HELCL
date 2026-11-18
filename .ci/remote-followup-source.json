@@ -1,6 +1,6 @@
 {
   "repository": "addxiaoyi/HELCL",
-  "baseCommit": "37eff5e203eaaaa14ad962a387a146520003b821",
+  "baseCommit": "781f246ed643bdfe29f3cf2003757cc000ec9888",
   "files": [
     {
       "path": ".github/workflows/native-credentials.yml",
@@ -2584,8 +2584,8 @@
     },
     {
       "path": "tests/test_verify_relay_container.py",
-      "sha256": "d445bbe46efad6d5dd5196c0cf805a94a698722be4c4c7edfac0b121165690ae",
-      "bytes": 4466
+      "sha256": "c3b475c374056a42744aee95d4b9fe50e409df80bdd3a47496ae5628cf63ccb1",
+      "bytes": 5876
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
@@ -2699,8 +2699,8 @@
     },
     {
       "path": "tools/verify_relay_container.py",
-      "sha256": "f3cea225a9be318ab76e2e050a648d512828a005794a96eb1997c9e9e95fd897",
-      "bytes": 17174
+      "sha256": "60b9b90041ff99b1edcb3af6bb1f7dad1808b72f108cee6d7200fad62713a363",
+      "bytes": 17735
     }
   ]
 }

@@ -160,10 +160,17 @@ class RelayAcceptance:
             "-f", str(context / "deploy" / "relay" / "Dockerfile"), str(context),
         ], timeout=900, show=True)
         self.check("current Relay Dockerfile builds from the minimal context")
+        self.digests()
         network = self.prefix + "-network"
         self.resource("network", network)
         self.command(self.docker + ["network", "create", "--label", f"{LABEL}={self.run_id}", network])
         subnet = self.command(self.docker + ["network", "inspect", network, "--format", "{{(index .IPAM.Config 0).Subnet}}"])
+        owner = self.command(self.docker + ["network", "inspect", network, "--format", "{{index .Labels \"" + LABEL + "\"}}"])
+        if owner != self.run_id:
+            raise AcceptanceFailure("Refusing to reconfigure a network without this run's ownership label.")
+        # Reuse Docker's conflict-free choice, but explicitly declare it for the fixed trusted-proxy IP.
+        self.command(self.docker + ["network", "rm", network])
+        self.command(self.docker + ["network", "create", "--label", f"{LABEL}={self.run_id}", "--subnet", subnet, network])
         proxy_ip = str(ipaddress.ip_network(subnet).network_address + 10)
         state = self.prefix + "-state"
         probe = self.prefix + "-probe"
@@ -209,7 +216,6 @@ class RelayAcceptance:
             PROXY_IMAGE,
         ])
         self.command(self.docker + ["exec", proxy, "nginx", "-t"])
-        self.digests()
         return relay, network, probe
 
     def wait_healthy(self, relay: str) -> None:

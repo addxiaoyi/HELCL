@@ -85,6 +85,32 @@ class RelayContainerVerifierTests(unittest.TestCase):
         probe.secrets.append("private-test-credential")
         self.assertEqual("failure: [redacted]", probe.redact("failure: private-test-credential"))
 
+    def test_static_proxy_ip_uses_an_explicit_owned_subnet(self):
+        probe = self.probe()
+        explicit_subnet = False
+        commands = []
+
+        def docker(args, **_):
+            nonlocal explicit_subnet
+            commands.append(args)
+            if "network" in args and "create" in args:
+                explicit_subnet = "--subnet" in args
+            if "network" in args and "inspect" in args:
+                return probe.run_id if "Labels" in args[-1] else "172.30.0.0/16"
+            if relay.PROXY_IMAGE in args and "--ip" in args and not explicit_subnet:
+                raise relay.AcceptanceFailure("user specified IP address requires user configured subnets")
+            return ""
+
+        with tempfile.TemporaryDirectory() as temporary:
+            probe.temporary = Path(temporary)
+            with patch.object(probe, "command", side_effect=docker), patch.object(probe, "wait_healthy"), patch.object(probe, "digests"):
+                probe.start(Path(temporary) / "context", Path(temporary) / "certificates")
+        self.assertTrue(explicit_subnet)
+        configured = [args for args in commands if "network" in args and "create" in args and "--subnet" in args]
+        self.assertEqual(1, len(configured))
+        self.assertEqual("172.30.0.0/16", configured[0][configured[0].index("--subnet") + 1])
+        self.assertIn(f"{relay.LABEL}={probe.run_id}", configured[0])
+
 
 if __name__ == "__main__":
     unittest.main()

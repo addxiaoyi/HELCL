@@ -759,9 +759,13 @@ public static class Utils
 		{
 			if (File.Exists(dst))
 			{
-				File.Delete(dst);
+				// Never delete the installed file before its replacement has committed.
+				File.Replace(src, dst, null);
 			}
-			File.Move(src, dst);
+			else
+			{
+				File.Move(src, dst);
+			}
 		}
 	}
 

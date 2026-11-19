@@ -1,0 +1,33 @@
+name: Portable backend CI
+
+on:
+  pull_request:
+    branches: ['codex/remote-followup-ci-20261118-02']
+    paths: ['src/HelL.Core/**', 'src/HelL.Contracts/**', 'src/HelL/Core/**', 'tests/HelL.Portable.Tests/**', '.github/workflows/portable-ci.yml']
+  push:
+    branches: ['codex/backend-followup-ci-*']
+    paths: ['src/HelL.Core/**', 'src/HelL.Contracts/**', 'src/HelL/Core/**', 'tests/HelL.Portable.Tests/**', '.github/workflows/portable-ci.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        fail-fast: false
+        os: [windows-latest, ubuntu-24.04, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: dotnet build src/HelL.Core/HelL.Core.csproj -c Release --no-incremental --nologo
+      - run: dotnet test tests/HelL.Portable.Tests/HelL.Portable.Tests.csproj -c Release --nologo

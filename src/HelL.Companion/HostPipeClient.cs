@@ -26,17 +26,37 @@ public static class HostPipeClient
         await HostFrames.WriteAsync(pipe, JsonSerializer.SerializeToUtf8Bytes(new HostPipeHello { SessionToken = sessionToken }), timeout.Token).ConfigureAwait(false);
         byte[] payload = await HostFrames.ReadAsync(pipe, timeout.Token).ConfigureAwait(false)
             ?? throw new IOException("The local host rejected the companion connection.");
-        HostPipeWelcome welcome = JsonSerializer.Deserialize<HostPipeWelcome>(payload)
-            ?? throw new InvalidDataException("The local host handshake is invalid.");
+        HostPipeWelcome welcome = ReadMessage<HostPipeWelcome>(payload, "Protocol", "Ok", "Device");
         if (!welcome.Ok || welcome.Protocol != HostProtocol.Version || string.IsNullOrWhiteSpace(welcome.Device))
             throw new InvalidDataException("The local host handshake is incompatible.");
         await HostFrames.WriteAsync(pipe, JsonSerializer.SerializeToUtf8Bytes(request), timeout.Token).ConfigureAwait(false);
         payload = await HostFrames.ReadAsync(pipe, timeout.Token).ConfigureAwait(false)
             ?? throw new EndOfStreamException("The local host did not return a reply.");
-        HostReply reply = JsonSerializer.Deserialize<HostReply>(payload)
-            ?? throw new InvalidDataException("The local host reply is invalid.");
+        HostReply reply = ReadMessage<HostReply>(payload, "Protocol", "RequestId", "Ok", "Device", "Tasks");
         if (reply.Protocol != HostProtocol.Version || reply.RequestId != request.RequestId || reply.Device != welcome.Device)
             throw new InvalidDataException("The local host reply does not match the request.");
+        if (reply.Tasks is null || reply.ErrorCode is null || reply.Error is null
+            || (reply.Ok && (reply.ErrorCode.Length != 0 || reply.Error.Length != 0))
+            || (!reply.Ok && (string.IsNullOrWhiteSpace(reply.ErrorCode) || string.IsNullOrWhiteSpace(reply.Error)))
+            || reply.Tasks.Any(task => task is null || string.IsNullOrWhiteSpace(task.Id) || task.Id.Length > 128
+                || task.Title is null || task.State is not ("running" or "completed" or "failed")))
+            throw new InvalidDataException("The local host reply contains invalid state or contradictory outcome fields.");
         return reply;
+    }
+
+    private static T ReadMessage<T>(byte[] payload, params string[] required) where T : class
+    {
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(payload);
+            if (document.RootElement.ValueKind != JsonValueKind.Object) throw new JsonException();
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (JsonProperty field in document.RootElement.EnumerateObject())
+                if (!names.Add(field.Name)) throw new JsonException();
+            foreach (string field in required)
+                if (!names.Contains(field)) throw new JsonException();
+            return JsonSerializer.Deserialize<T>(payload) ?? throw new JsonException();
+        }
+        catch (JsonException) { throw new InvalidDataException("The local host message is malformed or incompatible."); }
     }
 }

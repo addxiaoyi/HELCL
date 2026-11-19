@@ -26,6 +26,7 @@ namespace HelL.Core;
 public sealed class HostPipeServer : IDisposable
 {
     private const int HandshakeBytes = 4096;
+    private const int HandshakeSeconds = 5;
     private readonly HostCommandService commands;
     private readonly HostPermission[] permissions;
     private readonly byte[] tokenHash;
@@ -73,7 +74,8 @@ public sealed class HostPipeServer : IDisposable
                     if (!SameUser(pipe)) throw new UnauthorizedAccessException("The local companion user differs from the owner.");
                     using (var session = CancellationTokenSource.CreateLinkedTokenSource(cancellation))
                     {
-                        session.CancelAfter(TimeSpan.FromSeconds(30));
+                        // Release unauthenticated peers before the real client's 15-second budget expires.
+                        session.CancelAfter(TimeSpan.FromSeconds(HandshakeSeconds));
                         using (session.Token.Register(pipe.Dispose)) await ServeAsync(pipe, session).ConfigureAwait(false);
                     }
                 }
@@ -117,9 +119,10 @@ public sealed class HostPipeServer : IDisposable
     {
         byte[]? payload = await HostFrames.ReadAsync(pipe, session.Token, HandshakeBytes).ConfigureAwait(false);
         if (payload == null || payload.Length > HandshakeBytes) return;
-        HostPipeHello? hello = JsonSerializer.Deserialize<HostPipeHello>(payload);
+        HostPipeHello hello = ReadMessage<HostPipeHello>(payload, "Protocol", "Role", "SessionToken");
         if (hello == null || hello.Protocol != HostProtocol.Version || hello.Role != "companion" || !MatchesToken(hello.SessionToken))
             throw new UnauthorizedAccessException("The local companion handshake was rejected.");
+        session.CancelAfter(TimeSpan.FromSeconds(30));
         await HostFrames.WriteAsync(pipe, JsonSerializer.SerializeToUtf8Bytes(new HostPipeWelcome { Ok = true, Device = device }), session.Token).ConfigureAwait(false);
         while (!session.IsCancellationRequested)
         {
@@ -127,13 +130,25 @@ public sealed class HostPipeServer : IDisposable
             payload = await HostFrames.ReadAsync(pipe, session.Token).ConfigureAwait(false);
             if (payload == null) return;
             HostRequest? request;
-            try { request = JsonSerializer.Deserialize<HostRequest>(payload); }
+            try { request = ReadMessage<HostRequest>(payload, "Protocol", "RequestId", "Command"); }
             catch (JsonException) { request = null; }
             HostReply reply = request == null
                 ? new HostReply { Device = device, ErrorCode = "invalid_request", Error = "The host request is not valid JSON." }
                 : commands.Execute(request, permissions);
             await HostFrames.WriteAsync(pipe, JsonSerializer.SerializeToUtf8Bytes(reply), session.Token).ConfigureAwait(false);
         }
+    }
+
+    private static T ReadMessage<T>(byte[] payload, params string[] required) where T : class
+    {
+        using JsonDocument document = JsonDocument.Parse(payload);
+        if (document.RootElement.ValueKind != JsonValueKind.Object) throw new JsonException("The pipe message must be an object.");
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (JsonProperty field in document.RootElement.EnumerateObject())
+            if (!names.Add(field.Name)) throw new JsonException("The pipe message contains duplicate fields.");
+        foreach (string field in required)
+            if (!names.Contains(field)) throw new JsonException("The pipe message is missing required fields.");
+        return JsonSerializer.Deserialize<T>(payload) ?? throw new JsonException("The pipe message is empty.");
     }
 
     private bool MatchesToken(string? supplied)

@@ -18,21 +18,24 @@ TREES = (
     "tests/HelL.Remote.Tests", "tests/HelL.Portable.Tests", "tests/HelL.Mobile.Tests",
     "tools/HelL.Credentials.Verify", "tools/HelL.Relay.Acceptance",
     "tools/HelL.Companion.Host", "tools/HelL.Mobile.Preview", "deploy/relay",
+    "tools/HelL.Remote.Stress", "tests/HelL.Remote.Stress.Tests",
     "docs/licenses",
 )
 FILES = (
     "deploy/relay/Dockerfile",
+    ".github/workflows/portable-ci.yml",
     "src/HelL/Models/CatalogItem.cs", "src/HelL.Android/CredentialEnvelope.cs",
-    "src/HelL.Desktop/Models/DesktopTask.cs", "src/HelL.Desktop/Controls/ProjectPicture.cs",
-    "src/HelL.Desktop/Services/DesktopImages.cs", "src/HelL.Desktop/Services/ImageBounds.cs",
+    "src/HelL.Desktop/Models/DesktopTask.cs",
     "tools/HelL.MinecraftMcp/package.json", "tools/HelL.MinecraftMcp/package-lock.json",
     "tools/run_native_credentials.sh", "tools/verify_relay_container.py",
     "tests/test_verify_relay_container.py", ".github/workflows/native-credentials.yml",
     "tools/prepare_remote_ci.py", "tests/test_prepare_remote_ci.py",
     ".github/workflows/relay-acceptance.yml", ".github/workflows/remote-mobile-acceptance.yml",
+    ".github/workflows/backend-foundation.yml", ".github/workflows/remote-stress.yml",
     "docs/native-credentials.md", "docs/remote-companion.md", "docs/backend-hardening-2026-11-18.md",
     "docs/remote-followup-2026-11-18.md",
-    "docs/backend-reliability-2026-11-18.md",
+    "docs/backend-reliability-2026-11-18.md", "docs/backend-followup-2026-11-19.md",
+    "docs/backend-followup-2026-11-19.md",
     "LICENSE", "THIRD_PARTY_NOTICES.md",
 )
 SUFFIXES = {".cs", ".csproj", ".axaml", ".xaml", ".json", ".png", ".jpg", ".jpeg", ".svg", ".otf", ".ttf", ".md", ".txt", ".js", ".yml", ".yaml", ".sh", ".py"}

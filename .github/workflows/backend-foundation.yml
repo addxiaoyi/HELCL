@@ -1,0 +1,65 @@
+name: HelL backend foundation checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ['codex/remote-followup-ci-20261118-02']
+    paths:
+      - 'src/HelL.Contracts/**'
+      - 'src/HelL.Core/**'
+      - 'src/HelL/Core/**'
+      - 'src/HelL.Companion/**'
+      - 'src/HelL.Remote/**'
+      - 'src/HelL.Relay/**'
+      - 'tests/HelL.Remote.Tests/**'
+      - 'tests/HelL.Portable.Tests/**'
+      - 'tools/HelL.Companion.Host/**'
+      - 'tools/HelL.Remote.Stress/**'
+      - 'tests/HelL.Remote.Stress.Tests/**'
+      - '.github/workflows/backend-foundation.yml'
+  push:
+    branches: ['codex/backend-followup-ci-*']
+    paths:
+      - 'src/HelL.Contracts/**'
+      - 'src/HelL.Core/**'
+      - 'src/HelL/Core/**'
+      - 'src/HelL.Companion/**'
+      - 'src/HelL.Remote/**'
+      - 'src/HelL.Relay/**'
+      - 'tests/HelL.Remote.Tests/**'
+      - 'tests/HelL.Portable.Tests/**'
+      - 'tools/HelL.Companion.Host/**'
+      - 'tools/HelL.Remote.Stress/**'
+      - 'tests/HelL.Remote.Stress.Tests/**'
+      - '.github/workflows/backend-foundation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build the shared backend and companion host
+        run: |
+          dotnet build src/HelL.Core/HelL.Core.csproj -c Release --nologo --no-incremental
+          dotnet build tools/HelL.Companion.Host/HelL.Companion.Host.csproj -c Release --nologo --no-incremental
+      - name: Test protected IPC and recovery regressions
+        run: |
+          dotnet test tests/HelL.Remote.Tests/HelL.Remote.Tests.csproj -c Release --logger 'trx;LogFileName=remote.trx' --results-directory artifacts/backend --nologo
+          dotnet test tests/HelL.Portable.Tests/HelL.Portable.Tests.csproj -c Release --logger 'trx;LogFileName=portable.trx' --results-directory artifacts/backend --nologo
+      - name: Test lifecycle stress safeguards
+        run: dotnet test tests/HelL.Remote.Stress.Tests/HelL.Remote.Stress.Tests.csproj -c Release --nologo
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: backend-foundation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/backend
+          if-no-files-found: warn

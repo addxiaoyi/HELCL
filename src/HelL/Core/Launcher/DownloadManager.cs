@@ -970,6 +970,7 @@ public class DownloadManager
 
 	public bool DownloadAll(IEnumerable<DownloadTask> tasksIn, string message = "下载中")
 	{
+		RaiseIfCancel();
 		Dictionary<string, DownloadTask> merged = new Dictionary<string, DownloadTask>();
 		Dictionary<string, List<object>> mergedUrls = new Dictionary<string, List<object>>();
 		List<string> list = new List<string>();
@@ -1026,10 +1027,11 @@ public class DownloadManager
 			}
 		}
 		tracker.BeginBatch(message, count, num);
-		NotifyProgress(force: true);
 		bool flag = false;
 		try
 		{
+			NotifyProgress(force: true);
+			RaiseIfCancel();
 			Queue<DownloadTask> queue = new Queue<DownloadTask>(list4);
 			BlockingCollection<KeyValuePair<DownloadTask, Exception>> results = new BlockingCollection<KeyValuePair<DownloadTask, Exception>>();
 			bool stop = false;
@@ -1098,7 +1100,7 @@ public class DownloadManager
 						list5.Add(new PPath(keyValuePair.Key.Dest).Name + ": " + Downloader.ErrStr(value));
 					}
 				}
-				if (flag || cancel())
+				if (flag || Token.IsCancellationRequested || cancel())
 				{
 					flag = true;
 					lock (queue)
@@ -1147,16 +1149,20 @@ public class DownloadManager
 				tracker.EndBatch(ok: false, message + "失败 " + list5.Count + "/" + count);
 				throw new DownloadError(message + "失败（" + list5.Count + "/" + count + " 个文件）: " + string.Join("; ", list5.Take(8)));
 			}
+			RaiseIfCancel();
 			tracker.EndBatch(ok: true, message + "完成");
 			NotifyProgress(force: true);
+			RaiseIfCancel();
 			return true;
 		}
-		catch (DownloadError)
+		catch (DownloadError error)
 		{
+			tracker.EndBatch(ok: false, Downloader.IsCancel(error) ? "已取消" : tracker.Snapshot().detail);
 			throw;
 		}
 		catch (TaskCancelled)
 		{
+			tracker.EndBatch(ok: false, "已取消");
 			throw;
 		}
 		catch (Exception)

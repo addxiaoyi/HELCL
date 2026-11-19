@@ -206,6 +206,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
     private async void GoResources(object? sender, RoutedEventArgs e) => await NavigateCheckedAsync("resources");
     private void ShowPage(string page, bool remember = true)
     {
+        if (page != currentPage) ++navigationRevision;
         if (remember && currentPage != page && (pageHistory.Count == 0 || pageHistory.Peek() != currentPage)) pageHistory.Push(currentPage);
         currentPage = page;
         ChromeTitle.Text = page switch

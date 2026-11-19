@@ -35,6 +35,13 @@ public sealed partial class MainWindow
         }
         finally { DesktopDialogs.Confirmation = null; }
 
+        AiView.PrefillPrompt("preserved draft", log: false);
+        bool loaded = await AiView.LoadLogReviewAsync(instance, "rotated.log", _ => Task.FromException<string>(new FileNotFoundException("private-log-path")));
+        if (loaded || AiView.FindControl<TextBox>("PromptInput")!.Text != "preserved draft" || Status.Text?.Contains("private-log-path") == true)
+            throw new IOException("A rotated log replaced the draft or leaked its read failure.");
+        await CheckImportTarget(instance);
+        await CheckResourceBinding();
+
         var document = new MessageDocument { Text = "# Heading\ntext\n```sh\necho fixture\n```" };
         if (document.Content is not StackPanel { Children.Count: > 2 }) throw new IOException("Structured AI document did not render its code block.");
         Width = 800; Height = 600;
@@ -46,7 +53,37 @@ public sealed partial class MainWindow
         {
             ok = true, filteredBatch = true, cancelledDeletePreservesFile = true,
             structuredCodeBlock = true, narrowNavigation = true, persistentTaskHistory = File.Exists(Path.Combine(Program.DataRoot, "desktop-task-history.json")),
+            logRotationPreservesDraft = true, fixedImportTarget = true, declinedOverwritePreservesFile = true,
+            invalidImportTargetNotRecreated = true, staleSearchRejected = true, staleReleasesRejected = true, staleDocumentsRejected = true,
             nativeScreenReaderVerified = false
         }));
+    }
+
+    private async Task CheckImportTarget(string original)
+    {
+        const string other = "frontend-other-import-target";
+        launcher.CreateInstance(other);
+        string source = Path.Combine(Program.DataRoot, "import-fixture.jar");
+        File.WriteAllText(source, "incoming bytes");
+        string originalFolder = Path.Combine(launcher.InstanceFolder(original), "mods");
+        string destination = Path.Combine(originalFolder, Path.GetFileName(source));
+        ModsView.Reload(other);
+        await ModsView.ImportPathsAsync(original, "mods", [source]);
+        if (!File.Exists(destination) || File.Exists(Path.Combine(launcher.InstanceFolder(other), "mods", Path.GetFileName(source))))
+            throw new IOException("Import used the newly selected instance instead of its original target.");
+        File.WriteAllText(destination, "installed bytes");
+        DesktopDialogs.Confirmation = (_, body) => Task.FromResult(false);
+        try { await ModsView.ImportPathsAsync(original, "mods", [source]); }
+        finally { DesktopDialogs.Confirmation = null; }
+        if (File.ReadAllText(destination) != "installed bytes") throw new IOException("A declined overwrite replaced an installed file.");
+        string removedFolder = launcher.InstanceFolder(other);
+        Directory.Delete(removedFolder, true);
+        bool refused = false;
+        try
+        {
+            await ModsView.ImportPathsAsync(other, "mods", [source]);
+        }
+        catch (IOException) { refused = true; }
+        if (!refused || Directory.Exists(removedFolder)) throw new IOException("A removed import target was accepted or recreated.");
     }
 }

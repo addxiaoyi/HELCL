@@ -60,4 +60,46 @@ public sealed class MobileWorkflowTests
         }
         finally { File.Delete(path); }
     }
+
+    [Fact]
+    public void CorruptHistoryCannotBeOverwrittenByALaterSave()
+    {
+        string path = Path.Combine(Path.GetTempPath(), "hell-corrupt-chat-" + Guid.NewGuid().ToString("N") + ".json");
+        const string corrupt = "{broken original history}";
+        File.WriteAllText(path, corrupt);
+        try
+        {
+            var chat = new MobileChat();
+            Assert.ThrowsAny<Exception>(() => chat.Restore(path));
+            Assert.Throws<InvalidOperationException>(() => chat.Save(path));
+            Assert.Equal(corrupt, File.ReadAllText(path));
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public void ExplicitChatRecoveryPreservesCorruptBytesAndAllowsNewHistory()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "hell-recover-chat-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        string path = Path.Combine(root, "chat.json");
+        byte[] corrupt = "{unreadable original bytes}"u8.ToArray();
+        File.WriteAllBytes(path, corrupt);
+        UnixFileMode? mode = !OperatingSystem.IsWindows() ? File.GetUnixFileMode(path) : null;
+        try
+        {
+            var chat = new MobileChat();
+            Assert.ThrowsAny<Exception>(() => chat.Restore(path));
+            Assert.True(chat.NeedsHistoryRecovery);
+            string backup = chat.RecoverHistory(path);
+            Assert.NotEqual(path, backup);
+            Assert.Equal(corrupt, File.ReadAllBytes(backup));
+            if (!OperatingSystem.IsWindows()) Assert.Equal(mode, File.GetUnixFileMode(backup));
+            Assert.False(chat.NeedsHistoryRecovery);
+            chat.Save(path);
+            Assert.Equal("[]", File.ReadAllText(path));
+            Assert.Equal(corrupt, File.ReadAllBytes(backup));
+        }
+        finally { Directory.Delete(root, true); }
+    }
 }

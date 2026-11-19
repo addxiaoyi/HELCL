@@ -45,7 +45,7 @@ are excluded from this mobile file handoff.
 ## Commands and results
 
 - `dotnet test tests/HelL.Mobile.Tests/HelL.Mobile.Tests.csproj -c Release`:
-  **55/55 passed**, including five new task/history tests. TRX:
+  Initial **55/55 passed**, including five new task/history tests. TRX:
   `TestResults/frontend-mobile/mobile-remediation.trx`.
 - `dotnet build tools/HelL.Mobile.Preview/HelL.Mobile.Preview.csproj -c Release`:
   **0 warnings / 0 errors** on the final incremental source.
@@ -76,3 +76,31 @@ smoke finishes on Home and pull this report for emulator acceptance.
 Desktop-hosted previews are not Android rendering, keyboard, TalkBack or physical
 device evidence. JSON file import deliberately avoids adding a QR/scanner
 dependency; it is the controlled-file alternative requested by the audit.
+
+## Final safety review
+
+The parent-requested review found and repaired three additional boundaries:
+
+- Typography baselines now use `ConditionalWeakTable`; removed remote controls
+  are collectible while surviving controls keep their original font baseline.
+- Confirmation covers the entire page and blocks background page/chrome/bottom
+  navigation; Back still cancels and restores prior enabled states. Chat clear
+  rechecks operation/disposal after confirmation and reports a busy model safely.
+- Unreadable chat history blocks later automatic saves. An explicit confirmation
+  offers “备份损坏记录并重置”: the exact original is moved to a random corrupt backup
+  (preserving its permissions) before a fresh history is permitted. Save failure
+  does not erase that backup, and the user has an actionable recovery path.
+
+Combined old-source UI acceptance failed with
+`retainedControl=True, clearedDuringOperation=True, backgroundAvailable=True`.
+The repaired full 390×844 smoke passed. A separate regression first proved that
+old `Save` overwrote a rejected history; the repaired full Mobile suite is now
+**57/57**, with **7/7** workflow tests verifying bytes and Unix-mode preservation,
+explicit recovery and successful subsequent persistence. Final preview build
+remains **0 warnings / 0 errors**.
+
+Private pairing-file callbacks also capture owner, selected host and navigation
+revision, and discard results after leaving/re-entering the page, host switching
+or disposal. Stream reads and public-offer saves recheck visibility/disposal after
+their native awaits. The remote preview verifies that an earlier page visit's
+file context is rejected; existing fingerprint/invitation validation remains.

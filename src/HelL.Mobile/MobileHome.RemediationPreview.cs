@@ -8,6 +8,7 @@ public sealed partial class MobileHome
 {
     private async Task CheckFrontendRemediationAsync()
     {
+        await CheckMobileSafetyGuardsAsync();
         ShowPage("manage");
         string originalName = InstanceName.Text ?? "";
         InstanceName.Text = originalName + " draft";
@@ -50,8 +51,53 @@ public sealed partial class MobileHome
             ok = true, draftNavigationGuard = true, localTaskHistory = true, nonBlockingTaskNavigation = true,
             searchFocus = true, visibleCompatibilityTarget = true, textScalePreview = 1.5, pageBackStack = true,
             codeBlocksCopy = true, chatHistoryPersistence = true, destructiveChatConfirmation = true,
+            weakTypographyTracking = true, clearConfirmationRechecksOperation = true, modalBackgroundBlocked = true,
             referenceLoaderExplained = true, boundedFilePairing = true, nativeAndroidVerified = false,
             pendingNativeChecks = new[] { "Android back keyboard ordering", "display cutout and gesture insets", "soft keyboard resize", "TalkBack focus", "system font 2x" }
         }));
+    }
+
+    private async Task CheckMobileSafetyGuardsAsync()
+    {
+        WeakReference discarded = CreateDiscardedTypographyControl();
+        for (int attempt = 0; attempt < 3 && discarded.IsAlive; attempt++)
+        {
+            GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
+            await Task.Delay(20);
+        }
+        bool retainedControl = discarded.IsAlive;
+
+        ShowPage("ai");
+        string fixture = Path.Combine(EvidenceRoot, "clear-chat-safety-fixture.json");
+        File.WriteAllText(fixture, JsonSerializer.Serialize(new[] { new Ai.ChatEntry("user", "preserve this question", "complete") }));
+        session.Chat.Restore(fixture);
+        int count = session.Chat.Entries.Count;
+        ClearAiChat(this, new RoutedEventArgs());
+        if (confirmation is null) throw new IOException("Chat clearing did not request confirmation.");
+        using var inFlight = new CancellationTokenSource();
+        operation = inFlight;
+        CompleteConfirmation(true);
+        await Task.Delay(40);
+        operation = null;
+        bool clearedDuringOperation = session.Chat.Entries.Count != count;
+
+        Task<bool> guarded = ConfirmAsync("controlled modal", "background controls must be blocked", "accept");
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => { }, Avalonia.Threading.DispatcherPriority.Background);
+        bool backgroundAvailable = BottomNavigation.IsEnabled || RailNavigation.IsEnabled || confirmationOverlay?.VerticalAlignment != Avalonia.Layout.VerticalAlignment.Stretch;
+        CompleteConfirmation(false);
+        if (await guarded || !BottomNavigation.IsEnabled || !RailNavigation.IsEnabled)
+            throw new IOException("Closing confirmation did not restore navigation.");
+        if (retainedControl || clearedDuringOperation || backgroundAvailable)
+            throw new IOException($"Mobile safety guard failed (retainedControl={retainedControl}, clearedDuringOperation={clearedDuringOperation}, backgroundAvailable={backgroundAvailable}).");
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private WeakReference CreateDiscardedTypographyControl()
+    {
+        var label = new TextBlock { Text = "discarded typography probe" };
+        Pages.Children.Add(label);
+        ApplyTextScale();
+        Pages.Children.Remove(label);
+        return new WeakReference(label);
     }
 }

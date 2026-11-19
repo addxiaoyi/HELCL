@@ -106,6 +106,12 @@ public sealed partial class MobileHome
             await Capture("remote-host-selection");
             remote.SelectHost(host.Offer.DeviceId);
             if (remote.Invitation?.Host.DeviceId != host.Offer.DeviceId) throw new IOException("The saved host invitation was not restored.");
+            var oldFile = new RemoteFileContext(remote, remote.SelectedHostId, navigationRevision);
+            if (!CanApplyRemoteFile(oldFile)) throw new IOException("A current file import context was rejected.");
+            ShowPage("more");
+            ShowPage("remote");
+            if (CanApplyRemoteFile(oldFile)) throw new IOException("A file picker result from an earlier page visit was accepted.");
+            for (int attempt = 0; attempt < 80 && remote.Busy; attempt++) await Task.Delay(50);
             foreach (Control control in RemoteLayout.GetVisualDescendants().OfType<Control>().Where(control => control.IsEffectivelyVisible && control.Bounds.Width > 0))
             {
                 Point point = control.TranslatePoint(default, RemotePage) ?? default;

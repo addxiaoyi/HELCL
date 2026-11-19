@@ -63,3 +63,31 @@ public upstream requests are not implied by fixture-hosted UI smoke. Those remai
 explicit environment acceptance, not missing implementations. The shared root
 agent supplied pagination/Details/InstallationPlan APIs; they are not part of this
 agent's owned diff.
+
+## Combined-review follow-up
+
+The parent requested a second review after integration. Three additional
+boundaries were repaired in the isolated Desktop branch:
+
+- Log rotation/read failure no longer escapes the `async void` UI event. A
+  controlled missing-file read first failed with `FileNotFoundException` in
+  `TestResults/log-rotation-red/ui-smoke-error.txt`; the repaired path preserves
+  the draft, reports a safe message and rejects late reads if the draft changed.
+- File picker/drop imports bind their instance and kind before awaiting. A
+  missing original instance is refused rather than reconstructed. Duplicate names,
+  resource extensions, local paths and reparse points are checked. A same-name
+  batch lists every replacement for explicit confirmation. Copying uses a
+  same-directory temporary file and promotion so copy failure preserves old bytes.
+- Search, release and detail readers carry a generation and full filter/target
+  binding. Changed conditions reject late results and disable installation from
+  stale visible results. Controlled TaskCompletionSource UI fixtures confirm all
+  three responses cannot cross a changed target.
+
+`TestResults/desktop-followup-verified/frontend-recovery.json` and `ui-smoke.json`
+both pass. It explicitly records log-rotation draft preservation, original import
+target, declined overwrite preservation, missing-target refusal and stale
+search/release/document rejection. The final follow-up Desktop Release build is
+0 warnings / 0 errors. Follow-up files are `AiAssistantView.axaml.cs`,
+`ModsManagerView.axaml.cs`, `ResourceBrowserView.axaml.cs`,
+`MainWindow.FrontendCheck.cs`, new `MainWindow.ResourceBindingCheck.cs`, and this
+record. No original-workspace edit or commit was performed.

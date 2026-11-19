@@ -112,12 +112,17 @@ jobs:
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
         with:
           dotnet-version: '10.0.x'
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
       - name: Build Android x64 APK and prepare disposable emulator
         shell: bash
         run: |
           dotnet workload install android --skip-manifest-update
           sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'system-images;android-35;google_apis;x86_64' 'platform-tools' 'emulator'
-          dotnet publish src/HelL.Android -c Release -r android-x64 -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME_21_X64" -o artifacts/android-apk
+          dotnet publish src/HelL.Android -c Release -r android-x64 -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME" -o artifacts/android-apk
           echo no | avdmanager create avd --force --name hell_frontend --package 'system-images;android-35;google_apis;x86_64'
           sudo chmod a+rw /dev/kvm
           "$ANDROID_HOME/emulator/emulator" -avd hell_frontend -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot > emulator.log 2>&1 &

@@ -104,11 +104,28 @@ public partial class AiAssistantView : UserControl
             PromptInput.Focus();
             return;
         }
-        string tail = await Task.Run(() => LogPreview.ReadTail(latestLog));
-        PromptInput.Text = $"请帮我诊断实例「{instName}」的 latest.log 日志末尾输出：\n\n```\n{tail}\n```";
-        reviewLog = true;
-        PromptInput.Focus();
-        host.SetStatus("已载入脱敏日志预览。确认内容后点击发送；发送前会再次显示目标服务。");
+        await LoadLogReviewAsync(instName, latestLog);
+    }
+
+    internal async Task<bool> LoadLogReviewAsync(string instance, string path, Func<string, Task<string>>? read = null)
+    {
+        string draft = PromptInput.Text ?? "";
+        try
+        {
+            string tail = await (read?.Invoke(path) ?? Task.Run(() => LogPreview.ReadTail(path)));
+            if (PromptInput.Text != draft) { host?.SetStatus("日志已读取，但输入已改变。为保留新草稿，请重新点击读取。"); return false; }
+            PromptInput.Text = $"请分析实例“{instance}”的 latest.log 日志末尾内容：\n\n```\n{tail}\n```";
+            reviewLog = true;
+            PromptInput.Focus();
+            host?.SetStatus("已载入脱敏日志预览。确认内容后点击发送；发送前会再次显示目标服务。");
+            return true;
+        }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        {
+            host?.SetStatus("日志读取失败，可能已轮换、移除或被占用。原草稿已保留，请刷新后重试。");
+            System.Diagnostics.Trace.TraceWarning("Desktop log preview: " + error.GetType().Name);
+            return false;
+        }
     }
 
     private async void SendPrompt(object? sender, RoutedEventArgs e)

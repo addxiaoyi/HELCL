@@ -18,12 +18,15 @@ public sealed partial class MobileHome
     private readonly TextBlock editError = WorkflowText("");
     private readonly Stack<string> pageHistory = new();
     private string currentPage = "home";
+    private int navigationRevision;
     private string? savedEditState;
     private string? activeLocalTask;
     private TaskCompletionSource<bool>? confirmation;
     private Border? confirmationOverlay;
     private CancellationTokenSource? versionsLoading;
-    private readonly Dictionary<Control, double> originalFontSizes = new();
+    private sealed record FontSizeSnapshot(double Value);
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<Control, FontSizeSnapshot> originalFontSizes = new();
+    private readonly Dictionary<Control, bool> confirmationBackground = new();
 
     private void InitializeWorkflow()
     {
@@ -76,7 +79,7 @@ public sealed partial class MobileHome
         {
             double font = control is TextBlock label ? label.FontSize : control is Avalonia.Controls.Primitives.TemplatedControl field ? field.FontSize : 0;
             if (font <= 0) continue;
-            if (!originalFontSizes.TryGetValue(control, out double original)) originalFontSizes[control] = original = font;
+            double original = originalFontSizes.GetValue(control, _ => new FontSizeSnapshot(font)).Value;
             double scaled = Math.Max(12, original) * Math.Max(MobileRuntime.SystemTextScale, MobileRuntime.TextScale);
             if (control is TextBlock text) { text.FontSize = scaled; text.TextWrapping = TextWrapping.Wrap; }
             else if (control is Avalonia.Controls.Primitives.TemplatedControl target) target.FontSize = scaled;
@@ -117,6 +120,7 @@ public sealed partial class MobileHome
 
     private async Task NavigateCheckedAsync(string page, bool remember = true)
     {
+        if (confirmation is not null) return;
         if (currentPage == "manage" && page != "manage" && savedEditState != EditState())
         {
             if (!await ConfirmAsync("离开实例编辑？", "这些修改尚未保存。选择继续编辑可保留当前内容。", "放弃修改并离开")) return;
@@ -186,10 +190,19 @@ public sealed partial class MobileHome
         yes.Click += (_, _) => CompleteConfirmation(true);
         no.Click += (_, _) => CompleteConfirmation(false);
         content.Children.Add(yes); content.Children.Add(no);
-        confirmationOverlay = new Border { Padding = new Thickness(20), Child = content,
+        var card = new Border { Padding = new Thickness(20), Child = content,
             HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Center };
+        card.Bind(Border.BackgroundProperty, this.GetResourceObservable("HelL.SurfaceRaised"));
+        confirmationOverlay = new Border { Padding = new Thickness(16), Child = card,
+            HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch };
         confirmationOverlay.Bind(Border.BackgroundProperty, this.GetResourceObservable("HelL.SurfaceRaised"));
         AutomationProperties.SetName(confirmationOverlay, title);
+        foreach (Control background in Pages.Children.Concat(new Control[] { RailNavigation, BottomNavigation })
+            .Concat(Shell.Children.OfType<Border>().Where(child => Grid.GetRow(child) == 0)))
+        {
+            confirmationBackground[background] = background.IsEnabled;
+            background.IsEnabled = false;
+        }
         Pages.Children.Add(confirmationOverlay);
         no.Focus();
         return confirmation.Task;
@@ -201,6 +214,8 @@ public sealed partial class MobileHome
         confirmation = null;
         if (confirmationOverlay is not null) Pages.Children.Remove(confirmationOverlay);
         confirmationOverlay = null;
+        foreach ((Control background, bool enabled) in confirmationBackground) background.IsEnabled = enabled;
+        confirmationBackground.Clear();
         pending?.TrySetResult(accepted);
     }
 

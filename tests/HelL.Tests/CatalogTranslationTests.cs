@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using HelL.Core;
 using HelL.Core.Launcher;
@@ -54,6 +55,7 @@ public sealed class CatalogTranslationTests
     {
         private readonly HttpListener _listener = new();
         private readonly Task _server;
+        private int stopped;
         public string Endpoint { get; }
         public string SystemPrompt { get; private set; } = "";
         public string UserPrompt { get; private set; } = "";
@@ -72,12 +74,12 @@ public sealed class CatalogTranslationTests
 
         private async Task Serve()
         {
-            while (_listener.IsListening)
+            while (Volatile.Read(ref stopped) == 0)
             {
                 HttpListenerContext request;
                 try { request = await _listener.GetContextAsync(); }
-                catch (HttpListenerException) when (!_listener.IsListening) { return; }
-                catch (ObjectDisposedException) { return; }
+                catch (HttpListenerException) when (Volatile.Read(ref stopped) != 0) { return; }
+                catch (ObjectDisposedException) when (Volatile.Read(ref stopped) != 0) { return; }
                 using var reader = new StreamReader(request.Request.InputStream, Encoding.UTF8);
                 string body = await reader.ReadToEndAsync();
                 object reply = new { };
@@ -118,6 +120,7 @@ public sealed class CatalogTranslationTests
 
         public void Dispose()
         {
+            Interlocked.Exchange(ref stopped, 1);
             _listener.Close();
             _server.GetAwaiter().GetResult();
         }

@@ -15,6 +15,7 @@ public sealed partial class MobileHome
     private MobileAiProfile? aiProfile;
     private bool aiNearBottom = true;
     private string failedPrompt = "";
+    private readonly Button aiRecoverHistory = new() { Content = "备份损坏记录并重置", Classes = { "secondary" }, MinHeight = 44 };
     private string ChatPath => Path.Combine(root, "mobile-chat.json");
 
     private void InitializeAi()
@@ -28,6 +29,9 @@ public sealed partial class MobileHome
         try { session.Chat.Restore(ChatPath); }
         catch (Exception error) when (error is not OutOfMemoryException) { AiChatNotice.Text = "无法恢复聊天记录：" + error.Message; }
         AiStorageNotice.Text = "对话仅保存在本机 mobile-chat.json，最多保留最近 48 条；不包含 API 密钥。可清空并撤销。";
+        aiRecoverHistory.Click += RecoverChatHistory;
+        if (AiStorageNotice.Parent is StackPanel storage) storage.Children.Insert(storage.Children.IndexOf(AiStorageNotice) + 1, aiRecoverHistory);
+        if (session.Chat.NeedsHistoryRecovery) AiStorageNotice.Text = "原聊天记录无法读取，已阻止覆盖。可先备份原件并新建聊天记录。";
         try
         {
             aiProfile = MobileAiProfile.Read(Config.CONFIG, session.Secrets);
@@ -86,7 +90,6 @@ public sealed partial class MobileHome
         try
         {
             await Task.Run(() => session.Chat.Send(profile, prompt, QueueAiPaint, token), token);
-            session.Chat.Save(ChatPath);
             AiChatNotice.Text = "回复完成";
             Status.Text = "AI 回复完成。";
         }
@@ -117,7 +120,10 @@ public sealed partial class MobileHome
     {
         if (operation != null || session.Chat.Entries.Count == 0) return;
         if (!await ConfirmAsync("清空当前聊天？", "清空本机聊天记录后可以撤销；此操作不会修改服务端数据。", "清空聊天")) return;
-        session.Chat.Clear();
+        if (disposed) return;
+        if (operation is not null) { AiChatNotice.Text = "有任务开始执行，请等待或停止任务后再清空聊天。"; return; }
+        try { session.Chat.Clear(); }
+        catch (InvalidOperationException error) { AiChatNotice.Text = error.Message; return; }
         try { session.Chat.Save(ChatPath); }
         catch (Exception error) when (error is not OutOfMemoryException) { AiStorageNotice.Text = "保存聊天变更失败，当前内容仍在内存：" + error.Message; }
         AiUndoClearButton.IsVisible = true;
@@ -133,6 +139,21 @@ public sealed partial class MobileHome
         AiUndoClearButton.IsVisible = false;
         AiChatNotice.Text = "已恢复清空前的对话。";
         UpdateAi();
+    }
+    private async void RecoverChatHistory(object? sender, RoutedEventArgs e)
+    {
+        if (operation is not null || !session.Chat.NeedsHistoryRecovery) return;
+        bool accepted = await ConfirmAsync("备份并重置聊天记录？", "将无法读取的原文件原样移到随机命名的 .corrupt 备份，保留原权限；然后新建聊天记录。当前未保存的聊天会被清空。", "备份原件并新建");
+        if (!accepted || disposed || operation is not null) return;
+        try
+        {
+            string backup = session.Chat.RecoverHistory(ChatPath);
+            session.Chat.Save(ChatPath);
+            AiStorageNotice.Text = "已保留原件：" + Path.GetFileName(backup) + "。新的聊天记录可以正常保存。";
+            UpdateAi();
+        }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        { AiStorageNotice.Text = "重置未完成，原件没有被删除：" + error.Message; }
     }
     private async void RetryAiMessage(object? sender, RoutedEventArgs e) { if (failedPrompt.Length > 0) await SendAiPromptAsync(failedPrompt); }
     private void EditFailedAi(object? sender, RoutedEventArgs e) { AiPrompt.Text = failedPrompt; AiPrompt.Focus(); }
@@ -158,6 +179,8 @@ public sealed partial class MobileHome
         AiEmpty.IsVisible = entries.Count == 0;
         AiRetryButton.IsVisible = AiEditRetryButton.IsVisible = failedPrompt.Length > 0;
         bool idle = operation == null;
+        aiRecoverHistory.IsVisible = session.Chat.NeedsHistoryRecovery;
+        aiRecoverHistory.IsEnabled = idle;
         AiSendButton.IsEnabled = AiSaveButton.IsEnabled = AiClearButton.IsEnabled = idle;
         AiMode.IsEnabled = AiAddress.IsEnabled = AiModel.IsEnabled = AiKey.IsEnabled = idle;
     }

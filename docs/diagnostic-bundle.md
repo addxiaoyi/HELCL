@@ -8,6 +8,15 @@ The launcher does not copy account information, instance names, full paths, devi
 
 Select sections and optionally uncheck individual fields before export. The ZIP is generated from exactly the displayed preview. Review it before saving or sharing. Export errors remain visible and do not trigger a network upload.
 
+Collection and export now have separate cancellation controls. During export,
+the preview and field selection are frozen and another export cannot start.
+Cancelling the file picker or a failed write leaves the current preview available
+for retry. Leaving the mobile page or closing a desktop panel cancels its pending
+work; late results cannot update a closed view. Cancelling an already-running
+system or mirror check waits for that bounded check to finish, then discards its
+result. Navigation stays available while the mobile diagnostic collector waits
+for the launcher owner lock.
+
 Desktop local-file export writes a complete package to a random file in the destination directory and then promotes it with `File.Replace`/`File.Move`. A failed promotion preserves the old destination and removes the temporary package. Mobile document-provider export generates the package in memory before opening the destination; provider I/O failure is still reported and cannot promise atomic replacement on every Android document provider.
 
 ## GUI integration baseline

@@ -53,7 +53,7 @@ public sealed class MobileRecoveryTests : IDisposable
         using var remote = new MobileRemoteController(Reopen(), (_, request, _) =>
         {
             calls++;
-            return Task.FromResult(new HostReply { RequestId = request.RequestId, Ok = true });
+            return Task.FromResult(new HostReply { Device = "fixture-host", RequestId = request.RequestId, Ok = true });
         }, (_, token) => channel.Reader.ReadAllAsync(token));
         Assert.True(remote.Watching);
         await Assert.ThrowsAsync<InvalidDataException>(() => remote.RefreshAsync());
@@ -75,7 +75,7 @@ public sealed class MobileRecoveryTests : IDisposable
         using var remote = new MobileRemoteController(Reopen(), (_, request, _) =>
         {
             calls++;
-            return Task.FromResult(new HostReply { RequestId = request.RequestId, Ok = true, Tasks = [new HostTask { Id = "restored" }] });
+            return Task.FromResult(new HostReply { Device = "fixture-host", RequestId = request.RequestId, Ok = true, Tasks = [new HostTask { Id = "restored", State = "running" }] });
         });
         await remote.RestoreConnectionAsync();
         Assert.Equal(1, calls);
@@ -132,10 +132,9 @@ public sealed class MobileRecoveryTests : IDisposable
     [Fact]
     public async Task SwitchingHostsClearsDetailsAndLateRepliesCannotRestoreThem()
     {
-        using var remote = new MobileRemoteController(phone, (_, request, _) => Task.FromResult(new HostReply
-        {
-            RequestId = request.RequestId, Ok = true, Tasks = [new HostTask { Id = "task-1" }],
-            Detail = new HostTaskDetails { TaskId = request.TaskId, RecentLogs = ["first-host-log"] },
+        using var remote = new MobileRemoteController(phone, (_, request, _) => Task.FromResult(new HostReply { Device = "fixture-host",
+            RequestId = request.RequestId, Ok = true, Tasks = [new HostTask { Id = "task-1", State = "running" }],
+            Detail = request.Command == HostCommand.TaskDetails ? new HostTaskDetails { TaskId = request.TaskId, RecentLogs = ["first-host-log"] } : null,
             Game = new HostGameStatus { Running = true, SessionId = new string('a', 32), State = "running" }
         }));
         remote.ImportInvitation(JsonSerializer.Serialize(Invite(first)));
@@ -162,7 +161,7 @@ public sealed class MobileRecoveryTests : IDisposable
         remote.ImportInvitation(JsonSerializer.Serialize(Invite(first)));
         Task reading = remote.ReadGameAsync();
         remote.ImportInvitation(JsonSerializer.Serialize(Invite(second)));
-        pending.SetResult(new HostReply { RequestId = request!.RequestId, Ok = true,
+        pending.SetResult(new HostReply { Device = "fixture-host", RequestId = request!.RequestId, Ok = true,
             Game = new HostGameStatus { Running = true, SessionId = new string('a', 32), State = "running" } });
         await reading;
         Assert.Equal(second.Offer.DeviceId, remote.SelectedHostId);
@@ -173,10 +172,9 @@ public sealed class MobileRecoveryTests : IDisposable
     public async Task OversizedOrMismatchedTaskDetailsDoNotReplaceTheLastValidDetails()
     {
         bool malformed = false;
-        using var remote = new MobileRemoteController(phone, (_, request, _) => Task.FromResult(new HostReply
-        {
-            RequestId = request.RequestId, Ok = true, Tasks = [new HostTask { Id = "task-1" }],
-            Detail = new HostTaskDetails { TaskId = request.TaskId, RecentLogs = malformed ? [new string('x', 513)] : ["bounded-line"] }
+        using var remote = new MobileRemoteController(phone, (_, request, _) => Task.FromResult(new HostReply { Device = "fixture-host",
+            RequestId = request.RequestId, Ok = true, Tasks = [new HostTask { Id = "task-1", State = "running" }],
+            Detail = request.Command == HostCommand.TaskDetails ? new HostTaskDetails { TaskId = request.TaskId, RecentLogs = malformed ? [new string('x', 513)] : ["bounded-line"] } : null
         }));
         remote.ImportInvitation(JsonSerializer.Serialize(Invite(first)));
         await remote.RefreshAsync();
@@ -194,7 +192,7 @@ public sealed class MobileRecoveryTests : IDisposable
         using var remote = new MobileRemoteController(phone, (_, request, _) =>
         {
             sent.Add(request);
-            return Task.FromResult(new HostReply { RequestId = request.RequestId, Ok = true,
+            return Task.FromResult(new HostReply { Device = "fixture-host", RequestId = request.RequestId, Ok = true,
                 Game = new HostGameStatus { Running = true, SessionId = new string('a', 32), State = "running" } });
         });
         remote.ImportInvitation(JsonSerializer.Serialize(Invite(first)));
@@ -212,9 +210,9 @@ public sealed class MobileRecoveryTests : IDisposable
     {
         using var remote = new MobileRemoteController(phone, (_, request, _) => Task.FromResult(
             request.Command == HostCommand.GameStatus
-                ? new HostReply { RequestId = request.RequestId, Ok = true,
+                ? new HostReply { Device = "fixture-host", RequestId = request.RequestId, Ok = true,
                     Game = new HostGameStatus { Running = true, SessionId = new string('a', 32), State = "running" } }
-                : new HostReply { RequestId = request.RequestId, ErrorCode = "graceful_stop_unavailable", Error = "private-path-and-token-must-not-appear" }));
+                : new HostReply { Device = "fixture-host", RequestId = request.RequestId, ErrorCode = "graceful_stop_unavailable", Error = "private-path-and-token-must-not-appear" }));
         remote.ImportInvitation(JsonSerializer.Serialize(Invite(first)));
         await remote.ReadGameAsync();
         await remote.StopGameAsync(new string('a', 32), true);
@@ -226,6 +224,118 @@ public sealed class MobileRecoveryTests : IDisposable
     }
 
     private RemotePairingStore Reopen() => new(Path.Combine(root, "phone"), "phone", keys);
+
+    [Theory]
+    [InlineData("duplicate-task")]
+    [InlineData("too-many-tasks")]
+    [InlineData("invalid-task-state")]
+    [InlineData("non-finite-progress")]
+    [InlineData("contradictory-error")]
+    [InlineData("invalid-game-state")]
+    public async Task MalformedHostRepliesCannotReplaceTheLastValidView(string fault)
+    {
+        bool malformed = false;
+        using var remote = new MobileRemoteController(phone, (_, request, _) =>
+        {
+            var reply = new HostReply
+            {
+                RequestId = request.RequestId, Device = "fixture-host", Ok = true,
+                Tasks = [new HostTask { Id = "valid-task", State = "running" }],
+                Game = new HostGameStatus { Running = true, SessionId = new string('a', 32), State = "running" }
+            };
+            if (malformed)
+            {
+                if (fault == "duplicate-task") reply.Tasks = [new HostTask { Id = "duplicate", State = "running" }, new HostTask { Id = "duplicate", State = "running" }];
+                if (fault == "too-many-tasks") reply.Tasks = Enumerable.Range(0, 41).Select(i => new HostTask { Id = "task-" + i, State = "running" }).ToArray();
+                if (fault == "invalid-task-state") reply.Tasks[0].State = "untrusted-state";
+                if (fault == "non-finite-progress") reply.Tasks[0].ProgressPercent = double.PositiveInfinity;
+                if (fault == "contradictory-error") { reply.ErrorCode = "permission_denied"; reply.Error = "untrusted-private-details"; }
+                if (fault == "invalid-game-state") reply.Game.Running = false;
+            }
+            return Task.FromResult(reply);
+        });
+        remote.ImportInvitation(JsonSerializer.Serialize(Invite(first)));
+        await remote.RefreshAsync();
+        await remote.ReadGameAsync();
+        malformed = true;
+        if (fault == "invalid-game-state") await remote.ReadGameAsync();
+        else await remote.RefreshAsync();
+        Assert.Equal("valid-task", Assert.Single(remote.Tasks).Id);
+        Assert.Equal("running", remote.Tasks[0].State);
+        Assert.True(remote.Game!.Running);
+        Assert.NotEmpty(remote.Error);
+        Assert.DoesNotContain("untrusted-private-details", remote.Error);
+    }
+
+    [Fact]
+    public async Task SwitchingComputersCanRestoreBeforeTheCancelledTransportReturns()
+    {
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var firstReply = new TaskCompletionSource<HostReply>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var remote = new MobileRemoteController(phone, (invite, request, _) =>
+        {
+            if (invite.Host.DeviceId == first.Offer.DeviceId) { started.TrySetResult(); return firstReply.Task; }
+            return Task.FromResult(new HostReply { Device = "fixture-host", RequestId = request.RequestId, Ok = true,
+                Tasks = [new HostTask { Id = "second-task", State = "running" }] });
+        });
+        remote.ImportInvitation(JsonSerializer.Serialize(Invite(second)));
+        remote.ImportInvitation(JsonSerializer.Serialize(Invite(first)));
+        Task oldRead = remote.RefreshAsync();
+        await started.Task;
+        remote.SelectHost(second.Offer.DeviceId);
+        await remote.RestoreConnectionAsync();
+        Assert.Equal("second-task", Assert.Single(remote.Tasks).Id);
+        firstReply.SetResult(new HostReply { Device = "fixture-host", Ok = true, Tasks = [new HostTask { Id = "stale-first", State = "running" }] });
+        await oldRead;
+        Assert.Equal("second-task", Assert.Single(remote.Tasks).Id);
+    }
+
+    [Fact]
+    public async Task AFailedActivitySaveDoesNotDiscardASuccessfulSnapshot()
+    {
+        using var remote = new MobileRemoteController(phone, (_, request, _) => Task.FromResult(new HostReply { Device = "fixture-host", RequestId = request.RequestId, Ok = true, Tasks = [new HostTask { Id = "fresh-task", State = "running" }] }));
+        remote.ImportInvitation(JsonSerializer.Serialize(Invite(first)));
+        keys.FailWrites = true;
+        await remote.RefreshAsync();
+        Assert.Equal("fresh-task", Assert.Single(remote.Tasks).Id);
+        Assert.Contains("保存", remote.Notice);
+        Assert.Empty(remote.Error);
+    }
+
+    [Fact]
+    public void FrequentSnapshotsDoNotRotateNativeKeysForEveryActivityWrite()
+    {
+        phone.RecordConnection(first.Offer.DeviceId);
+        int writes = keys.Writes;
+        phone.RecordConnection(first.Offer.DeviceId);
+        phone.RecordConnection(first.Offer.DeviceId);
+        Assert.Equal(writes, keys.Writes);
+    }
+
+    [Fact]
+    public async Task ACommandWaitingForTheStateGateCannotStartAfterDisposal()
+    {
+        int sent = 0;
+        using var remote = new MobileRemoteController(phone, (_, request, _) =>
+        {
+            Interlocked.Increment(ref sent);
+            return Task.FromResult(new HostReply { Device = "fixture-host", RequestId = request.RequestId, Ok = true, Game = new HostGameStatus() });
+        });
+        remote.ImportInvitation(JsonSerializer.Serialize(Invite(first)));
+        object gate = typeof(MobileRemoteController).GetField("stateGate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(remote)!;
+        Task? query = null;
+        var caller = new Thread(() => query = remote.ReadGameAsync()) { IsBackground = true };
+        lock (gate)
+        {
+            caller.Start();
+            Assert.True(SpinWait.SpinUntil(() => (caller.ThreadState & ThreadState.WaitSleepJoin) != 0, TimeSpan.FromSeconds(2)));
+            remote.Dispose();
+        }
+        Assert.True(caller.Join(TimeSpan.FromSeconds(2)));
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => query!);
+        Assert.Equal(0, sent);
+        Assert.False(remote.Busy);
+    }
 
     [Fact]
     public void RevokingASelectedHostWithoutAnInvitationClearsItsSelection()
@@ -244,8 +354,9 @@ public sealed class MobileRecoveryTests : IDisposable
     {
         private readonly Dictionary<string, string> values = [];
         public bool FailWrites { get; set; }
+        public int Writes { get; private set; }
         public string Read(string key) => values.GetValueOrDefault(key, "");
-        public void Write(string key, string value) { if (FailWrites) throw new IOException("key store is locked"); values[key] = value; }
+        public void Write(string key, string value) { Writes++; if (FailWrites) throw new IOException("key store is locked"); values[key] = value; }
         public void Delete(string key) => values.Remove(key);
     }
 }

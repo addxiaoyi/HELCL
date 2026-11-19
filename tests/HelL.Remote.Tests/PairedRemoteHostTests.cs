@@ -219,7 +219,12 @@ public sealed class PairedRemoteHostTests
             fixture.Host = new PairedRemoteHost(fixture.Desktop, fixture.http, relay, token, (request, _) =>
             {
                 Interlocked.Increment(ref fixture.Executed);
-                return Task.FromResult(new HostReply { RequestId = request.RequestId, Device = "existing-launcher", Ok = true });
+                return Task.FromResult(new HostReply
+                {
+                    RequestId = request.RequestId, Device = "existing-launcher", Ok = true,
+                    Detail = request.Command == HostCommand.TaskDetails ? new HostTaskDetails { TaskId = request.TaskId } : null,
+                    Game = request.Command == HostCommand.GameStatus ? new HostGameStatus() : null
+                });
             }, renewal);
             fixture.Client = new PairedRemoteClient(fixture.Phone);
             return fixture;

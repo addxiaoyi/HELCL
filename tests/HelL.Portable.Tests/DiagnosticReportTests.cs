@@ -7,6 +7,22 @@ namespace HelL.Portable.Tests;
 
 public sealed class DiagnosticReportTests
 {
+    [Theory]
+    [InlineData("Opened /var/private/sensitive-value")]
+    [InlineData("设备码：sensitive-value")]
+    [InlineData("密码为 sensitive-value")]
+    public void DiagnosticMessagesDoNotExposeAbsolutePathsOrLocalizedCredentials(string message)
+    {
+        Assert.DoesNotContain("sensitive-value", DiagnosticReportBuilder.SanitizeMessage(message));
+    }
+
+    [Fact]
+    public void PreCancelledCollectionDoesNotStartEnvironmentOrNetworkChecks()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        Assert.Throws<OperationCanceledException>(() => DiagnosticCapture.Collect(DiagnosticSections.All, cancellation: cancellation.Token));
+    }
     private static readonly DateTimeOffset Captured = new(2026, 11, 19, 3, 0, 0, TimeSpan.Zero);
 
     [Fact]

@@ -3,7 +3,7 @@ name: Remote features checks
 on:
   workflow_dispatch:
   pull_request:
-    branches: ['codex/backend-followup-ci-20261119-01']
+    branches: ['codex/backend-followup-ci-20261119-01', 'codex/remote-features']
 
 permissions:
   contents: read
@@ -40,6 +40,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet build tools/HelL.Companion.Host -c Release --nologo
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify bounded lifecycle pressure and cleanup
+        if: runner.os == 'Linux'
+        run: |
+          dotnet test tests/HelL.Remote.Stress.Tests -c Release --nologo
+          dotnet run --project tools/HelL.Remote.Stress -c Release -- --cycles 3 --pairs 2 --seed 20261119 --report artifacts/features/stress-report.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

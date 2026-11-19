@@ -198,6 +198,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
     {
         ChromeTitle.Text = page switch
         {
+            "diagnostics" => "诊断包",
             "home" => "首页", "library" => "实例库", "resources" => "下载资源",
             "create" => "创建实例", "manage" => "实例设置", "account" => "账号",
             "about" => "关于", "ai" => "AI 助手", "remote" => "远程电脑", _ => "我的"
@@ -215,9 +216,11 @@ public sealed partial class MobileHome : UserControl, IDisposable
         AiPage.IsVisible = page == "ai";
         RemotePage.IsVisible = page == "remote";
         if (diagnosticPage is not null) diagnosticPage.IsVisible = page == "diagnostics";
+        DiagnosticPageChanged(page == "diagnostics");
         if (page == "remote") InitializeRemote();
+        SetRemotePageActive(page == "remote");
         if (page == "ai") InitializeAi();
-        string tab = page is "create" or "manage" ? "library" : page is "about" or "account" or "remote" ? "more" : page;
+        string tab = page is "create" or "manage" ? "library" : page is "about" or "account" or "remote" or "diagnostics" ? "more" : page;
         foreach (var button in RailNavigation.Children.OfType<Button>().Concat(BottomNavigation.Children.OfType<Button>()))
         {
             bool active = (string?)button.Tag == tab;
@@ -292,6 +295,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
         disposed = true;
         ++coverRevision;
         operation?.Cancel();
+        DisposeDiagnostics();
         ClearAuthorization();
         SizeChanged -= ArrangeWorkspace;
         AttachedToVisualTree -= RestoreAccount;

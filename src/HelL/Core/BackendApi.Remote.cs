@@ -10,11 +10,12 @@ namespace HelL.Core;
 public partial class BackendApi
 {
     private const int RemoteTaskCapacity = 80;
-    private const int RemoteSnapshotLimit = 40;
-    private const int RemoteTaskLogLimit = 20;
+    private const int RemoteSnapshotLimit = HostProtocol.MaxSnapshotTasks;
+    private const int RemoteTaskLogLimit = HostProtocol.MaxRemoteLogLines;
     private readonly object remoteTaskGate = new object();
     private readonly Dictionary<string, RemoteTaskState> remoteTasks = new Dictionary<string, RemoteTaskState>(StringComparer.Ordinal);
     private readonly List<string> remoteTaskOrder = new List<string>();
+    private long remoteTaskSequence;
 
     private sealed class RemoteTaskState
     {
@@ -28,6 +29,7 @@ public partial class BackendApi
         public bool Crash;
         public long StartedAtUnix;
         public long FinishedAtUnix;
+        public long Sequence;
         public readonly Queue<string> RecentLogs = new Queue<string>();
     }
 
@@ -46,7 +48,8 @@ public partial class BackendApi
                 {
                     Id = id,
                     Title = HostRemoteDiagnostics.Clean(Py.S(data.Get("title")), 128),
-                    StartedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                    StartedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                    Sequence = ++remoteTaskSequence
                 };
                 remoteTasks.Add(id, task);
                 remoteTaskOrder.Add(id);
@@ -56,6 +59,7 @@ public partial class BackendApi
             switch (eventName)
             {
                 case "progress":
+                    if (task.State != "running") break;
                     task.ProgressPercent = Percent(data.Get("current"), data.Get("total"));
                     task.Stage = HostRemoteDiagnostics.Clean(Py.S(data.Get("message")), 160);
                     int speedSeparator = task.Stage.IndexOf("  |  ", StringComparison.Ordinal);
@@ -78,25 +82,31 @@ public partial class BackendApi
                     task.Crash = true;
                     break;
                 case "finished":
+                    if (task.State != "running") break;
                     bool success = Py.Truthy(data.Get("success"));
                     task.State = success ? "completed" : "failed";
                     task.Message = HostRemoteDiagnostics.Clean(Py.S(data.Get("message")), 512);
                     task.Crash |= Py.Truthy(data.Get("crash"));
                     if (success) task.ProgressPercent = 100;
-                    task.Stage = task.Message;
+                    task.Stage = task.Message.Length <= 160 ? task.Message : task.Message.Substring(0, 160);
                     task.Speed = "";
                     task.FinishedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    task.Sequence = ++remoteTaskSequence;
                     break;
             }
         }
     }
 
-    internal HostTask[] remote_task_snapshot()
+    internal HostTask[] remote_task_snapshot() => remote_task_state().Tasks;
+
+    internal (HostTask[] Tasks, bool Truncated) remote_task_state()
     {
         lock (remoteTaskGate)
-            return remoteTasks.Values.OrderBy(task => task.State != "running")
-                .ThenByDescending(task => task.StartedAtUnix).ThenBy(task => task.Id, StringComparer.Ordinal)
-                .Take(RemoteSnapshotLimit).Select(ToHostTask).ToArray();
+        {
+            HostTask[] tasks = remoteTasks.Values.OrderBy(task => task.State != "running")
+                .ThenByDescending(task => task.Sequence).Take(RemoteSnapshotLimit).Select(ToHostTask).ToArray();
+            return (tasks, remoteTasks.Count > tasks.Length);
+        }
     }
 
     internal bool remote_tasks_truncated()

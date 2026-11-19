@@ -23,6 +23,7 @@ public sealed class RemotePairingStore
     private const int MaxDevices = 16;
     private const int MaxFileBytes = 1024 * 1024;
     private const int MaxSnapshotReloads = 2;
+    private const int ActivityWriteIntervalSeconds = 60;
     private static readonly byte[] Context = Encoding.UTF8.GetBytes("HelL device pairing v1");
     private readonly object gate = new();
     private readonly string path;
@@ -111,6 +112,7 @@ public sealed class RemotePairingStore
         lock (gate)
         {
             if (!state.Devices.Any(device => device.DeviceId == deviceId)) throw new UnauthorizedAccessException("The selected host is not paired.");
+            if (state.SelectedHostId == deviceId) return;
             Commit(state with { SelectedHostId = deviceId });
         }
     }
@@ -128,8 +130,12 @@ public sealed class RemotePairingStore
         {
             if (!state.Devices.Any(device => device.DeviceId == deviceId))
                 throw new UnauthorizedAccessException("Only a paired device can have connection activity recorded.");
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            PairedDeviceActivity? previous = state.Activity.SingleOrDefault(item => item.DeviceId == deviceId);
+            // Live polling must not rotate the native encryption key for every successful snapshot.
+            if (previous is not null && now >= previous.LastConnected && now - previous.LastConnected < ActivityWriteIntervalSeconds) return;
             PairedDeviceActivity[] next = state.Activity.Where(item => item.DeviceId != deviceId)
-                .Append(new PairedDeviceActivity(deviceId, DateTimeOffset.UtcNow.ToUnixTimeSeconds())).ToArray();
+                .Append(new PairedDeviceActivity(deviceId, now)).ToArray();
             Commit(state with { Activity = next });
         }
     }

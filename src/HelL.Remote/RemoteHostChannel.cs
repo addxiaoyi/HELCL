@@ -74,12 +74,10 @@ public static class RemoteHostChannel
                 requestTime.CancelAfter(options.RequestTimeout);
                 byte[]? payload = await HostFrames.ReadAsync(tls, requestTime.Token).ConfigureAwait(false);
                 if (payload is null) return;
-                HostRequest request = JsonSerializer.Deserialize<HostRequest>(payload)
-                    ?? throw new InvalidDataException("The remote host request is empty.");
-                request.Validate();
+                HostRequest request = HostWireMessages.ReadRequest(payload);
                 HostReply reply = await execute(request, requestTime.Token).ConfigureAwait(false);
-                if (reply.Protocol != HostProtocol.Version || reply.RequestId != request.RequestId || string.IsNullOrWhiteSpace(reply.Device))
-                    throw new InvalidDataException("The host handler returned an incompatible reply.");
+                try { reply.Validate(request); }
+                catch (ArgumentException) { throw new InvalidDataException("The host handler returned an incompatible reply."); }
                 await HostFrames.WriteAsync(tls, JsonSerializer.SerializeToUtf8Bytes(reply), requestTime.Token).ConfigureAwait(false);
             }
         }
@@ -110,11 +108,7 @@ public static class RemoteHostChannel
             await HostFrames.WriteAsync(tls, JsonSerializer.SerializeToUtf8Bytes(request), requestTime.Token).ConfigureAwait(false);
             byte[] payload = await HostFrames.ReadAsync(tls, requestTime.Token).ConfigureAwait(false)
                 ?? throw new EndOfStreamException("The remote host ended before returning its state.");
-            HostReply reply = JsonSerializer.Deserialize<HostReply>(payload)
-                ?? throw new InvalidDataException("The remote host reply is empty.");
-            if (reply.Protocol != HostProtocol.Version || reply.RequestId != request.RequestId || string.IsNullOrWhiteSpace(reply.Device))
-                throw new InvalidDataException("The remote host reply does not match this request.");
-            return reply;
+            return HostWireMessages.ReadReply(payload, request);
         }
         finally { socket.Abort(); }
     }

@@ -226,4 +226,38 @@ public sealed class HostCommandTests
         Assert.False(fixture.Rpc.Has("remote_task_snapshot"));
         Assert.False(fixture.Rpc.Has("remote_request_game_stop"));
     }
+
+    [Fact]
+    public void LateProgressCannotOverwriteATasksTerminalOutcome()
+    {
+        using var fixture = new BackendFixture();
+        fixture.Api.Emit("task_added", PyDict.Of("task_id", "terminal", "title", "fixture"));
+        fixture.Api.Emit("finished", PyDict.Of("task_id", "terminal", "success", true, "message", "verified complete"));
+        fixture.Api.Emit("progress", PyDict.Of("task_id", "terminal", "current", 1L, "total", 10L, "message", "late callback  |  2 MB/s"));
+
+        HostTask terminal = Assert.Single(fixture.Api.remote_task_snapshot());
+        Assert.Equal("completed", terminal.State);
+        Assert.Equal(100d, terminal.ProgressPercent);
+        Assert.Equal("verified complete", terminal.Stage);
+        Assert.Empty(terminal.Speed);
+    }
+
+    [Fact]
+    public void SnapshotOrderUsesEventOrderAndLongOutcomesRemainWithinWireLimits()
+    {
+        using var fixture = new BackendFixture();
+        for (int index = 0; index < 50; index++)
+        {
+            string id = "reverse-" + (50 - index).ToString("D3");
+            fixture.Api.Emit("task_added", PyDict.Of("task_id", id, "title", "fixture"));
+            fixture.Api.Emit("finished", PyDict.Of("task_id", id, "success", false, "message", new string('x', 400)));
+        }
+        var service = new HostCommandService(fixture.Api, "test-host");
+        var request = new HostRequest { RequestId = Guid.NewGuid().ToString("N"), Command = HostCommand.Snapshot };
+        HostReply reply = service.Execute(request, [HostPermission.Read]);
+        reply.Validate(request);
+        Assert.Equal("reverse-001", reply.Tasks[0].Id);
+        Assert.Equal("reverse-040", reply.Tasks[^1].Id);
+        Assert.All(reply.Tasks, task => { Assert.Equal(400, task.Message.Length); Assert.Equal(160, task.Stage.Length); });
+    }
 }

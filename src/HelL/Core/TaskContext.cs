@@ -45,9 +45,9 @@ public sealed class TaskContext
 		_w._log(text);
 	}
 
-	public void LoginCode(object code, object uri)
+	public void LoginCode(object code, object uri, object expiresIn = null)
 	{
-		_w.login_code(code, uri);
+		_w.login_code(code, uri, expiresIn);
 	}
 
 	public void LoginStatus(object text)

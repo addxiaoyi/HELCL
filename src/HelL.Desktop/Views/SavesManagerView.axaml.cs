@@ -124,9 +124,11 @@ public partial class SavesManagerView : UserControl
     private async void DeleteWorldRow(object? sender, RoutedEventArgs e)
     {
         if (host == null || string.IsNullOrEmpty(currentInstance) || sender is not Button { Tag: string worldName }) return;
+        string target = currentInstance;
+        if (!await host.ConfirmAction("删除世界存档", $"实例：{target}\n世界：{worldName}\n删除后不能从游戏内恢复。请先确认已有可用备份。", "删除存档")) return;
         await host.RunTask(_ =>
         {
-            Saves.DeleteSave(new Instance(currentInstance), worldName);
+            Saves.DeleteSave(new Instance(target), worldName);
             Reload(currentInstance);
             host.SetStatus($"已删除存档：{worldName}");
             return Task.CompletedTask;
@@ -136,9 +138,12 @@ public partial class SavesManagerView : UserControl
     private async void RestoreBackupRow(object? sender, RoutedEventArgs e)
     {
         if (host == null || string.IsNullOrEmpty(currentInstance) || sender is not Button { Tag: string backupName }) return;
+        string target = currentInstance;
+        var worlds = Saves.ListSaves(new Instance(target)).OfType<PyDict>().Select(row => $"{Py.S(row.Get("name"))} · {Py.Int(row.Get("mtime", 0L))}");
+        if (!await host.ConfirmAction("还原备份", $"目标实例：{target}\n备份：{backupName}\n当前世界（最后修改 Unix 时间）：\n{string.Join("\n", worlds)}\n同名世界会被覆盖；请先备份当前进度。", "确认还原")) return;
         await host.RunTask(async token =>
         {
-            await Task.Run(() => Saves.RestoreBackup(new Instance(currentInstance), backupName, overwrite: true), token);
+            await Task.Run(() => Saves.RestoreBackup(new Instance(target), backupName, overwrite: true), token);
             Reload(currentInstance);
             host.SetStatus($"备份「{backupName}」已还原到存档目录。");
         });
@@ -147,9 +152,12 @@ public partial class SavesManagerView : UserControl
     private async void DeleteBackupRow(object? sender, RoutedEventArgs e)
     {
         if (host == null || string.IsNullOrEmpty(currentInstance) || sender is not Button { Tag: string backupName }) return;
+        string target = currentInstance;
+        string detail = (BackupsList.ItemsSource as IEnumerable<BackupItemRow>)?.FirstOrDefault(row => row.BackupName == backupName)?.Detail ?? "";
+        if (!await host.ConfirmAction("删除备份", $"实例：{target}\n备份：{backupName}\n{detail}\n删除可能移除唯一恢复点。", "删除备份")) return;
         await host.RunTask(_ =>
         {
-            Saves.DeleteBackup(new Instance(currentInstance), backupName);
+            Saves.DeleteBackup(new Instance(target), backupName);
             Reload(currentInstance);
             host.SetStatus($"已删除备份：{backupName}");
             return Task.CompletedTask;
@@ -170,7 +178,7 @@ public partial class SavesManagerView : UserControl
         await host.Launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(dir));
     }
 
-    private void ChooseLogFile(object? sender, SelectionChangedEventArgs e)
+    private async void ChooseLogFile(object? sender, SelectionChangedEventArgs e)
     {
         if (LogFilePicker.SelectedItem is not LogEntryItem entry || !File.Exists(entry.FullPath))
         {
@@ -179,8 +187,8 @@ public partial class SavesManagerView : UserControl
         }
         try
         {
-            string[] lines = File.ReadAllLines(entry.FullPath);
-            string excerpt = string.Join(Environment.NewLine, lines.TakeLast(180));
+            string excerpt = await Task.Run(() => HelL.Desktop.Services.LogPreview.ReadTail(entry.FullPath, 180));
+            if ((LogFilePicker.SelectedItem as LogEntryItem)?.FullPath != entry.FullPath) return;
             LogViewer.Text = excerpt.Length == 0 ? "（日志文件为空）" : excerpt;
             DiagnoseLogButton.IsEnabled = excerpt.Length > 0;
         }

@@ -23,6 +23,8 @@ public sealed class CatalogItem
 	public string? Slug { get; set; }
 
 	public string Source { get; set; } = "";
+    [JsonPropertyName("search_failed_sources")] public List<string> SearchFailedSources { get; set; } = new();
+    [JsonPropertyName("search_completed_sources")] public List<string> SearchCompletedSources { get; set; } = new();
 
 	public string Description { get; set; } = "";
     public string OriginalDescription { get; set; } = "";
@@ -100,6 +102,8 @@ public sealed class CatalogCompatibility
 public sealed class CatalogDependency
 {
     public string Source { get; set; } = "";
+    [JsonPropertyName("search_failed_sources")] public List<string> SearchFailedSources { get; set; } = new();
+    [JsonPropertyName("search_completed_sources")] public List<string> SearchCompletedSources { get; set; } = new();
     public string ProjectId { get; set; } = "";
     public string VersionId { get; set; } = "";
     public string ProjectType { get; set; } = "";

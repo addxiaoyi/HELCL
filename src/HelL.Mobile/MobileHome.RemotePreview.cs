@@ -49,6 +49,11 @@ public sealed partial class MobileHome
             await Capture("remote-cancelled");
             await remote.RefreshAsync();
             await Capture("remote-readonly-tasks");
+            Control[] stableTasks = remoteTasks.Children.ToArray();
+            Control[] stableHosts = remoteHosts.Children.ToArray();
+            PresentRemote();
+            if (!stableTasks.SequenceEqual(remoteTasks.Children) || !stableHosts.SequenceEqual(remoteHosts.Children))
+                throw new IOException("Unchanged remote snapshots rebuilt controls and lost stable reading targets.");
             if (remote.Tasks.Length != 2 || remoteTasks.GetVisualDescendants().OfType<Button>().Any(button => button.IsEnabled && button.Classes.Contains("remote-task-cancel")))
                 throw new IOException("Read-only task actions were enabled.");
             await remote.ReadTaskDetailsAsync("preview-install");
@@ -101,6 +106,12 @@ public sealed partial class MobileHome
             await Capture("remote-host-selection");
             remote.SelectHost(host.Offer.DeviceId);
             if (remote.Invitation?.Host.DeviceId != host.Offer.DeviceId) throw new IOException("The saved host invitation was not restored.");
+            var oldFile = new RemoteFileContext(remote, remote.SelectedHostId, navigationRevision);
+            if (!CanApplyRemoteFile(oldFile)) throw new IOException("A current file import context was rejected.");
+            ShowPage("more");
+            ShowPage("remote");
+            if (CanApplyRemoteFile(oldFile)) throw new IOException("A file picker result from an earlier page visit was accepted.");
+            for (int attempt = 0; attempt < 80 && remote.Busy; attempt++) await Task.Delay(50);
             foreach (Control control in RemoteLayout.GetVisualDescendants().OfType<Control>().Where(control => control.IsEffectivelyVisible && control.Bounds.Width > 0))
             {
                 Point point = control.TranslatePoint(default, RemotePage) ?? default;
@@ -118,6 +129,7 @@ public sealed partial class MobileHome
                 horizontalOverflow = false, loading = true, cancellation = true, snapshot = true, safeError = true,
                 taskDetails = true, gameStatus = true, gracefulStop = true, hostSelection = true,
                 terminalStateConfirmed = true, pollingStopsOnLeave = true, privateInputClearedOnLeave = true,
+                stableRows = true, deviceScopedRevocation = true, invitationExpiryVisible = true,
                 mockedRemoteTransport = true, nativeAndroidVerified = false
             }));
             return true;

@@ -19,7 +19,8 @@ namespace HelL.Pages;
 
 public sealed partial class AiPage : PageBase
 {
-	private readonly SPanel _chatList = Ui.V(4.0);
+	private readonly ListBox _chatList;
+    private readonly TextBlock _historyEmpty = Ui.Muted("").Wrap();
 
 	private readonly SPanel _messages = Ui.V(12.0);
 
@@ -174,7 +175,7 @@ public sealed partial class AiPage : PageBase
 
 	internal Border SelfTestHist => _hist;
 
-	internal SPanel SelfTestChatList => _chatList;
+	internal FrameworkElement SelfTestChatList => _chatList;
 
 	internal TextBlock SelfTestUsage => _usageLabel;
 
@@ -268,7 +269,8 @@ public sealed partial class AiPage : PageBase
 		}, "\ue710");
 		button.HorizontalAlignment = HorizontalAlignment.Stretch;
 		button.HorizontalContentAlignment = HorizontalAlignment.Left;
-		_histSearch = Ui.Input(I18n.L("搜索对话"));
+		_histSearch = Ui.Input("搜索对话标题与正文");
+        _chatList = Ui.VirtualList<AiChatDto>(HistoryChatRow, rowSpacing: 4);
 		_histSearch.TextChanged += delegate
 		{
 			RenderChats();
@@ -277,7 +279,7 @@ public sealed partial class AiPage : PageBase
 		grid.Add(button, 0);
 		grid.Add(_histSearch.M(0.0, 4.0), 1);
 		grid.Add(Ui.Txt(I18n.L("最近"), 11.0, bold: false, "B.InkFaint").M(8.0, 12.0, 0.0, 4.0), 2);
-		grid.Add(Ui.Scroll(_chatList), 3);
+		grid.Add(Ui.G("Auto,*").Add(_historyEmpty, 0).Add(_chatList, 1), 3);
 		_hist = new Border
 		{
 			Width = 192.0,
@@ -928,13 +930,22 @@ public sealed partial class AiPage : PageBase
 		}
 	}
 
-	private void RenderChats()
-	{
-		_chatList.Children.Clear();
-		string text = _histSearch?.Text?.Trim() ?? "";
-		int num = 0;
-		foreach (AiChatDto chat in _store.Chats)
-		{
+    private void RenderChats()
+    {
+        string query = _histSearch?.Text?.Trim() ?? "";
+        var chats = _store.Chats.Where(chat => query.Length == 0
+            || (chat.Title ?? "").IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0
+            || chat.Messages.Any(message => (message.Content ?? "").IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
+        _chatList.ItemsSource = chats;
+        _historyEmpty.Text = chats.Count == 0 ? query.Length > 0 ? "没有匹配的对话标题或消息正文。" : "还没有对话。" : "";
+        _historyEmpty.Visibility = chats.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        AiChatDto activeChat = ActiveChat;
+        _titleText.Text = activeChat == null || string.IsNullOrWhiteSpace(activeChat.Title) ? I18n.L("新对话") : activeChat.Title;
+        SyncInstChip();
+    }
+
+    private UIElement HistoryChatRow(AiChatDto chat)
+    {
 			string id = chat.Id;
 			string text2 = chat.Title;
 			if (string.IsNullOrWhiteSpace(text2))
@@ -953,11 +964,6 @@ public sealed partial class AiPage : PageBase
 			{
 				text2 = I18n.L("新对话");
 			}
-			if (text.Length > 0 && text2.IndexOf(text, StringComparison.OrdinalIgnoreCase) < 0)
-			{
-				continue;
-			}
-			num++;
 			bool flag = id == _store.ActiveId;
 			bool num2 = _busy && id == _runChatId;
 			TextBlock textBlock = Ui.Txt(text2, 12.5, flag, flag ? "B.Ink" : "B.InkMuted");
@@ -1019,16 +1025,9 @@ public sealed partial class AiPage : PageBase
 				}
 			};
 			button.ContextMenu = DelMenu(id);
-			_chatList.Children.Add(button.Stretch());
-		}
-		if (num == 0)
-		{
-			_chatList.Children.Add(Ui.Txt((text.Length > 0) ? I18n.L("没有匹配的对话") : I18n.L("还没有对话"), 12.0, bold: false, "B.InkFaint").M(8.0, 4.0));
-		}
-		AiChatDto activeChat = ActiveChat;
-		_titleText.Text = ((activeChat == null || string.IsNullOrWhiteSpace(activeChat.Title)) ? I18n.L("新对话") : activeChat.Title);
-		SyncInstChip();
-	}
+        System.Windows.Automation.AutomationProperties.SetName(button, "打开对话 " + text2);
+        return button.Stretch();
+    }
 
 	private ContextMenu DelMenu(string id)
 	{
@@ -1037,13 +1036,12 @@ public sealed partial class AiPage : PageBase
 		{
 			Header = I18n.L("删除这个对话")
 		};
-		menuItem.Click += delegate
-		{
-			PageBase.Run(() => SwitchChatAsync(() => PageBase.Api.TryCallAsync("ai_delete_chat", new
-			{
-				chat_id = id
-			}, _store)));
-		};
+        menuItem.Click += (_, _) => PageBase.Run(async () =>
+        {
+            var chat = _store.Chats.FirstOrDefault(item => item.Id == id);
+            if (!await Dlg.Confirm("删除这段对话？", "将删除对话“" + (chat?.Title ?? "新对话") + "”及其中消息。此操作无法撤销。", "删除对话", "取消", danger: true)) return;
+            await SwitchChatAsync(() => Api.CallAsync<AiStoreDto>("ai_delete_chat", new { chat_id = id }));
+        });
 		contextMenu.Items.Add(menuItem);
 		return contextMenu;
 	}

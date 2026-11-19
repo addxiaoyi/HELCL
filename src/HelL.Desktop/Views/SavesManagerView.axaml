@@ -4,9 +4,9 @@
              x:Class="HelL.Desktop.Views.SavesManagerView">
   <Grid Margin="36,10,36,24" RowDefinitions="Auto,Auto,*">
     <Grid ColumnDefinitions="*,Auto,Auto" Margin="2,0,0,14">
-      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+      <StackPanel Spacing="4" VerticalAlignment="Center">
         <TextBlock Text="存档与日志" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
-        <TextBlock x:Name="SubtitleText" IsVisible="False" />
+        <TextBlock x:Name="SubtitleText" IsVisible="True" TextWrapping="Wrap" FontSize="12" />
         <TextBlock x:Name="CountBadge" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
       </StackPanel>
       <Button Grid.Column="1" Content="打开存档目录" Classes="soft" Click="OpenSavesFolder" Margin="0,0,8,0" />

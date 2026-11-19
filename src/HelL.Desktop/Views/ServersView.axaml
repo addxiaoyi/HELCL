@@ -3,9 +3,10 @@
              x:Class="HelL.Desktop.Views.ServersView">
   <Grid Margin="36,10,36,24" RowDefinitions="Auto,*">
     <Grid ColumnDefinitions="*,Auto,Auto" Margin="2,0,0,14">
-      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+      <StackPanel Spacing="5" VerticalAlignment="Center">
         <TextBlock Text="多人联机" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
-        <TextBlock x:Name="SubtitleText" IsVisible="False" />
+        <TextBlock x:Name="SubtitleText" IsVisible="True" />
+        <Button x:Name="UndoRemoveButton" Content="撤销移除" Classes="soft" IsVisible="False" Click="UndoRemoveServer" />
         <TextBlock x:Name="ServerCountBadge" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
       </StackPanel>
       <Button Grid.Column="1" Content="测速" Classes="soft" Click="PingServers" Margin="0,0,8,0" />

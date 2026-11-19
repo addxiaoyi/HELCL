@@ -18,7 +18,7 @@ public sealed partial class DesktopTask : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
     public Guid Id { get; } = Guid.NewGuid();
     public string Title { get; }
-    public DateTimeOffset StartedAt { get; } = DateTimeOffset.Now;
+    public DateTimeOffset StartedAt { get; }
     public string StartedLabel => StartedAt.ToString("HH:mm:ss");
     public DateTimeOffset? FinishedAt { get; private set; }
     public ObservableCollection<string> Log { get; } = [];
@@ -37,10 +37,11 @@ public sealed partial class DesktopTask : INotifyPropertyChanged
     public bool IsActive => state is DesktopTaskState.Running or DesktopTaskState.Cancelling;
     public bool CanCancel => cancellable && state == DesktopTaskState.Running;
 
-    public DesktopTask(string title)
+    public DesktopTask(string title, DateTimeOffset? startedAt = null)
     {
         if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("任务名称不能为空。", nameof(title));
         Title = title;
+        StartedAt = startedAt ?? DateTimeOffset.Now;
     }
 
     public void Report(string text, double? progress = null)
@@ -86,6 +87,8 @@ public sealed partial class DesktopTask : INotifyPropertyChanged
         Changed(nameof(Indeterminate));
         Changed(nameof(FinishedAt));
     }
+
+    internal void RestoreFinishedAt(DateTimeOffset? finishedAt) => FinishedAt = finishedAt;
 
     private void SetState(DesktopTaskState next)
     {

@@ -104,10 +104,12 @@ public partial class ModsManagerView : UserControl
         await host.RunTask(_ =>
         {
             var inst = new Instance(currentInstance);
-            foreach (var row in allRows.Where(r => r.Enabled != enable))
+            string query = SearchBox.Text?.Trim() ?? "";
+            var visible = allRows.Where(row => query.Length == 0 || row.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)).ToArray();
+            foreach (var row in visible.Where(r => r.Enabled != enable))
                 Mods.SetModEnabled(inst, row.FileName, enable);
             Reload(currentInstance);
-            host.SetStatus(enable ? "已启用全部模组。" : "已禁用全部模组。");
+            host.SetStatus($"已{(enable ? "启用" : "禁用")}当前筛选的 {visible.Length} 个模组。");
             return Task.CompletedTask;
         });
     }
@@ -115,25 +117,13 @@ public partial class ModsManagerView : UserControl
     private async void OnDropFiles(object? sender, DragEventArgs e)
     {
         if (host == null || string.IsNullOrEmpty(currentInstance)) return;
+        string target = currentInstance, kind = currentKind;
         var files = e.DataTransfer.TryGetFiles();
         if (files == null) return;
-        string[] paths = files.Select(f => f.TryGetLocalPath()).Where(p => !string.IsNullOrWhiteSpace(p) && File.Exists(p)).Cast<string>().ToArray();
-        if (paths.Length == 0) return;
-        await host.RunTask(_ =>
-        {
-            var inst = new Instance(currentInstance);
-            string destDir = Path.Combine(inst.path, currentKind);
-            Directory.CreateDirectory(destDir);
-            int count = 0;
-            foreach (string src in paths)
-            {
-                File.Copy(src, Path.Combine(destDir, Path.GetFileName(src)), overwrite: true);
-                count++;
-            }
-            Reload(currentInstance);
-            host.SetStatus($"已导入 {count} 个文件。");
-            return Task.CompletedTask;
-        });
+        string[] paths = files.Select(file => file.TryGetLocalPath()).Where(path => !string.IsNullOrWhiteSpace(path)).Cast<string>().ToArray();
+        try { await ImportPathsAsync(target, kind, paths); }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        { host.SetStatus("导入未完成，请检查原文件和目标实例后重试。"); System.Diagnostics.Trace.TraceWarning("Desktop import: " + error.GetType().Name); }
     }
 
     private async void ToggleModRow(object? sender, RoutedEventArgs e)
@@ -154,11 +144,13 @@ public partial class ModsManagerView : UserControl
     private async void DeleteContentRow(object? sender, RoutedEventArgs e)
     {
         if (host == null || string.IsNullOrEmpty(currentInstance) || sender is not Button { Tag: string fileName }) return;
+        string target = currentInstance, kind = currentKind;
+        if (!await host.ConfirmAction("删除资源文件", $"实例：{target}\n类型：{kind}\n文件：{fileName}\n删除不会自动恢复，请确认已保存原文件。", "删除文件")) return;
         await host.RunTask(_ =>
         {
-            var inst = new Instance(currentInstance);
-            if (currentKind == "mods") Mods.DeleteMod(inst, fileName);
-            else Mods.DeleteContentFile(inst, currentKind, fileName);
+            var inst = new Instance(target);
+            if (kind == "mods") Mods.DeleteMod(inst, fileName);
+            else Mods.DeleteContentFile(inst, kind, fileName);
             Reload(currentInstance);
             host.SetStatus($"已删除 {fileName}");
             return Task.CompletedTask;
@@ -168,31 +160,82 @@ public partial class ModsManagerView : UserControl
     private async void ImportFiles(object? sender, RoutedEventArgs e)
     {
         if (host == null || string.IsNullOrEmpty(currentInstance)) return;
-        string[] patterns = currentKind == "mods" ? ["*.jar", "*.jar.disabled"] : ["*.zip", "*.jar"];
-        var files = await host.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        string target = currentInstance, kind = currentKind;
+        try
         {
-            Title = "导入文件",
-            AllowMultiple = true,
-            FileTypeFilter = [new FilePickerFileType("内容包") { Patterns = patterns }]
-        });
-        if (files.Count == 0) return;
+            string[] patterns = kind == "mods" ? ["*.jar", "*.jar.disabled"] : ["*.zip", "*.jar"];
+            var files = await host.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "导入文件到“" + target + "”",
+                AllowMultiple = true,
+                FileTypeFilter = [new FilePickerFileType("内容包") { Patterns = patterns }]
+            });
+            if (files.Count == 0) return;
+            string[] paths = files.Select(file => file.TryGetLocalPath()).Where(path => !string.IsNullOrWhiteSpace(path)).Cast<string>().ToArray();
+            await ImportPathsAsync(target, kind, paths);
+        }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        { host.SetStatus("导入未完成，请检查原文件和目标实例后重试。"); System.Diagnostics.Trace.TraceWarning("Desktop import: " + error.GetType().Name); }
+    }
+
+    internal async Task ImportPathsAsync(string target, string kind, IReadOnlyList<string> paths)
+    {
+        if (host == null || paths.Count == 0) return;
+        if (kind is not ("mods" or "resourcepacks" or "shaderpacks" or "datapacks")) throw new ArgumentException("Invalid resource type.");
+        string folder = RequireImportFolder(target, kind);
+        var plan = paths.Select(path => (Source: Path.GetFullPath(path), Destination: Mods._mod_file_at(folder, Path.GetFileName(path)))).ToArray();
+        if (plan.Select(item => item.Destination).Distinct(StringComparer.OrdinalIgnoreCase).Count() != plan.Length)
+            throw new ArgumentException("Multiple sources have the same destination filename.");
+        foreach (var item in plan)
+        {
+            if (!File.Exists(item.Source)) throw new FileNotFoundException("An import source is no longer available.");
+            bool accepted = kind == "mods" ? item.Source.EndsWith(".jar", StringComparison.OrdinalIgnoreCase) || item.Source.EndsWith(".jar.disabled", StringComparison.OrdinalIgnoreCase)
+                : item.Source.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) || item.Source.EndsWith(".jar", StringComparison.OrdinalIgnoreCase);
+            if (!accepted) throw new ArgumentException("The import source does not match the selected resource type.");
+            DependencyTarget.RequireLocalPath(item.Source);
+            DependencyTarget.RequireLocalPath(item.Destination);
+        }
+        var replacements = plan.Where(item => File.Exists(item.Destination)).Select(item => item.Destination).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (replacements.Count > 0 && !await host.ConfirmAction("确认覆盖资源文件", $"固定目标实例：{target}\n类型：{kind}\n以下同名文件将被替换：\n{string.Join("\n", replacements.Select(Path.GetFileName))}\n取消会保留全部原文件。", "覆盖这些文件")) return;
         await host.RunTask(_ =>
         {
-            var inst = new Instance(currentInstance);
-            string destDir = Path.Combine(inst.path, currentKind);
-            Directory.CreateDirectory(destDir);
-            int copied = 0;
-            foreach (var item in files)
+            if (RequireImportFolder(target, kind) != folder) throw new IOException("The import destination changed.");
+            Directory.CreateDirectory(folder);
+            foreach (var item in plan)
             {
-                string? src = item.TryGetLocalPath();
-                if (string.IsNullOrEmpty(src) || !File.Exists(src)) continue;
-                File.Copy(src, Path.Combine(destDir, Path.GetFileName(src)), overwrite: true);
-                copied++;
+                DependencyTarget.RequireLocalPath(item.Destination);
+                PromoteImport(item.Source, item.Destination, replacements.Contains(item.Destination));
             }
             Reload(currentInstance);
-            host.SetStatus($"已导入 {copied} 个文件。");
+            host.SetStatus($"已导入 {plan.Length} 个文件到实例“{target}”。");
             return Task.CompletedTask;
-        });
+        }, "ImportFiles");
+    }
+
+    private string RequireImportFolder(string target, string kind)
+    {
+        if (host is null || !host.GameLauncher.InstancesList().Any(entry => entry.Name == target))
+            throw new IOException("The original target instance no longer exists.");
+        var instance = new Instance(target);
+        if (!Directory.Exists(instance.path)) throw new IOException("The original target directory no longer exists.");
+        string folder = Path.Combine(instance.path, kind);
+        DependencyTarget.RequireLocalPath(folder);
+        return folder;
+    }
+
+    private static void PromoteImport(string source, string destination, bool replace)
+    {
+        string temporary = Path.Combine(Path.GetDirectoryName(destination)!, ".hell-import-" + Guid.NewGuid().ToString("N") + ".tmp");
+        try
+        {
+            using (var input = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var output = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            { input.CopyTo(output); output.Flush(true); }
+            DependencyTarget.RequireLocalPath(destination);
+            if (replace && File.Exists(destination)) File.Replace(temporary, destination, null);
+            else File.Move(temporary, destination);
+        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
 
     private async void OpenContentFolder(object? sender, RoutedEventArgs e)

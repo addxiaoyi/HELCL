@@ -11,6 +11,8 @@ public sealed class CatalogSearchRequest
     public string Source { get; init; } = "modrinth";
     public string Query { get; init; } = "";
     public PyDict Filters { get; init; } = new();
+    public int Offset { get; init; }
+    public int Limit { get; init; } = 30;
 }
 
 public static class CatalogSearch
@@ -18,6 +20,10 @@ public static class CatalogSearch
     public static List<object> Search(string kind, string query, string source, PyDict filters, Func<CatalogSearchRequest, List<object>>? fetch = null)
     {
         if (!CatalogFiles.KIND_CF.ContainsKey(kind)) throw new ArgumentException("资源类型无效。");
+        int offset = checked((int)Py.Int(filters.Get("offset", 0L)));
+        int limit = checked((int)Py.Int(filters.Get("limit", 40L)));
+        if (offset < 0 || offset > 50000 || limit < 1 || limit > 50)
+            throw new ArgumentException("资源分页超出范围，请重新搜索。");
         string selected = (source ?? "all").ToLowerInvariant();
         if (selected is "" or "全部") selected = "all";
         if (selected.StartsWith("curse")) selected = "curseforge";
@@ -27,7 +33,7 @@ public static class CatalogSearch
         var queries = ResourceNames.Queries(kind, query);
         fetch ??= Fetch;
         var jobs = sources.SelectMany(provider => queries.Select(term => new CatalogSearchRequest
-            { Kind = kind, Source = provider, Query = term, Filters = filters.Copy() })).ToArray();
+            { Kind = kind, Source = provider, Query = term, Filters = filters.Copy(), Offset = offset, Limit = limit })).ToArray();
         var responses = jobs.Select(request => Task.Run(() =>
         {
             try { return (Rows: fetch(request), Error: (Exception?)null); }
@@ -38,11 +44,19 @@ public static class CatalogSearch
         var rows = responses.SelectMany(task => task.Result.Rows).OfType<PyDict>().Select(row => row.Copy()).ToList();
         if (rows.Count == 0 && responses.Any(task => task.Result.Error != null))
             throw new InvalidOperationException("部分资源搜索未完成，请检查网络或切换来源后重试。", responses.First(task => task.Result.Error != null).Result.Error);
-        foreach (var row in rows) { row["kind"] = kind; ResourceNames.Localize(row); }
+        var failedSources = jobs.Where((job, index) => responses[index].Result.Error != null).Select(job => job.Source).Distinct().Cast<object>().ToList();
+        var completedSources = jobs.Where((job, index) => responses[index].Result.Error == null).Select(job => job.Source).Distinct().Cast<object>().ToList();
+        foreach (var row in rows)
+        {
+            row["kind"] = kind;
+            row["search_failed_sources"] = failedSources;
+            row["search_completed_sources"] = completedSources;
+            ResourceNames.Localize(row);
+        }
         string key = ResourceNames.Normalize(query);
         return Mods.RankHits(rows, query, kind).OfType<PyDict>()
             .GroupBy(row => Py.S(row.Get("source")) + ":" + Py.S(Py.Or(row.Get("id"), row.Get("slug"), row.Get("title"))))
-            .Select(group => group.First()).OrderByDescending(row => MatchScore(row, key)).Take(40).Cast<object>().ToList();
+            .Select(group => group.First()).OrderByDescending(row => MatchScore(row, key)).Take(limit).Cast<object>().ToList();
     }
 
     private static int MatchScore(PyDict row, string query)
@@ -60,7 +74,7 @@ public static class CatalogSearch
         object category = Py.Or(request.Filters.Get("category"), request.Filters.Get("type"), "");
         string loader = request.Kind is "mod" or "modpack" ? CatalogLoader.Normalize(Py.S(request.Filters.Get("loader"))) : "";
         if (request.Source == "modrinth")
-            return Mods.SearchModrinthProjects(dm, request.Query, request.Kind, 30, version, CatalogFiles.CategoryFacets(category), loader);
-        return Mods.SearchCurseforge(dm, request.Query, 30, Config.CurseforgeKey(), CatalogFiles.KIND_CF[request.Kind], null, version, CatalogFiles.CfCategoryTokens(category), loader);
+            return Mods.SearchModrinthProjects(dm, request.Query, request.Kind, request.Limit, version, CatalogFiles.CategoryFacets(category), loader, offset: request.Offset);
+        return Mods.SearchCurseforge(dm, request.Query, request.Limit, Config.CurseforgeKey(), CatalogFiles.KIND_CF[request.Kind], null, version, CatalogFiles.CfCategoryTokens(category), loader, offset: request.Offset);
     }
 }

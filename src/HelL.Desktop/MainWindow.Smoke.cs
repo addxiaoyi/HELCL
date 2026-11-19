@@ -202,6 +202,7 @@ public sealed partial class MainWindow
                 if (account.IsSignedIn || DemoMode.IsChecked != true) throw new InvalidOperationException("退出登录后状态未清理。");
             }
             VerifyCorruptLibraryStartup();
+            await CheckFrontendRecovery();
             File.WriteAllText(Path.Combine(Program.DataRoot, "ui-smoke.json"), JsonSerializer.Serialize(new
             {
                 ok = true, platform = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier,

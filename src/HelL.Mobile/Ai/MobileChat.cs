@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using HelL.Core;
 using HelL.Core.Launcher.Ai;
 
@@ -18,14 +19,87 @@ internal sealed class MobileChat
     private const int HistoryLimit = 24;
     private readonly object gate = new();
     private readonly List<ChatEntry> history = [];
+    private ChatEntry[]? cleared;
+    private string? blockedHistoryPath;
     internal IReadOnlyList<ChatEntry> Entries { get { lock (gate) return history.ToArray(); } }
+    internal bool NeedsHistoryRecovery { get { lock (gate) return blockedHistoryPath is not null; } }
 
     private bool busy;
+    internal void Restore(string path)
+    {
+        lock (gate)
+        {
+            if (history.Count != 0 || !File.Exists(path)) return;
+            try
+            {
+                if (new FileInfo(path).Length > 512 * 1024) throw new InvalidDataException("聊天记录超过允许大小，原文件已保留。");
+                ChatEntry[] saved = JsonSerializer.Deserialize<ChatEntry[]>(File.ReadAllText(path)) ?? throw new InvalidDataException("聊天记录格式无效，原文件已保留。");
+                if (saved.Length > HistoryLimit * 2 || saved.Any(entry => entry is null || entry.Role is not ("user" or "assistant")
+                    || entry.Text is null || entry.Text.Length > MaxReply || entry.State is not ("complete" or "failed" or "cancelled" or "streaming")))
+                    throw new InvalidDataException("聊天记录内容无效，原文件已保留。");
+                history.AddRange(saved.Select(entry => entry.State == "streaming" ? entry with { State = "cancelled" } : entry));
+                blockedHistoryPath = null;
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException or InvalidDataException)
+            {
+                blockedHistoryPath = Path.GetFullPath(path);
+                throw;
+            }
+        }
+    }
+
+    internal void Save(string path)
+    {
+        string json;
+        lock (gate)
+        {
+            if (string.Equals(blockedHistoryPath, Path.GetFullPath(path), OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                throw new InvalidOperationException("原聊天记录无法读取，已阻止覆盖。请先选择“备份损坏记录并重置”。");
+            json = JsonSerializer.Serialize(history.TakeLast(HistoryLimit * 2));
+        }
+        if (Encoding.UTF8.GetByteCount(json) > 512 * 1024) throw new IOException("聊天记录过大，请清理部分内容后重试。");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        string temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            File.WriteAllText(temporary, json);
+            File.Move(temporary, path, true);
+        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
+    }
+
+    internal string RecoverHistory(string path)
+    {
+        lock (gate)
+        {
+            if (busy) throw new InvalidOperationException("请先停止当前回复，再重置聊天记录。");
+            string fullPath = Path.GetFullPath(path);
+            if (!string.Equals(blockedHistoryPath, fullPath, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                throw new InvalidOperationException("当前聊天记录无需重置。");
+            string backup = fullPath + ".corrupt-" + Guid.NewGuid().ToString("N");
+            // Moving the original preserves its exact bytes and permissions before a new history is allowed.
+            File.Move(fullPath, backup);
+            cleared = history.ToArray();
+            history.Clear();
+            blockedHistoryPath = null;
+            return backup;
+        }
+    }
+
+    internal bool UndoClear()
+    {
+        lock (gate)
+        {
+            if (busy || cleared is null || history.Count != 0) return false;
+            history.AddRange(cleared); cleared = null; return true;
+        }
+    }
     internal void Clear()
     {
         lock (gate)
         {
             if (busy) throw new InvalidOperationException("请先停止当前回复。");
+            cleared = history.ToArray();
             history.Clear();
         }
     }

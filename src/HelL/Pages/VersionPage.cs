@@ -171,10 +171,7 @@ public sealed partial class VersionPage : PageBase
 				PageBase.Run(LoadLoaderVersionsAsync);
 			}
 		};
-		_list.MouseDoubleClick += delegate
-		{
-			PageBase.RunOnce(_install, InstallAsync, I18n.L("安装失败"));
-		};
+        _list.MouseDoubleClick += (_, e) => { SyncInstallSummary(); _install.BringIntoView(); _install.Focus(); e.Handled = true; };
 		_loader.SelectionChanged += delegate
 		{
 			string text = _loader.Str();
@@ -200,7 +197,8 @@ public sealed partial class VersionPage : PageBase
 		_fetchError = Ui.RowCard(grid2, null, 10.0);
 		_fetchError.Visibility = Visibility.Collapsed;
 		SPanel border = Ui.V(12.0, new PageHeader(Ui.H3("选择版本"), Ui.Btn("最新正式版", BtnKind.Ghost, (_, _) => SelectRecommended())), _search, el, _fetchError, _list, _count);
-		_list.Height = 290.0;
+		_list.Height = 290;
+        SizeChanged += (_, _) => _list.Height = Math.Max(220, Math.Min(620, ActualHeight - 260));
 		SPanel border2 = BuildInstallPanel();
 		_mineSearch.TextChanged += delegate
 		{
@@ -759,6 +757,21 @@ public sealed partial class VersionPage : PageBase
         try
         {
         string target = _inst.Str();
+        string summary;
+        bool insufficient = false;
+        try
+        {
+            using var estimate = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(8));
+            var plan = await Task.Run(() => HelL.Core.Launcher.InstallationPlan.ForVersion(new HelL.Core.Launcher.Instance(target), row.Version, none ? "" : loader, estimate.Token));
+            summary = plan.Summary; insufficient = plan.SpaceKnownInsufficient;
+        }
+        catch (Exception error)
+        {
+            summary = "目标实例：" + target + "\n版本：" + row.Version + "\n下载量暂不可用：" + error.Message
+                + "\n安装将校验并复用已有文件，不删除存档。可取消并检查网络后重试，也可明确选择继续。";
+        }
+        if (insufficient) { await Dlg.Alert("磁盘空间不足", summary); return; }
+        if (!await Dlg.Confirm("确认安装 Minecraft " + row.Version, summary, "确认安装", "取消")) return;
 		string task = await PageBase.Api.StartTaskAsync("install_game", new
 		{
 			version = row.Version,

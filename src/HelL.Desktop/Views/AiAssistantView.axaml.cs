@@ -12,6 +12,8 @@ public partial class AiAssistantView : UserControl
     private MainWindow? host;
     private DesktopAiProfile? activeProfile;
     private int paintQueued;
+    private string failedPrompt = "";
+    private bool reviewLog;
 
     public AiAssistantView() => InitializeComponent();
 
@@ -26,16 +28,19 @@ public partial class AiAssistantView : UserControl
             ModelBox.Text = activeProfile.Model;
             ProviderSubtitle.Text = $"当前模型：{activeProfile.Model} · {new Uri(activeProfile.Endpoint).Host}";
         }
-        catch
+        catch (Exception error)
         {
             ConfigPanel.IsVisible = true;
+            ProviderSubtitle.Text = "AI 配置不可用：" + (error is IOException ? "请检查系统密钥库或保存配置。" : "请检查服务地址、模型与密钥。");
+            System.Diagnostics.Trace.TraceWarning("Desktop AI configuration: " + error.GetType().Name);
         }
         SyncModeVisibility();
         RefreshMessages();
     }
 
-    internal void PrefillPrompt(string text)
+    internal void PrefillPrompt(string text, bool log = true)
     {
+        reviewLog = log;
         PromptInput.Text = text;
         PromptInput.Focus();
     }
@@ -82,7 +87,7 @@ public partial class AiAssistantView : UserControl
         }
     }
 
-    private void DiagnoseLatestLog(object? sender, RoutedEventArgs e)
+    private async void DiagnoseLatestLog(object? sender, RoutedEventArgs e)
     {
         if (host == null) return;
         string? instName = host.GameLauncher.SelectedInstance;
@@ -99,10 +104,28 @@ public partial class AiAssistantView : UserControl
             PromptInput.Focus();
             return;
         }
-        string[] lines = File.ReadAllLines(latestLog);
-        string tail = string.Join(Environment.NewLine, lines.TakeLast(120));
-        PromptInput.Text = $"请帮我诊断实例「{instName}」的 latest.log 日志末尾输出：\n\n```\n{tail}\n```";
-        SendPrompt(sender, e);
+        await LoadLogReviewAsync(instName, latestLog);
+    }
+
+    internal async Task<bool> LoadLogReviewAsync(string instance, string path, Func<string, Task<string>>? read = null)
+    {
+        string draft = PromptInput.Text ?? "";
+        try
+        {
+            string tail = await (read?.Invoke(path) ?? Task.Run(() => LogPreview.ReadTail(path)));
+            if (PromptInput.Text != draft) { host?.SetStatus("日志已读取，但输入已改变。为保留新草稿，请重新点击读取。"); return false; }
+            PromptInput.Text = $"请分析实例“{instance}”的 latest.log 日志末尾内容：\n\n```\n{tail}\n```";
+            reviewLog = true;
+            PromptInput.Focus();
+            host?.SetStatus("已载入脱敏日志预览。确认内容后点击发送；发送前会再次显示目标服务。");
+            return true;
+        }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        {
+            host?.SetStatus("日志读取失败，可能已轮换、移除或被占用。原草稿已保留，请刷新后重试。");
+            System.Diagnostics.Trace.TraceWarning("Desktop log preview: " + error.GetType().Name);
+            return false;
+        }
     }
 
     private async void SendPrompt(object? sender, RoutedEventArgs e)
@@ -114,15 +137,29 @@ public partial class AiAssistantView : UserControl
             PromptInput.Focus();
             return;
         }
+        DesktopAiProfile profile;
+        try { profile = DesktopAiProfile.Read(Config.CONFIG, session.Secrets); }
+        catch (Exception error) { host.SetStatus("AI 配置尚未就绪，请检查服务地址、模型和系统密钥库。" ); System.Diagnostics.Trace.TraceWarning(error.GetType().Name); return; }
+        if (reviewLog)
+        {
+            prompt = LogPreview.Redact(prompt);
+            if (!await host.ConfirmAction("发送日志分析", $"目标服务：{new Uri(profile.Endpoint).Host}\n模式：{profile.Mode}\n请确认以下脱敏内容可以发送：\n\n{prompt}", "确认发送")) return;
+        }
         await host.RunTask(async token =>
         {
-            var profile = DesktopAiProfile.Read(Config.CONFIG, session.Secrets);
             PromptInput.Clear();
             host.SetStatus($"正在请求 {profile.Model} 生成回复…");
             try
             {
                 await Task.Run(() => session.Send(profile, prompt, QueueRefresh, token), token);
                 host.SetStatus("飞鱼 AI 回复完成。");
+            }
+            catch
+            {
+                failedPrompt = prompt;
+                if (string.IsNullOrWhiteSpace(PromptInput.Text)) PromptInput.Text = prompt;
+                RetryPromptButton.IsVisible = true;
+                throw;
             }
             finally
             {
@@ -138,8 +175,9 @@ public partial class AiAssistantView : UserControl
         host.SetStatus("已复制飞鱼 AI 回复内容。");
     }
 
-    private void ClearConversation(object? sender, RoutedEventArgs e)
+    private async void ClearConversation(object? sender, RoutedEventArgs e)
     {
+        if (host == null || !await host.ConfirmAction("清空 AI 会话", "将清空当前对话。此操作不会删除已导出的内容。", "清空")) return;
         try
         {
             session.Clear();
@@ -155,10 +193,15 @@ public partial class AiAssistantView : UserControl
         Dispatcher.UIThread.Post(() =>
         {
             Interlocked.Exchange(ref paintQueued, 0);
+            bool following = ChatScroll.Extent.Height - ChatScroll.Viewport.Height - ChatScroll.Offset.Y < 60;
             RefreshMessages();
-            ChatScroll.ScrollToEnd();
+            if (following) ChatScroll.ScrollToEnd();
+            LatestReplyButton.IsVisible = !following;
         }, DispatcherPriority.Background);
     }
+
+    private void JumpToLatest(object? sender, RoutedEventArgs e) { ChatScroll.ScrollToEnd(); LatestReplyButton.IsVisible = false; }
+    private void RetryPrompt(object? sender, RoutedEventArgs e) { if (failedPrompt.Length == 0) return; PromptInput.Text = failedPrompt; SendPrompt(sender, e); }
 
     private void RefreshMessages()
     {

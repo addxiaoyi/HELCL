@@ -5,9 +5,9 @@
   <Grid Margin="36,10,36,24" RowDefinitions="Auto,Auto,*">
     <!-- 简洁顶栏 -->
     <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="2,0,0,14">
-      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+      <StackPanel Spacing="4" VerticalAlignment="Center">
         <TextBlock Text="模组与资源" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
-        <TextBlock x:Name="InstanceSubtitle" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
+        <TextBlock x:Name="InstanceSubtitle" TextWrapping="Wrap" MaxWidth="360" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
         <TextBlock x:Name="SummaryBadge" Classes="muted" FontSize="12" VerticalAlignment="Center" />
       </StackPanel>
       <Button Grid.Column="1" Content="导入…" Classes="soft" Click="ImportFiles" Margin="0,0,8,0" />
@@ -27,8 +27,8 @@
       </Border>
       <TextBox x:Name="SearchBox" Grid.Column="1" PlaceholderText="筛选文件名…" TextChanged="SearchChanged" />
       <StackPanel x:Name="BatchActions" Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-        <Button Content="全部启用" Classes="ghost" MinHeight="28" Padding="9,3" FontSize="12" Click="EnableAllMods" />
-        <Button Content="全部禁用" Classes="ghost" MinHeight="28" Padding="9,3" FontSize="12" Click="DisableAllMods" />
+        <Button Content="启用当前筛选" Classes="ghost" MinHeight="28" Padding="9,3" FontSize="12" Click="EnableAllMods" />
+        <Button Content="禁用当前筛选" Classes="ghost" MinHeight="28" Padding="9,3" FontSize="12" Click="DisableAllMods" />
       </StackPanel>
       <TextBlock x:Name="HintBar" IsVisible="False" />
     </Grid>

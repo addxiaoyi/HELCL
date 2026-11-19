@@ -12,6 +12,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
     <Compile Include="../../src/HelL.Android/CredentialEnvelope.cs" Link="CredentialEnvelope.cs" />
     <Compile Include="../../src/HelL.Mobile/Ai/*.cs" Link="Ai/%(Filename)%(Extension)" />
+    <Compile Include="../../src/HelL.Mobile/Workflow/*.cs" Link="Workflow/%(Filename)%(Extension)" />
     <ProjectReference Include="../../src/HelL.Core/HelL.Core.csproj" />
     <ProjectReference Include="../../src/HelL.Remote/HelL.Remote.csproj" />
     <Compile Include="../../src/HelL.Mobile/Remote/*.cs" Link="Remote/%(Filename)%(Extension)" />

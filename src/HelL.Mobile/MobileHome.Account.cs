@@ -11,6 +11,8 @@ public sealed partial class MobileHome
 {
     private PortableAccount? account => session.ExistingAccount;
     private Uri? authorizationUri;
+    private readonly DispatcherTimer authorizationCountdown = new() { Interval = TimeSpan.FromSeconds(1) };
+    private DateTimeOffset authorizationExpires;
     private PortableAccount Account => session.Account;
 
     private async void RestoreAccount(object? sender, VisualTreeAttachmentEventArgs e)
@@ -49,7 +51,11 @@ public sealed partial class MobileHome
         authorizationUri = PortableAccount.ValidateDeviceUri(authorization.Uri.AbsoluteUri);
         DeviceCode.Text = authorization.Code;
         DeviceAddress.Text = authorizationUri.AbsoluteUri;
-        DeviceExpiry.Text = $"请在 {Math.Ceiling(authorization.ExpiresIn / 60.0)} 分钟内完成授权。";
+        authorizationExpires = DateTimeOffset.UtcNow.AddSeconds(authorization.ExpiresIn);
+        authorizationCountdown.Tick -= AuthorizationTick;
+        authorizationCountdown.Tick += AuthorizationTick;
+        AuthorizationTick(this, EventArgs.Empty);
+        authorizationCountdown.Start();
         AuthorizationPanel.IsVisible = true;
         AuthorizationPanel.BringIntoView();
     }
@@ -115,8 +121,21 @@ public sealed partial class MobileHome
 
     private void ClearAuthorization()
     {
+        authorizationCountdown.Stop();
         AuthorizationPanel.IsVisible = false;
         DeviceCode.Text = DeviceAddress.Text = DeviceExpiry.Text = "";
         authorizationUri = null;
+    }
+
+    private void AuthorizationTick(object? sender, EventArgs e)
+    {
+        TimeSpan left = authorizationExpires - DateTimeOffset.UtcNow;
+        if (left <= TimeSpan.Zero)
+        {
+            authorizationCountdown.Stop();
+            DeviceExpiry.Text = "验证码已过期。取消当前登录后点击登录，重新获取验证码。";
+            return;
+        }
+        DeviceExpiry.Text = $"验证码剩余 {left.Minutes:00}:{left.Seconds:00}，即将过期时请及时完成授权。";
     }
 }

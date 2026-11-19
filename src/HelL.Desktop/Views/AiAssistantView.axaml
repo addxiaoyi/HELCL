@@ -1,4 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:HelL.Desktop.Controls"
              xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="HelL.Desktop.Views.AiAssistantView">
   <Grid Margin="48,10,48,22" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14" MaxWidth="760">
@@ -58,7 +59,7 @@
                       <Button Content="复制" Classes="ghost" Tag="{Binding Content}" Click="CopyBubbleText" MinHeight="20" Padding="6,1" FontSize="11" />
                     </StackPanel>
                   </Grid>
-                  <SelectableTextBlock Text="{Binding Content}" TextWrapping="Wrap" LineHeight="21" />
+                  <local:MessageDocument Text="{Binding Content}" />
                 </StackPanel>
               </Border>
             </DataTemplate>
@@ -71,7 +72,11 @@
     <Border Grid.Row="3" Classes="inset-group" Padding="12,8" CornerRadius="14">
       <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
         <TextBox x:Name="PromptInput" AcceptsReturn="True" BorderThickness="0" Background="Transparent" MinHeight="36" MaxHeight="110" TextWrapping="Wrap" PlaceholderText="输入问题或粘贴报错日志…" VerticalAlignment="Center" AutomationProperties.Name="AI 提问输入框" />
+        <StackPanel Grid.Column="1" Spacing="5">
+        <Button x:Name="RetryPromptButton" Content="重试本条" Classes="soft" IsVisible="False" Click="RetryPrompt" HorizontalAlignment="Left" />
+        <Button x:Name="LatestReplyButton" Content="跳到最新回复" Classes="soft" IsVisible="False" Click="JumpToLatest" HorizontalAlignment="Left" />
         <Button x:Name="SendButton" Grid.Column="1" Content="发送" Classes="accent" VerticalAlignment="Bottom" Click="SendPrompt" />
+        </StackPanel>
       </Grid>
     </Border>
   </Grid>

@@ -28,7 +28,8 @@ public sealed partial class MainWindow : Window
         launcher = new PortableLauncher(root);
         SettingsView.Initialize(this, root);
         InitializeAppearance();
-        TasksView.Initialize(() => CancelTask(this, new RoutedEventArgs()));
+        SizeChanged += (_, _) => ApplyFrontendLayout();
+        TasksView.Initialize(() => CancelTask(this, new RoutedEventArgs()), this);
         Status.PropertyChanged += (_, change) =>
         {
             if (change.Property == TextBlock.TextProperty) activeTask?.Report(Status.Text ?? string.Empty);
@@ -428,11 +429,12 @@ public sealed partial class MainWindow : Window
 
     internal async Task RunTask(Func<CancellationToken, Task> action, [System.Runtime.CompilerServices.CallerMemberName] string operation = "")
     {
-        if (task != null) return;
+        if (task != null) { SetStatus("正在执行“" + (activeTask?.Title ?? "当前任务") + "”，请等待完成或取消后再操作。"); return; }
         using var cancellation = new CancellationTokenSource();
         task = cancellation;
         activeTask = new Models.DesktopTask(TaskTitle(operation));
         TasksView.Add(activeTask);
+        if (operation is "Search" or "LoadReleases" or "RefreshVersions" or "RefreshLoaderVersions" or "RefreshLibrary") TasksView.SetRetry(activeTask, action);
         TaskState.Text = "进行中";
         TaskState.Classes.Set("error", false);
         Avalonia.Automation.AutomationProperties.SetHelpText(Status, "");
@@ -461,6 +463,7 @@ public sealed partial class MainWindow : Window
             task = null;
             activeTask = null;
             SetBusy(false);
+            ShowPage(currentPage);
             if (TaskState.Text == "进行中") TaskState.Text = "已完成";
             if (closing) Close();
         }
@@ -473,8 +476,8 @@ public sealed partial class MainWindow : Window
         CreateButton.IsEnabled = !busy;
         Workspace.IsEnabled = !busy && SelectedName != null;
         AccountPanel.IsEnabled = !busy;
-        LibraryView.IsEnabled = !busy;
-        ResourcesView.IsEnabled = !busy;
+        LibraryView.IsEnabled = true;
+        ResourcesView.IsEnabled = true;
         Navigation.IsEnabled = true;
         CancelButton.IsVisible = busy;
         CancelButton.IsEnabled = busy;
@@ -532,6 +535,7 @@ public sealed partial class MainWindow : Window
 
     internal void ShowPage(string page)
     {
+        currentPage = page;
         if (task == null)
         {
             try
@@ -555,8 +559,12 @@ public sealed partial class MainWindow : Window
         bool isInstanceGroup = page is "library" or "mods" or "saves" or "servers";
         bool isSettingsGroup = page is "settings" or "java" or "playtime" or "tasks";
 
-        InstanceSegBar.IsVisible = isInstanceGroup;
-        SettingsSegBar.IsVisible = isSettingsGroup;
+        InstanceSegBar.IsVisible = false;
+        SettingsSegBar.IsVisible = false;
+        ChromeTitle.Text = task == null ? "" : "当前任务进行中 · 部分数据完成后刷新";
+        ChromeTitle.IsVisible = task != null;
+        TopInstanceLabel.IsVisible = isInstanceGroup || page is "install" or "java";
+        TopInstanceLabel.Text = "操作实例：" + (SelectedName ?? "未选择");
 
         foreach (var btn in InstanceSegButtons.Children.OfType<Button>())
             btn.Classes.Set("current", (string?)btn.Tag == page);
@@ -575,6 +583,8 @@ public sealed partial class MainWindow : Window
         PlaytimeView.IsVisible = page == "playtime";
         TasksView.IsVisible = page == "tasks";
         SettingsView.IsVisible = page == "settings";
+        FooterSettingsButton.Classes.Set("current", page == "settings");
+        ApplyFrontendLayout();
 
         foreach (var button in Navigation.Children.OfType<Button>())
             button.Classes.Set("current", (string?)button.Tag == page);

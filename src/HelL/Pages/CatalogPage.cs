@@ -96,6 +96,9 @@ public sealed partial class CatalogPage : PageBase
 	private int _searchToken;
 
 	public static int SearchTimeoutMs = 9000;
+    private readonly TextBlock _searchNotice = Ui.Muted("").Wrap();
+    private readonly Button _continueSearch = Ui.Btn("继续等待（45 秒）", BtnKind.Chip);
+    private readonly SPanel _searchStatus = Ui.H(8);
 
 	private CancellationTokenSource? _searchCts;
 
@@ -306,7 +309,12 @@ public sealed partial class CatalogPage : PageBase
 		Grid grid2 = Ui.G("Auto,Auto,*");
 		grid2.Add(el3, 0);
 		grid2.Add(el2.M(0.0, 14.0, 0.0, 14.0), 1);
-		grid2.Add(new CatalogWorkspace(common, Ui.V(8, destination, MatchingControls()), _listHost, targetLabel, ResultsToolbar()), 2);
+		        _searchStatus.Wrap = true;
+        _searchStatus.Children.Add(_searchNotice); _searchStatus.Children.Add(_continueSearch);
+        _searchStatus.Visibility = _continueSearch.Visibility = Visibility.Collapsed;
+        _continueSearch.Click += (_, _) => Run(() => SearchWithBudgetAsync(45000));
+        var resultsArea = Ui.G("Auto,*").Add(_searchStatus.M(0, 0, 0, 8), 0).Add(_listHost, 1);
+        grid2.Add(new CatalogWorkspace(common, Ui.V(8, destination, MatchingControls()), resultsArea, targetLabel, ResultsToolbar()), 2);
 		grid2.Margin = new Thickness(26.0, 20.0, 26.0, 20.0);
 		base.Content = grid2;
 		EnableDrop(() => new FileDrop.DropContext
@@ -494,14 +502,23 @@ public sealed partial class CatalogPage : PageBase
 		_inst.Fill(_instances.Select((InstanceInfo i) => i.Name), PageBase.Win?.Prefs.CatalogInstance);
 		_sync = false;
 		await ReloadTarget();
-		await ReloadFavoritesAsync();
+		try { await ReloadFavoritesAsync(); }
+        catch (Exception error) { _searchNotice.Text = "收藏状态未能读取：" + error.Message; _searchStatus.Visibility = Visibility.Visible; }
+        var manifest = await Api.TryCallAsync<List<VersionRow>>("get_version_list");
+        if (manifest?.Count > 0)
+        {
+            string currentVersion = _version.Text;
+            _sync = true; _version.Items.Clear(); _version.Items.Add(I18n.L("全部"));
+            foreach (string version in manifest.Where(row => row.Type == "release").Select(row => row.Version).Distinct().Take(100)) _version.Items.Add(version);
+            _version.Text = currentVersion; _sync = false;
+        }
 		PageBase.Run(ReloadCurrentAsync, I18n.L("搜索失败"));
 	}
 
-	private CancellationToken NextSearchToken()
+	private CancellationToken NextSearchToken(int timeoutMs)
 	{
 		CancelSearch();
-		_searchCts = new CancellationTokenSource(SearchTimeoutMs);
+		_searchCts = new CancellationTokenSource(timeoutMs);
 		_searchInterrupted = false;
 		return _searchCts.Token;
 	}
@@ -573,7 +590,7 @@ public sealed partial class CatalogPage : PageBase
 
 	private async Task ReloadFavoritesAsync()
 	{
-		List<CatalogItem> source = (await PageBase.Api.TryCallAsync("catalog_favorites", null, new List<CatalogItem>())) ?? new List<CatalogItem>();
+		List<CatalogItem> source = (await PageBase.Api.CallAsync<List<CatalogItem>>("catalog_favorites")) ?? new List<CatalogItem>();
 		_favKeys = source.Select(FavKey).ToHashSet<string>(StringComparer.OrdinalIgnoreCase);
 	}
 
@@ -604,7 +621,9 @@ public sealed partial class CatalogPage : PageBase
 		int token = ++_searchToken;
 		CancelSearch();
 		ShowPlaceholder(Ui.Skeleton(56.0));
-		List<CatalogItem> list = (await PageBase.Api.TryCallAsync("catalog_favorites", null, new List<CatalogItem>())) ?? new List<CatalogItem>();
+        List<CatalogItem> list;
+        try { list = await PageBase.Api.CallAsync<List<CatalogItem>>("catalog_favorites") ?? new List<CatalogItem>(); }
+        catch (Exception error) { if (token == _searchToken) ShowFailure("收藏读取失败", "无法确认收藏是否为空。请重试。" + error.Message); return; }
 		if (token == _searchToken)
 		{
 			_favKeys = list.Select(FavKey).ToHashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -619,11 +638,15 @@ public sealed partial class CatalogPage : PageBase
 		}
 	}
 
-	private async Task SearchAsync()
-	{
+    private Task SearchAsync() => SearchWithBudgetAsync(SearchTimeoutMs);
+
+    private async Task SearchWithBudgetAsync(int timeoutMs)
+    {
 		int token = ++_searchToken;
-		CancellationToken ct = NextSearchToken();
-		ShowPlaceholder(Ui.Skeleton(64.0), Ui.Skeleton(64.0), Ui.Skeleton(64.0));
+		CancellationToken ct = NextSearchToken(timeoutMs);
+		if (_results.Items.Count == 0) ShowPlaceholder(Ui.Skeleton(64), Ui.Skeleton(64), Ui.Skeleton(64));
+        _searchNotice.Text = "正在更新，保留上次结果。来源：" + _source.Str() + "。聚合结果可能不包含不可用来源，可选择单一来源重试。";
+        _searchStatus.Visibility = Visibility.Visible; _continueSearch.Visibility = Visibility.Collapsed;
 		string query = _search.Text?.Trim() ?? "";
 		_searchInFlight = true;
 		try
@@ -641,6 +664,10 @@ public sealed partial class CatalogPage : PageBase
 			}, ct)) ?? new List<CatalogItem>();
 			if (token == _searchToken)
 			{
+                var completedSources = list.FirstOrDefault()?.SearchCompletedSources ?? new List<string>();
+                var failedSources = list.FirstOrDefault()?.SearchFailedSources ?? new List<string>();
+                _searchNotice.Text = "来源：" + _source.Str() + (completedSources.Count > 0 ? " · 已完成：" + string.Join("、", completedSources) : " · 已更新")
+                    + (failedSources.Count > 0 ? " · 未完成：" + string.Join("、", failedSources) + "。可切换该来源单独重试。" : "");
 				if (list.Count == 0)
 				{
 					ShowPlaceholder(Ui.Empty(Glyph(), _kind.Empty, I18n.L("换个关键词，或切换来源 / 游戏版本试试")));
@@ -655,14 +682,16 @@ public sealed partial class CatalogPage : PageBase
 		{
 			if (token == _searchToken && !_searchInterrupted)
 			{
-				ShowFailure(I18n.L("搜索超时"), I18n.L("{0} 秒内没等到结果。检查网络或换个来源再试。", Math.Max(1, (SearchTimeoutMs + 999) / 1000)));
+				_searchNotice.Text = "搜索已等待 " + Math.Max(1, timeoutMs / 1000) + " 秒；上次结果仍可使用，可继续等待或切换来源。";
+                    _searchStatus.Visibility = _continueSearch.Visibility = Visibility.Visible;
 			}
 		}
 		catch (Exception ex2)
 		{
 			if (token == _searchToken)
 			{
-				ShowFailure(I18n.L("搜索失败"), ex2.Message);
+				if (_results.Items.Count > 0) { _searchNotice.Text = "更新失败，显示上次结果：" + ex2.Message; _searchStatus.Visibility = _continueSearch.Visibility = Visibility.Visible; }
+                else ShowFailure(I18n.L("搜索失败"), ex2.Message);
 			}
 		}
 		finally
@@ -1164,24 +1193,29 @@ public sealed partial class CatalogPage : PageBase
 		string ver = InstalledVersion();
 		string file = m.Filename;
 		CheckBox checkBox = Ui.Switch(m.Enabled);
-		checkBox.Checked += delegate
-		{
-			PageBase.Run(() => PageBase.Api.TryCallAsync<object>("enable_mod", new
-			{
-				instance = inst,
-				filename = file,
-				version = ver
-			}));
-		};
-		checkBox.Unchecked += delegate
-		{
-			PageBase.Run(() => PageBase.Api.TryCallAsync<object>("disable_mod", new
-			{
-				instance = inst,
-				filename = file,
-				version = ver
-			}));
-		};
+        TextBlock enabledState = Ui.Small(m.Enabled ? "已启用" : "已禁用");
+        bool applying = false;
+        bool confirmed = m.Enabled;
+        async void Toggle(object sender, RoutedEventArgs e)
+        {
+            if (applying) return;
+            bool next = checkBox.IsChecked == true;
+            applying = true; checkBox.IsEnabled = false;
+            try
+            {
+                await Api.CallAsync<object>(next ? "enable_mod" : "disable_mod", new { instance = inst, filename = file, version = ver });
+                confirmed = next; m.Enabled = next; enabledState.Text = next ? "已启用" : "已禁用";
+                System.Windows.Automation.AutomationProperties.SetHelpText(checkBox, next ? "已启用" : "已禁用");
+            }
+            catch (Exception error)
+            {
+                checkBox.IsChecked = confirmed;
+                checkBox.ToolTip = "修改未保存：" + error.Message;
+                PageBase.Toast("模组状态未更改", file + "：" + error.Message, ToastKind.Error);
+            }
+            finally { checkBox.IsEnabled = true; applying = false; }
+        }
+        checkBox.Checked += Toggle; checkBox.Unchecked += Toggle;
 		Button el = Ui.Btn(I18n.L("删除"), BtnKind.Ghost, delegate
 		{
 			PageBase.Run(() => DeleteInstalledAsync(file), I18n.L("删除失败"));
@@ -1189,7 +1223,7 @@ public sealed partial class CatalogPage : PageBase
 		Grid grid = Ui.G(null, "Auto,*,Auto,Auto");
 		grid.Add(checkBox.M(0.0, 0.0, 10.0).VCenter(), 0);
 		grid.Add(Ui.V(1.0, Ui.Txt(string.IsNullOrWhiteSpace(m.Name) ? file : m.Name).Trim(), Ui.Small(string.Join(" · ", new string[3] { file, m.Version, m.Size }.Where((string x) => !string.IsNullOrEmpty(x))))).VCenter(), 0, 1);
-		grid.Add(Ui.Small(m.Enabled ? "" : I18n.L("已禁用")).VCenter().M(8.0, 0.0, 0.0, 0.0), 0, 2);
+		grid.Add(enabledState.VCenter().M(8.0, 0.0, 0.0, 0.0), 0, 2);
 		grid.Add(el.VCenter().M(8.0, 0.0, 0.0, 0.0), 0, 3);
 		return Ui.RowCard(grid, null, 10.0);
 	}
@@ -1294,7 +1328,7 @@ public sealed partial class CatalogPage : PageBase
 		}
 	}
 
-	private void SniffClipboard()
+	private async void SniffClipboard()
 	{
 		string text;
 		try
@@ -1313,11 +1347,7 @@ public sealed partial class CatalogPage : PageBase
 		if (text2.Contains("modrinth.com") || text2.Contains("curseforge.com"))
 		{
 			_clipSeen = text;
-			if ((_search.Text ?? "").Trim().Length == 0)
-			{
-				_search.Text = text;
-			}
-			PageBase.Toast(I18n.L("识别到剪贴板链接"), (text.Length > 96) ? (text.Substring(0, 96) + "…") : text);
+            if ((_search.Text ?? "").Trim().Length == 0 && await Dlg.Confirm("使用剪贴板链接？", "检测到资源链接。仅在确认后将其用作搜索条件。\n\n" + text, "使用链接", "忽略")) _search.Text = text;
 		}
 	}
 
@@ -1341,6 +1371,19 @@ public sealed partial class CatalogPage : PageBase
 				purge_instance = false
 			});
 		}
+        else if (_kind.Key is "mod" or "resourcepack" or "shader" or "datapack")
+        {
+            if (!await Dlg.Confirm("移到实例回收区？", filename + "\n\n文件将保留在实例的 .hell-recycle 中，可撤销；原路径同名文件不会被覆盖。", "移到回收区", "取消")) return;
+            var receipt = await Api.CallAsync<Dictionary<string, System.Text.Json.JsonElement>>("recycle_catalog_file", new { instance = inst, filename, kind = _kind.Key, version = InstalledVersion() });
+            string token = receipt != null && receipt.TryGetValue("receipt", out var value) ? value.GetString() ?? "" : "";
+            await LoadInstalledAsync();
+            if (token.Length > 0 && await Dlg.Confirm("文件已移到回收区", filename + " 已从当前实例移除。是否立即撤销？", "撤销", "完成"))
+            {
+                await Api.CallAsync("restore_catalog_file", new { instance = inst, receipt = token });
+                await LoadInstalledAsync();
+            }
+            return;
+        }
 		else
 		{
 			if (!(await Dlg.Confirm(I18n.L("删除确认"), I18n.L("将删除「{0}」，不可恢复。", filename), I18n.L("删除"), I18n.L("取消"), danger: true)))

@@ -6,12 +6,13 @@ using HelL.Mobile;
 
 namespace HelL.Android;
 
-[Activity(Name = "io.hell.launcher.preview.MainActivity", Label = "HelL Preview", Theme = "@style/HelLTheme", Icon = "@drawable/hell_icon",
+[Activity(Name = "io.hell.launcher.preview.MainActivity", Label = "HelL Preview", Theme = "@style/HelLTheme", Icon = "@drawable/hell_icon", WindowSoftInputMode = global::Android.Views.SoftInput.AdjustResize,
     MainLauncher = true, Exported = true, ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode)]
 public sealed class MainActivity : AvaloniaMainActivity
 {
     protected override void OnCreate(Bundle? savedInstanceState)
     {
+        MobileRuntime.SystemTextScale = Math.Clamp(Resources?.Configuration?.FontScale ?? 1, 1, 2);
         bool smoke = Intent?.GetBooleanExtra("hell_ui_smoke", false) == true;
         bool restart = Intent?.GetBooleanExtra("hell_verify_restart", false) == true;
         if (smoke || restart)

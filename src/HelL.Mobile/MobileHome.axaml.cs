@@ -39,6 +39,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
         launcher = session.Launcher;
         InitializeAppearance();
         InitializeDiagnostics();
+        InitializeWorkflow();
         DataPath.Text = root;
         ready = true;
         Reload();
@@ -86,6 +87,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
             InstanceGroup.Text = entry.Group;
             ReferenceVersion.Text = reference;
             ReferenceLoader.SelectedItem = ReferenceLoader.Items.OfType<ComboBoxItem>().FirstOrDefault(item => (string?)item.Tag == launcher.ReferenceLoader(selected));
+            savedEditState = EditState();
             PinButtonText.Text = entry.Pinned ? "取消固定" : "固定实例";
             ResourceTarget.Text = $"{selected} · 参考 {reference} / {launcher.ReferenceLoader(selected)}\n仅筛选资源，未安装游戏运行内核。";
             InstanceEditor.IsVisible = true;
@@ -98,7 +100,11 @@ public sealed partial class MobileHome : UserControl, IDisposable
     private async void CreateInstance(object? sender, RoutedEventArgs e) => await Run(async token =>
     {
         string name = NewName.Text?.Trim() ?? "";
-        string version = ValidateReference(NewVersion.Text);
+        createError.Text = "";
+        ValidateInstanceName(name, NewName, createError);
+        string version;
+        try { version = ValidateReference(NewVersion.Text); }
+        catch (ArgumentException error) { createError.Text = error.Message; NewVersion.Focus(); throw; }
         launcher.CreateInstance(name);
         launcher.SetReferenceVersion(name, version);
         NewName.Clear();
@@ -112,8 +118,12 @@ public sealed partial class MobileHome : UserControl, IDisposable
     {
         RequireSelection();
         string name = InstanceName.Text?.Trim() ?? "";
+        editError.Text = "";
+        ValidateInstanceName(name, InstanceName, editError);
         string group = InstanceGroups.Normalize(InstanceGroup.Text ?? "");
-        string version = ValidateReference(ReferenceVersion.Text);
+        string version;
+        try { version = ValidateReference(ReferenceVersion.Text); }
+        catch (ArgumentException error) { editError.Text = error.Message; ReferenceVersion.Focus(); throw; }
         string loader = (ReferenceLoader.SelectedItem as ComboBoxItem)?.Tag as string ?? "vanilla";
         launcher.RenameInstance(selected, name);
         selected = name;
@@ -192,10 +202,15 @@ public sealed partial class MobileHome : UserControl, IDisposable
         Status.Text = "实例备份已导出，不含账号和系统凭据。";
     });
 
-    private void Navigate(object? sender, RoutedEventArgs e) { if (sender is Button { Tag: string page }) ShowPage(page); }
-    private void GoResources(object? sender, RoutedEventArgs e) => ShowPage("resources");
-    private void ShowPage(string page)
+    private async void Navigate(object? sender, RoutedEventArgs e) { if (sender is Button { Tag: string page }) await NavigateCheckedAsync(page); }
+    private async void GoResources(object? sender, RoutedEventArgs e) => await NavigateCheckedAsync("resources");
+    private void ShowPage(string page, bool remember = true)
     {
+        if (page != currentPage) ++navigationRevision;
+        if (remember && currentPage != page && (pageHistory.Count == 0 || pageHistory.Peek() != currentPage)) pageHistory.Push(currentPage);
+        currentPage = page;
+        if (OperatingSystem.IsAndroid() && MobileRuntime.ReportRoot.Length > 0)
+            Avalonia.Threading.Dispatcher.UIThread.Post(RecordPlatformAudit, Avalonia.Threading.DispatcherPriority.Background);
         ChromeTitle.Text = page switch
         {
             "diagnostics" => "诊断包",
@@ -207,7 +222,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
         HomePage.IsVisible = page == "home";
         LibraryWorkspace.IsVisible = page == "library";
         ResourcesPage.IsVisible = page == "resources";
-        if (page == "resources") ResourcesPage.Offset = Avalonia.Vector.Zero;
+        if (page == "resources" && !DetailsPanel.IsVisible) ResourcesPage.Offset = resourceListOffset;
         AboutPage.IsVisible = page == "about";
         CreatePage.IsVisible = page == "create";
         ManagePage.IsVisible = page == "manage";
@@ -215,6 +230,8 @@ public sealed partial class MobileHome : UserControl, IDisposable
         MorePage.IsVisible = page == "more";
         AiPage.IsVisible = page == "ai";
         RemotePage.IsVisible = page == "remote";
+        if (localTasksPage is not null) localTasksPage.IsVisible = page == "tasks";
+        if (page == "tasks") { ChromeTitle.Text = "本机任务"; PresentLocalTasks(); }
         if (diagnosticPage is not null) diagnosticPage.IsVisible = page == "diagnostics";
         DiagnosticPageChanged(page == "diagnostics");
         if (page == "remote") InitializeRemote();
@@ -252,18 +269,21 @@ public sealed partial class MobileHome : UserControl, IDisposable
     private static string ValidateReference(string? text)
     {
         string version = text?.Trim() ?? "";
-        if (!System.Text.RegularExpressions.Regex.IsMatch(version, @"\A1\.\d+(?:\.\d+)?\z")) throw new ArgumentException("请输入正式版本号，例如 1.21.1。");
+        if (!System.Text.RegularExpressions.Regex.IsMatch(version, @"\A(?:1\.\d+(?:\.\d+)?|\d{2}\.\d+(?:\.\d+)?)\z")) throw new ArgumentException("请输入正式版本号，例如 1.21.1 或 26.1。");
         return version;
     }
 
-    private async Task Run(Func<CancellationToken, Task> action, bool allowNavigation = false)
+    private async Task Run(Func<CancellationToken, Task> action, bool allowNavigation = false,
+        [System.Runtime.CompilerServices.CallerMemberName] string actionName = "操作")
     {
-        if (disposed || operation != null) return;
+        if (disposed) return;
+        if (operation != null) { Status.Text = "另一个任务正在执行，可在通知铃铛查看进度或取消后再试。"; return; }
         using var cancellation = new CancellationTokenSource();
         bool acquired = false;
         operation = cancellation;
+        activeLocalTask = session.Tasks.Start(OperationTitle(actionName), selected.Length == 0 ? "本机" : selected);
         DismissStatusButton.IsVisible = false;
-        if (!allowNavigation) Pages.IsEnabled = RailNavigation.IsEnabled = BottomNavigation.IsEnabled = false;
+        Pages.IsEnabled = RailNavigation.IsEnabled = BottomNavigation.IsEnabled = true;
         UpdateAccount();
         UpdateAi();
         Progress.IsVisible = CancelButton.IsVisible = true;
@@ -273,18 +293,23 @@ public sealed partial class MobileHome : UserControl, IDisposable
             acquired = true;
             cancellation.Token.ThrowIfCancellationRequested();
             await action(cancellation.Token);
+            session.Tasks.Update(activeLocalTask!, "completed", Status.Text ?? "操作已完成。");
         }
-        catch (Exception) when (cancellation.IsCancellationRequested) { Status.Text = "操作已取消，可以重新开始。"; }
-        catch (Exception error) { RememberDiagnosticIssue(error); Status.Text = "未完成：" + error.Message; }
+        catch (Exception) when (cancellation.IsCancellationRequested)
+        { Status.Text = "操作已取消，可以重新开始。"; session.Tasks.Update(activeLocalTask!, "cancelled", Status.Text); }
+        catch (Exception error)
+        { RememberDiagnosticIssue(error); Status.Text = "未完成：" + error.Message; session.Tasks.Update(activeLocalTask!, "failed", Status.Text); }
         finally
         {
             if (acquired) session.Operations.Release();
             operation = null;
+            activeLocalTask = null;
             DismissStatusButton.IsVisible = true;
             Pages.IsEnabled = RailNavigation.IsEnabled = BottomNavigation.IsEnabled = true;
             UpdateAccount();
             UpdateAi();
             Progress.IsVisible = CancelButton.IsVisible = false;
+            if (currentPage == "tasks") PresentLocalTasks();
         }
     }
     private void Cancel(object? sender, RoutedEventArgs e) { operation?.Cancel(); Status.Text = "正在取消…"; }
@@ -295,6 +320,9 @@ public sealed partial class MobileHome : UserControl, IDisposable
         disposed = true;
         ++coverRevision;
         operation?.Cancel();
+        versionsLoading?.Cancel();
+        CompleteConfirmation(false);
+        DetachMobileInsets();
         DisposeDiagnostics();
         ClearAuthorization();
         SizeChanged -= ArrangeWorkspace;

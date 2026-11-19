@@ -1,0 +1,165 @@
+name: Frontend completion acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ['codex/remote-close-loop', 'codex/frontend-foundation']
+
+permissions:
+  contents: read
+
+jobs:
+  portable:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '10.0.x'
+      - name: Test backend and frontend service behavior
+        shell: pwsh
+        run: |
+          dotnet test tests/HelL.Portable.Tests -c Release --logger 'trx;LogFileName=portable.trx' --results-directory artifacts/frontend
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet test tests/HelL.Mobile.Tests -c Release --logger 'trx;LogFileName=mobile.trx' --results-directory artifacts/frontend
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet test tests/HelL.Desktop.Tests -c Release --logger 'trx;LogFileName=desktop.trx' --results-directory artifacts/frontend
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet test tests/HelL.Remote.Tests -c Release --logger 'trx;LogFileName=remote.trx' --results-directory artifacts/frontend
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: frontend-unit-${{ matrix.os }}-${{ github.run_id }}
+          path: artifacts/frontend
+          if-no-files-found: warn
+
+  wpf:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: Build and test complete WPF application
+        shell: pwsh
+        run: |
+          dotnet build HelL.sln -c Release --no-incremental
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet test tests/HelL.Tests -c Release --no-build --logger 'trx;LogFileName=wpf.trx' --results-directory artifacts/wpf
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build tools/HelL.UiPreview -c Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & tools/HelL.UiPreview/bin/Release/net48/HelL.UiPreview.exe --frontend-remediation "$env:GITHUB_WORKSPACE/artifacts/wpf/frontend"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: frontend-wpf-${{ github.run_id }}
+          path: artifacts/wpf
+          if-no-files-found: warn
+
+  preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build desktop and mobile preview
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y xvfb libx11-6 libice6 libsm6 libfontconfig1 libgl1
+          dotnet build src/HelL.Desktop -c Release
+          dotnet build tools/HelL.Mobile.Preview -c Release
+      - name: Exercise desktop and three mobile viewports
+        run: |
+          xvfb-run -a dotnet src/HelL.Desktop/bin/Release/net10.0/HelL.Desktop.dll --home "$GITHUB_WORKSPACE/artifacts/desktop" --ui-smoke
+          for size in '320 720' '390 844' '844 390'; do
+            read -r width height <<< "$size"
+            xvfb-run -a dotnet tools/HelL.Mobile.Preview/bin/Release/net10.0/HelL.Mobile.Preview.dll "$GITHUB_WORKSPACE/artifacts/mobile-${width}x${height}" "$width" "$height"
+            xvfb-run -a dotnet tools/HelL.Mobile.Preview/bin/Release/net10.0/HelL.Mobile.Preview.dll "$GITHUB_WORKSPACE/artifacts/remote-${width}x${height}" "$width" "$height" --remote
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: frontend-preview-${{ github.run_id }}
+          path: artifacts
+          if-no-files-found: warn
+
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
+      - name: Build Android x64 APK
+        timeout-minutes: 15
+        shell: bash
+        run: |
+          dotnet workload install android --skip-manifest-update
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'system-images;android-35;google_apis;x86_64' 'platform-tools' 'emulator'
+          dotnet publish src/HelL.Android -c Release -r android-x64 -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME" -o artifacts/android-apk
+      - name: Prepare disposable Android emulator
+        timeout-minutes: 6
+        shell: bash
+        run: |
+          export ANDROID_AVD_HOME="$RUNNER_TEMP/hell-frontend-avds"
+          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo no | avdmanager create avd --force --name hell_frontend --path "$ANDROID_AVD_HOME/hell_frontend.avd" --package 'system-images;android-35;google_apis;x86_64'
+          test -f "$ANDROID_AVD_HOME/hell_frontend.avd/config.ini"
+          printf 'avd.ini.encoding=UTF-8\npath=%s\ntarget=android-35\n' "$ANDROID_AVD_HOME/hell_frontend.avd" > "$ANDROID_AVD_HOME/hell_frontend.ini"
+          "$ANDROID_HOME/emulator/emulator" -list-avds
+          sudo chmod a+rw /dev/kvm
+          "$ANDROID_HOME/emulator/emulator" -avd hell_frontend -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot > emulator.log 2>&1 &
+          emulator_pid=$!
+          timeout 180 adb wait-for-device || { cat emulator.log; exit 1; }
+          for attempt in $(seq 1 120); do
+            if [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = '1' ]; then break; fi
+            kill -0 "$emulator_pid" || { cat emulator.log; exit 1; }
+            sleep 2
+          done
+          test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = '1'
+          adb shell input keyevent 82
+      - name: Verify native keyboard, return navigation, insets and system font
+        shell: bash
+        run: python3 tools/verify_android_frontend.py artifacts/android-apk/io.hell.launcher.preview-Signed.apk artifacts/android-acceptance
+      - name: Stop owned emulator
+        if: always()
+        run: adb emu kill || true
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: frontend-android-${{ github.run_id }}
+          path: |
+            artifacts/android-acceptance
+            emulator.log
+          if-no-files-found: warn

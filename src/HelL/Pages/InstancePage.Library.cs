@@ -12,6 +12,9 @@ namespace HelL.Pages;
 
 public sealed partial class InstancePage
 {
+    private const int LibraryPageSize = 60;
+    private int _visibleLimit = LibraryPageSize;
+    private readonly Button _loadMore = Ui.Btn("继续显示", BtnKind.Ghost);
     private readonly HashSet<string> _pins = new(StringComparer.Ordinal);
     private readonly Dictionary<string, long> _lastPlayed = new(StringComparer.Ordinal);
     private readonly ComboBox _sort = Ui.Combo(new[] { "最近游玩", "名称 A–Z", "版本数量" }, "最近游玩", 140);
@@ -23,7 +26,7 @@ public sealed partial class InstancePage
     {
         var options = await Api.CallAsync<HomeOptions>("home_options") ?? new();
         _pins.Clear(); foreach (string name in options.PinnedInstances) _pins.Add(name);
-        var recent = await Api.CallAsync<List<DashboardInstance>>("dashboard_instances", new { limit = 24 }) ?? new();
+        var recent = await Api.CallAsync<List<DashboardInstance>>("dashboard_instances", new { limit = Math.Max(24, _rows.Count) }) ?? new();
         _lastPlayed.Clear(); foreach (var row in recent) _lastPlayed[row.Instance] = row.LastPlayed;
     }
     private List<InstanceInfo> FilterLibrary(string query)
@@ -39,7 +42,8 @@ public sealed partial class InstancePage
     {
         var root = Ui.G("Auto,Auto,Auto,*"); root.Margin = new Thickness(UiMetrics.PageInset, 20, UiMetrics.PageInset, 20);
         root.Add(heading, 0); root.Add(filters.M(0, 18, 0, 12), 1);
-        _libraryFrame.Add(Ui.Scroll(Ui.V(0, _list, _empty)), 0);
+        _loadMore.Click += (_, _) => { _visibleLimit += LibraryPageSize; Render(); };
+        _libraryFrame.Add(Ui.Scroll(Ui.V(0, _list, _loadMore, _empty)), 0);
         _inspector.Padding = new Thickness(20, 0, 0, 0); _inspector.Margin = new Thickness(20, 0, 0, 0); _inspector.BorderThickness = new Thickness(1, 0, 0, 0);
         _inspector.SetResourceReference(Border.BorderBrushProperty, "B.LineSoft"); _libraryFrame.Add(Ui.Scroll(_inspector), 0, 1);
         _libraryFrame.SizeChanged += (_, _) => ArrangeInspector();

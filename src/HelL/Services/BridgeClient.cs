@@ -264,6 +264,7 @@ public sealed class BridgeClient : IDisposable
 			bridgeEvent.Title = Str(rootElement, "title");
 			bridgeEvent.Code = Str(rootElement, "code");
 			bridgeEvent.Uri = Str(rootElement, "uri");
+            bridgeEvent.ExpiresIn = Num(rootElement, "expires_in");
 			bridgeEvent.Kind = Str(rootElement, "kind");
 			bridgeEvent.Label = Str(rootElement, "label");
 			bridgeEvent.Name = Str(rootElement, "name");

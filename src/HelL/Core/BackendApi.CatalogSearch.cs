@@ -11,7 +11,13 @@ public partial class BackendApi
     {
         CommunityNames.Ensure();
         var hits = CatalogSearch.Search(kind, Py.S(query), _catalog_source(source), ExtraOr(extra));
-        return hits.OfType<PyDict>().Select(hit => (object)_content_row(hit, Py.S(hit.Get("source")))).ToList();
+        return hits.OfType<PyDict>().Select(hit =>
+        {
+            var row = _content_row(hit, Py.S(hit.Get("source")));
+            row["search_failed_sources"] = hit.Get("search_failed_sources", new List<object>());
+            row["search_completed_sources"] = hit.Get("search_completed_sources", new List<object>());
+            return (object)row;
+        }).ToList();
     }
 
     public object catalog_language_status(bool refresh = false)

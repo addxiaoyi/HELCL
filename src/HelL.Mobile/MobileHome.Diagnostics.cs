@@ -16,7 +16,7 @@ public sealed partial class MobileHome
     private readonly TextBox diagnosticPreview = new()
     {
         AcceptsReturn = true, IsReadOnly = true, TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-        Height = 240, MinHeight = 120, FontFamily = "monospace"
+        MinHeight = 220, MaxHeight = 600, FontFamily = "monospace"
     };
     private readonly CheckBox includeApp = IncludeCheck("应用版本", true);
     private readonly CheckBox includeEnvironment = IncludeCheck("系统与 .NET 环境", true);
@@ -53,7 +53,7 @@ public sealed partial class MobileHome
         diagnosticLayout.Children.Add(new Border { Classes = { "glass" }, Padding = new Avalonia.Thickness(14), Child = diagnosticChecks });
         diagnosticLayout.Children.Add(new Expander { Header = "选择要保留的字段", Content = diagnosticFields });
         diagnosticLayout.Children.Add(new TextBlock { Text = "导出预览", Classes = { "field-label" } });
-        diagnosticLayout.Children.Add(diagnosticPreview);
+        diagnosticLayout.Children.Add(new Expander { Header = "展开完整 JSON 预览（技术信息）", Content = diagnosticPreview, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch });
         diagnosticRefresh.Click += RefreshDiagnosticPreview;
         diagnosticExport.Click += ExportDiagnosticPackage;
         diagnosticCancel.Click += CancelDiagnosticOperation;
@@ -117,7 +117,7 @@ public sealed partial class MobileHome
             diagnosticReport = fullDiagnosticReport = DiagnosticReportBuilder.Build(snapshot, sections, DateTimeOffset.UtcNow);
             foreach (DiagnosticField field in fullDiagnosticReport.Fields)
             {
-                var check = IncludeCheck(field.Key + " · " + field.Value, true);
+                var check = IncludeCheck(DiagnosticFieldLabel(field.Key) + " · " + field.Value, true);
                 check.Tag = field.Key;
                 check.IsCheckedChanged += SelectDiagnosticFields;
                 diagnosticFields.Children.Add(check);
@@ -273,6 +273,16 @@ public sealed partial class MobileHome
         recentDiagnosticIssues.Enqueue(new DiagnosticIssue(code, summary));
         while (recentDiagnosticIssues.Count > 8) recentDiagnosticIssues.Dequeue();
     }
+
+    private static string DiagnosticFieldLabel(string key) => key switch
+    {
+        "app.version" => "应用版本", "system.platform" => "操作系统", "system.architecture" => "处理器架构",
+        "system.runtime" => ".NET 运行时", "storage.available_bytes" => "可用存储空间（字节）", "launcher.instance_count" => "实例数量",
+        _ when key.StartsWith("launch_check.", StringComparison.Ordinal) => "启动预检：" + key[13..],
+        _ when key.StartsWith("mirror.", StringComparison.Ordinal) => "下载源：" + key[7..],
+        _ when key.StartsWith("recent_issue.", StringComparison.Ordinal) => "最近问题摘要",
+        _ => "其它诊断信息"
+    };
 
     private static CheckBox IncludeCheck(string label, bool selected) => new() { Content = label, IsChecked = selected };
     private static Button DiagnosticButton(string label, EventHandler<RoutedEventArgs>? action)

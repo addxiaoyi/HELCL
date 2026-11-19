@@ -24,7 +24,7 @@
                     <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="{Binding ExePath}" Classes="muted" FontSize="11.5" TextTrimming="CharacterEllipsis" />
                   </StackPanel>
-                  <Button Grid.Column="2" Content="设为默认" Classes="soft" Tag="{Binding ExePath}" Click="BindJavaToInstance" MinHeight="27" Padding="11,3" FontSize="12" VerticalAlignment="Center" />
+                  <Button Grid.Column="2" Content="用于当前实例" Classes="soft" Tag="{Binding ExePath}" Click="BindJavaToInstance" MinHeight="27" Padding="11,3" FontSize="12" VerticalAlignment="Center" />
                 </Grid>
               </DataTemplate>
             </ListBox.ItemTemplate>

@@ -29,6 +29,8 @@ public sealed class BridgeEvent
 
 	public string Uri { get; set; } = "";
 
+    public int ExpiresIn { get; set; }
+
 	public string Kind { get; set; } = "";
 
 	public string Label { get; set; } = "";

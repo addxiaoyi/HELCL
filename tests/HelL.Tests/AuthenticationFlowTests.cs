@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using HelL.Core;
 using HelL.Core.Launcher;
@@ -24,6 +25,7 @@ public sealed class AuthenticationFlowTests : IDisposable
 		private readonly HttpListener listener = new HttpListener();
 		private readonly string previous = Environment.GetEnvironmentVariable("TIPCL_HTTP_REPLAY");
 		private readonly Task server;
+		private readonly CancellationTokenSource stopped = new CancellationTokenSource();
 		public Dictionary<string, int> Calls { get; } = new Dictionary<string, int>();
 		public Func<string, int, (int Status, string Body, int? RetryAfter)> Reply;
 
@@ -40,12 +42,13 @@ public sealed class AuthenticationFlowTests : IDisposable
 			server = Task.Run(Serve);
 		}
 
-		private void Serve()
+		private async Task Serve()
 		{
-			while (listener.IsListening)
+			while (!stopped.IsCancellationRequested)
 			{
 				HttpListenerContext context;
-				try { context = listener.GetContext(); }
+				try { context = await listener.GetContextAsync().WaitAsync(stopped.Token).ConfigureAwait(false); }
+				catch (OperationCanceledException) when (stopped.IsCancellationRequested) { return; }
 				catch (HttpListenerException) { return; }
 				catch (ObjectDisposedException) { return; }
 				catch (Exception) { return; }
@@ -92,10 +95,12 @@ public sealed class AuthenticationFlowTests : IDisposable
 		public void Dispose()
 		{
 			Environment.SetEnvironmentVariable("TIPCL_HTTP_REPLAY", previous);
+			stopped.Cancel();
 			try { listener.Stop(); } catch { }
 			try { listener.Abort(); } catch { }
 			try { listener.Close(); } catch { }
 			Assert.True(server.Wait(TimeSpan.FromSeconds(5)), "Replay server did not stop.");
+			stopped.Dispose();
 		}
 	}
 

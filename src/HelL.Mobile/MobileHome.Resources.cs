@@ -7,15 +7,28 @@ namespace HelL.Mobile;
 
 public sealed partial class MobileHome
 {
+    private const int ResourcePageSize = 30;
+    private int resourceRevision;
+    private int resourceOffset;
+    private string resourceSearchKey = "";
+    private Avalonia.Vector resourceListOffset;
     private void FiltersChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (!ready) return;
         if (SelectedKind == "world" && Provider.SelectedIndex == 0) Provider.SelectedIndex = 1;
         SyncCategory();
-        ClearProjects();
+        ++resourceRevision;
+        project = null;
+        Projects.SelectedItem = null;
+        DetailsButton.IsEnabled = DownloadButton.IsEnabled = false;
+        SearchNotice.IsVisible = true;
+        SearchNotice.Text = searchResults.Count == 0 ? "选择资源类型，搜索与当前实例兼容的内容。" : "筛选已修改，显示上次结果；点击搜索更新。";
+        LoadMoreResourcesButton.IsVisible = false;
     }
     private void ClearProjects()
     {
+        ++resourceRevision;
+        LoadMoreResourcesButton.IsVisible = false;
         project = null;
         searchResults = [];
         Projects.ItemsSource = Array.Empty<CatalogProject>();
@@ -27,32 +40,45 @@ public sealed partial class MobileHome
         SearchRetry.IsVisible = selected.Length > 0;
         SearchRetry.Content = "浏览资源";
     }
-    private async void SearchResources(object? sender, RoutedEventArgs e) => await Run(async token =>
+    private async void SearchResources(object? sender, RoutedEventArgs e) => await SearchResourcesAsync(false);
+    private async void LoadMoreResources(object? sender, RoutedEventArgs e) => await SearchResourcesAsync(true);
+    private Task SearchResourcesAsync(bool more) => Run(async token =>
     {
         RequireSelection();
         var target = catalog.Target(selected, reference);
         string kind = SelectedKind, provider = SelectedProvider, query = Query.Text?.Trim() ?? "";
-        ClearProjects(); SearchNotice.Text = "正在搜索…";
+        string key = string.Join("\n", selected, reference, target.Loader, kind, provider, query, resourceOrder);
+        int offset = more && key == resourceSearchKey ? resourceOffset : 0;
+        int revision = ++resourceRevision;
+        SearchPanel.IsVisible = true;
+        DetailsPanel.IsVisible = false;
+        SearchNotice.IsVisible = true;
+        SearchNotice.Text = searchResults.Count > 0 ? "正在更新，保留上次成功结果…" : "正在搜索…";
         SearchRetry.IsVisible = false;
         try
         {
-            var rows = await Task.Run(() => catalog.Search(kind, query, provider, target, token, resourceOrder), token);
-            searchResults = rows;
-            Projects.ItemsSource = rows;
-            SearchNotice.Text = rows.Count == 0 ? "没有兼容结果，可换关键词或参考版本重试。" : $"找到 {rows.Count} 个项目";
-            SearchNotice.IsVisible = rows.Count == 0;
-            SearchRetry.IsVisible = rows.Count == 0;
+            var rows = await Task.Run(() => catalog.Search(kind, query, provider, target, token, resourceOrder, offset, ResourcePageSize), token);
+            if (revision != resourceRevision || disposed) return;
+            searchResults = offset == 0 ? rows : searchResults.Concat(rows).DistinctBy(item => (item.Source, item.Id)).ToArray();
+            resourceSearchKey = key;
+            resourceOffset = offset + ResourcePageSize;
+            Projects.ItemsSource = searchResults;
+            SearchNotice.Text = searchResults.Count == 0 ? "没有兼容结果，可换关键词或参考版本再试。"
+                : rows.Count == 0 ? $"已显示 {searchResults.Count} 个项目，当前结果已到底。" : $"已显示 {searchResults.Count} 个项目，可尝试加载下一批。";
+            LoadMoreResourcesButton.IsVisible = rows.Count > 0;
+            SearchRetry.IsVisible = searchResults.Count == 0;
             SearchRetry.Content = "重新搜索";
             Status.Text = "";
         }
         catch
         {
-            SearchNotice.Text = token.IsCancellationRequested ? "搜索已取消，可以重新开始。" : "搜索未完成，检查网络或切换来源后重试。";
-            SearchRetry.Content = "重新搜索";
+            if (revision != resourceRevision || disposed) throw;
+            SearchNotice.Text = token.IsCancellationRequested ? "搜索已取消；上次结果仍保留。" : "更新失败；上次结果仍保留，可检查网络或切换来源后重试。";
+            SearchRetry.Content = "重试搜索";
             SearchRetry.IsVisible = true;
             throw;
         }
-    });
+    }, allowNavigation: true);
 
     private void ProjectSelected(object? sender, SelectionChangedEventArgs e) => DetailsButton.IsEnabled = Projects.SelectedItem is CatalogProject;
     private async void OpenDetails(object? sender, RoutedEventArgs e)
@@ -63,6 +89,7 @@ public sealed partial class MobileHome
     }
     private void PresentProject(CatalogProject entry)
     {
+        resourceListOffset = ResourcesPage.Offset;
         ResourcesPage.Offset = Avalonia.Vector.Zero;
         project = entry; original = false;
         DownloadNotice.Text = "";
@@ -85,7 +112,11 @@ public sealed partial class MobileHome
         OriginalButton.Content = original ? "查看中文简介" : "查看原文";
     }
     private void ToggleOriginal(object? sender, RoutedEventArgs e) { original = !original; Description(); }
-    private void BackToSearch(object? sender, RoutedEventArgs e) { SearchPanel.IsVisible = true; DetailsPanel.IsVisible = false; }
+    private void BackToSearch(object? sender, RoutedEventArgs e)
+    {
+        SearchPanel.IsVisible = true; DetailsPanel.IsVisible = false;
+        Avalonia.Threading.Dispatcher.UIThread.Post(() => ResourcesPage.Offset = resourceListOffset);
+    }
     private async void RefreshReleases(object? sender, RoutedEventArgs e) => await LoadReleases();
     private Task LoadReleases() => Run(async token =>
     {
@@ -111,11 +142,11 @@ public sealed partial class MobileHome
             else ReleaseInfo.Text = "没有兼容文件，请调整实例参考版本。";
         }
         catch { ReleaseInfo.Text = "版本获取失败，可点击刷新版本重试。"; throw; }
-    });
+    }, allowNavigation: true);
     private void ReleaseSelected(object? sender, SelectionChangedEventArgs e)
     {
         if (project == null || Releases.SelectedItem is not CatalogRelease release) { DownloadButton.IsEnabled = false; return; }
-        ReleaseInfo.Text = release.Compatibility + "\n" + release.Filename;
+        ReleaseInfo.Text = "已选择兼容文件（按日期推荐，可手动更换）\n" + release.Title + " · " + release.Date + "\n" + release.Compatibility + "\n" + release.Filename;
         DownloadNotice.Text = project.Kind switch
         {
             "modpack" => "仅保存整合包原始文件，当前 APK 不安装加载器或运行游戏。",
@@ -134,8 +165,15 @@ public sealed partial class MobileHome
         if (project == null || Releases.SelectedItem is not CatalogRelease release) throw new InvalidOperationException("请选择文件版本。");
         string name = selected, version = reference, world = Worlds.SelectedItem as string ?? "";
         var entry = project;
-        var progress = new Progress<InstallProgress>(update => { if (operation != null) Status.Text = update.Message; });
+        var progress = new Progress<InstallProgress>(update =>
+        {
+            if (operation == null) return;
+            Status.Text = $"{entry.Title} · {release.Filename}\n{update.Message}"
+                + (update.Total > 0 ? $"\n总体进度 {update.Completed:N0} / {update.Total:N0}" : "");
+            DownloadNotice.Text = Status.Text;
+            if (currentPage == "tasks") PresentLocalTasks();
+        });
         string message = await Task.Run(() => catalog.Download(entry, release, name, version, progress, token, world), token);
         Status.Text = DownloadNotice.Text = message;
-    });
+    }, allowNavigation: true);
 }

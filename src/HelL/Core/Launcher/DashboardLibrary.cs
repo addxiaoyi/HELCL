@@ -27,6 +27,6 @@ public static class DashboardLibrary
                 LastPlayed = Py.Truthy(latest.Get("available")) ? Py.Int(latest.Get("ended")) : 0
             });
         }
-        return rows.OrderByDescending(row => row.Pinned).ThenByDescending(row => row.LastPlayed).ThenByDescending(row => row.Version.Length > 0).ThenBy(row => row.Instance, StringComparer.OrdinalIgnoreCase).Take(Math.Max(1, Math.Min(24, limit))).ToList();
+        return rows.OrderByDescending(row => row.Pinned).ThenByDescending(row => row.LastPlayed).ThenByDescending(row => row.Version.Length > 0).ThenBy(row => row.Instance, StringComparer.OrdinalIgnoreCase).Take(Math.Max(1, Math.Min(10000, limit))).ToList();
     }
 }

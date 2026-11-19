@@ -11,7 +11,7 @@ namespace HelL.Desktop.Views;
 
 public partial class ServersView : UserControl
 {
-    public sealed record ServerRow(long Index, string Name, string Host, int Port, string FullAddress, string AddressLabel, int? LatencyMs)
+    public sealed record ServerRow(long Index, string Name, string Host, int Port, string FullAddress, string AddressLabel, int? LatencyMs, string Description = "")
     {
         public string PingText => LatencyMs switch
         {
@@ -45,6 +45,7 @@ public partial class ServersView : UserControl
     private MainWindow? host;
     private string currentInstance = "";
     private ServerRow[] currentRows = [];
+    private (string Instance, ServerRow Server)? removed;
 
     public ServersView() => InitializeComponent();
 
@@ -79,7 +80,7 @@ public partial class ServersView : UserControl
             string name = Py.S(dict.Get("name", full));
             string desc = Py.S(dict.Get("description"));
             string label = string.IsNullOrWhiteSpace(desc) ? full : $"{full} · {desc}";
-            return new ServerRow(idx, name, ip, (int)Math.Clamp(port, 1, 65535), full, label, null);
+            return new ServerRow(idx, name, ip, (int)Math.Clamp(port, 1, 65535), full, label, null, desc);
         }).ToArray();
 
         currentRows = rows;
@@ -149,11 +150,28 @@ public partial class ServersView : UserControl
     private async void RemoveServer(object? sender, RoutedEventArgs e)
     {
         if (host == null || string.IsNullOrEmpty(currentInstance) || sender is not Button { Tag: long index }) return;
+        string target = currentInstance;
+        ServerRow? server = currentRows.FirstOrDefault(row => row.Index == index);
+        if (server is null || !await host.ConfirmAction("移除服务器", $"实例：{target}\n服务器：{server.Name}\n地址：{server.FullAddress}\n仅移除本机列表记录，不影响服务器。", "移除")) return;
         await host.RunTask(_ =>
         {
-            Servers.DeleteServer(new Instance(currentInstance), index);
+            Servers.DeleteServer(new Instance(target), index);
+            removed = (target, server);
+            UndoRemoveButton.IsVisible = true;
             Reload(currentInstance);
             host.SetStatus("已移除所选服务器。");
+            return Task.CompletedTask;
+        });
+    }
+
+    private async void UndoRemoveServer(object? sender, RoutedEventArgs e)
+    {
+        if (host == null || removed is not { } undo) return;
+        await host.RunTask(_ =>
+        {
+            Servers.AddServer(new Instance(undo.Instance), undo.Server.Name, undo.Server.Host, undo.Server.Port, undo.Server.Description);
+            removed = null; UndoRemoveButton.IsVisible = false;
+            Reload(undo.Instance); host.SetStatus("已恢复服务器列表记录。");
             return Task.CompletedTask;
         });
     }

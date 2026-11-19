@@ -20,8 +20,8 @@
         </StackPanel>
         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
           <Button Classes="ghost" Content="启动页" Tag="{Binding Name}" Click="QuickOpenRow" MinHeight="27" Padding="10,3" FontSize="12" />
-          <Button Classes="icon-btn" ToolTip.Tip="模组" Tag="{Binding Name}" Click="QuickModsRow"><icons:MaterialIcon Kind="PuzzleOutline" Width="14" Height="14" /></Button>
-          <Button Classes="icon-btn" ToolTip.Tip="存档" Tag="{Binding Name}" Click="QuickSavesRow"><icons:MaterialIcon Kind="FolderOutline" Width="14" Height="14" /></Button>
+          <Button Classes="icon-btn" ToolTip.Tip="模组" AutomationProperties.Name="{Binding Name, StringFormat=管理实例 {0} 的模组}" Tag="{Binding Name}" Click="QuickModsRow"><icons:MaterialIcon Kind="PuzzleOutline" Width="14" Height="14" /></Button>
+          <Button Classes="icon-btn" ToolTip.Tip="存档" AutomationProperties.Name="{Binding Name, StringFormat=管理实例 {0} 的存档}" Tag="{Binding Name}" Click="QuickSavesRow"><icons:MaterialIcon Kind="FolderOutline" Width="14" Height="14" /></Button>
         </StackPanel>
       </Grid>
     </DataTemplate>

@@ -236,6 +236,9 @@ public sealed partial class MobileHome
         "SendAiMessage" or "SendAiPromptAsync" => "AI 对话",
         "CreateInstance" => "创建实例", "SaveInstance" => "保存实例设置",
         "LoginMicrosoft" => "微软账号授权", "RefreshAccount" => "刷新账号授权",
-        _ => method.Replace("Async", "", StringComparison.Ordinal)
+        "SaveAiSettings" => "保存 AI 设置", "RestoreAccount" => "恢复账号授权",
+        "PinInstance" => "固定实例", "ResetCover" => "恢复默认封面", "PickCover" => "设置实例封面",
+        "CheckActivitySession" => "验证界面恢复",
+        _ => "应用操作"
     };
 }

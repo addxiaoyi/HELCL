@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Android.Content;
 using Android.Security.Keystore;
+using Android.Runtime;
 using HelL.Core.Platform;
 using Java.Security;
 using Javax.Crypto;
@@ -27,7 +28,8 @@ internal sealed class AndroidSecretStore(Context context) : ISecretStore
             if (stored == null) return "";
             var (iv, encrypted) = CredentialEnvelope.Read(stored);
             using var store = OpenStore();
-            using var key = store.GetKey(alias, null) as ISecretKey
+            using var storedKey = store.GetKey(alias, null);
+            using var key = storedKey?.JavaCast<ISecretKey>()
                 ?? throw new InvalidOperationException("AndroidSecretStore: 设备密钥不可用，请重新登录。");
             using var cipher = Cipher.GetInstance(Transformation)
                 ?? throw new InvalidOperationException("AndroidSecretStore: 系统加密服务不可用。");
@@ -55,7 +57,8 @@ internal sealed class AndroidSecretStore(Context context) : ISecretStore
                 try
                 {
                     if (created) CreateKey(alias);
-                    using var key = store.GetKey(alias, null) as ISecretKey
+                    using var storedKey = store.GetKey(alias, null);
+                    using var key = storedKey?.JavaCast<ISecretKey>()
                         ?? throw new InvalidOperationException("AndroidSecretStore: 无法读取设备密钥。");
                     using var cipher = Cipher.GetInstance(Transformation)
                         ?? throw new InvalidOperationException("AndroidSecretStore: 系统加密服务不可用。");

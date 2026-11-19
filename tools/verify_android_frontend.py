@@ -128,6 +128,7 @@ def verify(apk: Path, output: Path) -> None:
         (output / "acceptance.json").write_text(json.dumps(acceptance, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(acceptance))
     finally:
+        adb("pull", evidence, str(output / "ui-failure-or-final"), allow_failure=True)
         adb("shell", "settings", "put", "system", "font_scale", original_scale if original_scale != "null" else "1.0", allow_failure=True)
         adb("shell", "am", "force-stop", PACKAGE, allow_failure=True)
         (output / "logcat.txt").write_text(adb("logcat", "-d", "-t", "1500", allow_failure=True), encoding="utf-8")

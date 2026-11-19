@@ -67,7 +67,11 @@ public sealed partial class InstancePage
 
     private async Task PinSelected(bool pinned)
     {
-        string[] names = _marked.ToArray();
+        string[] names = _marked.OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray();
+        int visible = _order.Count(row => _marked.Contains(row.Key));
+        string preview = string.Join("\n", names.Take(25)) + (names.Length > 25 ? "\n…共 " + names.Length + " 项" : "");
+        if (!await Dlg.Confirm(pinned ? "固定这些实例？" : "取消固定这些实例？",
+            "本次处理 " + names.Length + " 项，其中 " + (names.Length - visible) + " 项不在当前可见结果中。\n\n" + preview, "确认处理", "取消")) return;
         await Api.CallAsync("pin_instances", new { instances = names, pinned });
         await LoadLibraryState(); Render(); Toast("批量操作完成", (pinned ? "已固定 " : "已取消固定 ") + names.Length + " 个实例。");
     }

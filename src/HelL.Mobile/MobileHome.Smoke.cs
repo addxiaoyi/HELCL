@@ -159,6 +159,7 @@ public sealed partial class MobileHome
             if (MobileRuntime.LiveSmoke) await CheckNativeDownload();
             await CheckResponsiveNavigation();
             await CheckActivitySession();
+            await CheckFrontendRemediationAsync();
             File.WriteAllText(Path.Combine(EvidenceRoot, "mobile-smoke.json"), JsonSerializer.Serialize(new
             {
                 ok = true, platform = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier,
@@ -314,6 +315,8 @@ public sealed partial class MobileHome
             throw new IOException("The AI send button did not complete its isolated streamed response: " + AiChatNotice.Text);
         await Capture("ai-replay");
         ClearAiChat(this, new RoutedEventArgs());
+        CompleteConfirmation(true);
+        await Task.Delay(50);
         if (!AiEmpty.IsVisible || session.Chat.Entries.Count != 0) throw new IOException("The AI clear action did not reset its session.");
 
         async Task WaitAiOperation()

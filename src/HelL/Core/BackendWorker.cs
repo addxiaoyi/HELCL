@@ -82,9 +82,9 @@ public sealed class BackendWorker
 		_emit("log", PyDict.Of("task_id", task_id, "text", Py.Str(text)));
 	}
 
-	public void login_code(object code, object uri)
+	public void login_code(object code, object uri, object expiresIn = null)
 	{
-		_emit("login_code", PyDict.Of("code", Py.Str(code), "uri", Py.Str(uri)));
+		_emit("login_code", PyDict.Of("code", Py.Str(code), "uri", Py.Str(uri), "expires_in", Py.Int(Py.Or(expiresIn, 0L))));
 	}
 
 	public void login_status(object text)

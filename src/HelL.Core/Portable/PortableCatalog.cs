@@ -30,7 +30,7 @@ public sealed record CatalogRelease(string Id, string Title, string Filename, st
 }
 
 /// <summary>Typed catalog boundary for the portable UI; downloads retain upstream checksums.</summary>
-public sealed class PortableCatalog
+public sealed partial class PortableCatalog
 {
     private static readonly Regex ProjectKey = new(@"\A[A-Za-z0-9_-]{1,128}\z");
 
@@ -38,7 +38,7 @@ public sealed class PortableCatalog
     {
         var game = ExistingInstance(instance);
         if (Py.S(game.Meta().Get("portable_reference_version")) == version &&
-            Regex.IsMatch(version, @"\A1\.\d+(?:\.\d+)?\z"))
+            Regex.IsMatch(version, @"\A(?:1|[2-9]\d)\.\d+(?:\.\d+)?\z"))
         {
             string loader = CatalogLoader.Normalize(Py.S(game.Meta().Get("portable_reference_loader", "vanilla")));
             return new CatalogTarget { Version = version, GameVersion = version, Loader = loader.Length == 0 ? "vanilla" : loader };
@@ -52,19 +52,21 @@ public sealed class PortableCatalog
         return target;
     }
 
-    public IReadOnlyList<CatalogProject> Search(string kind, string query, string source, CatalogTarget? target, CancellationToken token, string order = "relevance")
+    public IReadOnlyList<CatalogProject> Search(string kind, string query, string source, CatalogTarget? target, CancellationToken token, string order = "relevance", int offset = 0, int pageSize = 30)
     {
         if (order is not ("relevance" or "downloads" or "newest" or "updated"))
             throw new ArgumentException("资源排序方式无效。", nameof(order));
-        var filters = PyDict.Of("game_version", target?.GameVersion ?? "", "loader", target?.Loader ?? "");
+        if (offset < 0 || offset > 50000 || pageSize < 1 || pageSize > 50) throw new ArgumentOutOfRangeException(nameof(offset));
+        token.ThrowIfCancellationRequested();
+        var filters = PyDict.Of("game_version", target?.GameVersion ?? "", "loader", target?.Loader ?? "", "offset", offset, "limit", pageSize);
         var rows = CatalogSearch.Search(kind, query, source, filters, request =>
         {
             token.ThrowIfCancellationRequested();
             var dm = Downloads(token);
             string loader = kind == "mod" ? CatalogLoader.Normalize(target?.Loader ?? "") : "";
             return request.Source == "modrinth"
-                ? Mods.SearchModrinthProjects(dm, request.Query, request.Kind, 30, target?.GameVersion ?? "", new List<object>(), loader, order)
-                : Mods.SearchCurseforge(dm, request.Query, 30, Config.CurseforgeKey(), CatalogFiles.KIND_CF[kind], "", target?.GameVersion ?? "", new List<object>(), loader, order);
+                ? Mods.SearchModrinthProjects(dm, request.Query, request.Kind, request.Limit, target?.GameVersion ?? "", new List<object>(), loader, order, request.Offset)
+                : Mods.SearchCurseforge(dm, request.Query, request.Limit, Config.CurseforgeKey(), CatalogFiles.KIND_CF[kind], "", target?.GameVersion ?? "", new List<object>(), loader, order, request.Offset);
         });
         token.ThrowIfCancellationRequested();
         var projects = rows.OfType<PyDict>().Select(row =>

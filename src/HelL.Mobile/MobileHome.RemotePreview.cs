@@ -49,6 +49,11 @@ public sealed partial class MobileHome
             await Capture("remote-cancelled");
             await remote.RefreshAsync();
             await Capture("remote-readonly-tasks");
+            Control[] stableTasks = remoteTasks.Children.ToArray();
+            Control[] stableHosts = remoteHosts.Children.ToArray();
+            PresentRemote();
+            if (!stableTasks.SequenceEqual(remoteTasks.Children) || !stableHosts.SequenceEqual(remoteHosts.Children))
+                throw new IOException("Unchanged remote snapshots rebuilt controls and lost stable reading targets.");
             if (remote.Tasks.Length != 2 || remoteTasks.GetVisualDescendants().OfType<Button>().Any(button => button.IsEnabled && button.Classes.Contains("remote-task-cancel")))
                 throw new IOException("Read-only task actions were enabled.");
             await remote.ReadTaskDetailsAsync("preview-install");
@@ -118,6 +123,7 @@ public sealed partial class MobileHome
                 horizontalOverflow = false, loading = true, cancellation = true, snapshot = true, safeError = true,
                 taskDetails = true, gameStatus = true, gracefulStop = true, hostSelection = true,
                 terminalStateConfirmed = true, pollingStopsOnLeave = true, privateInputClearedOnLeave = true,
+                stableRows = true, deviceScopedRevocation = true, invitationExpiryVisible = true,
                 mockedRemoteTransport = true, nativeAndroidVerified = false
             }));
             return true;

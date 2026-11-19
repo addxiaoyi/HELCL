@@ -13,10 +13,10 @@
       <!-- 斜向冰晶漫反射光层 -->
       <Border Background="{DynamicResource HelL.BackdropMesh}" IsHitTestVisible="False" />
 
-      <Grid ColumnDefinitions="208,*">
+      <Grid x:Name="ShellColumns" ColumnDefinitions="208,*">
         <!-- 左侧全高半透明磨砂侧边栏 -->
         <Border Grid.Column="0" Background="{DynamicResource HelL.Chrome}" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="0,0,1,0" Padding="11,10,11,12">
-          <Grid RowDefinitions="Auto,*,Auto,Auto">
+          <Grid RowDefinitions="Auto,*,Auto,Auto,Auto">
             <!-- 极简几何品牌标识（支持拖拽） -->
             <Border Background="Transparent" Padding="6,4,6,10" PointerPressed="BeginTitleBarDrag" DoubleTapped="ToggleMaximizeTitleBar">
               <Grid ColumnDefinitions="Auto,*,Auto" IsHitTestVisible="False">
@@ -82,7 +82,7 @@
                 <Button Tag="ai" Click="Navigate" Classes="nav">
                   <StackPanel Orientation="Horizontal" Spacing="9">
                     <icons:MaterialIcon Kind="CreationOutline" Width="15" Height="15" VerticalAlignment="Center" />
-                    <TextBlock Text="AI 诊断顾问" FontSize="12.5" VerticalAlignment="Center" />
+                    <TextBlock Text="AI 助手" FontSize="12.5" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
                 <Button Tag="java" Click="Navigate" Classes="nav">
@@ -103,17 +103,12 @@
                     <TextBlock Text="任务队列" FontSize="12.5" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
-                <Button Tag="settings" Click="Navigate" Classes="nav">
-                  <StackPanel Orientation="Horizontal" Spacing="9">
-                    <icons:MaterialIcon Kind="TuneVariant" Width="15" Height="15" VerticalAlignment="Center" />
-                    <TextBlock Text="外观与通透度" FontSize="12.5" VerticalAlignment="Center" />
-                  </StackPanel>
-                </Button>
               </StackPanel>
             </ScrollViewer>
 
             <!-- 底部实例速切区 -->
-            <Border Grid.Row="2" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="0,1,0,0" Padding="0,7,0,5" Margin="0,5,0,0">
+            <StackPanel Grid.Row="2" Spacing="4"><Button x:Name="FooterSettingsButton" Tag="settings" Content="设置" Classes="nav" Click="Navigate" AutomationProperties.Name="设置" /><Button Content="易读字号 / 标准字号" Classes="ghost" Click="ToggleReadableText" FontSize="12" /></StackPanel>
+            <Border Grid.Row="3" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="0,1,0,0" Padding="0,7,0,5" Margin="0,5,0,0">
               <Grid MaxHeight="84">
                 <TextBlock x:Name="LibraryEmpty" Text="暂无实例" Classes="muted" FontSize="11.5" Margin="8,3" />
                 <ListBox x:Name="InstanceList" SelectionChanged="SelectInstance" Background="Transparent" AutomationProperties.Name="我的 Minecraft 实例">
@@ -139,7 +134,7 @@
             </Border>
 
             <!-- 单行新建入口 -->
-            <StackPanel Grid.Row="3" Spacing="4">
+            <StackPanel Grid.Row="4" Spacing="4">
               <Grid ColumnDefinitions="*,32" ColumnSpacing="6">
                 <TextBox x:Name="InstanceName" PlaceholderText="新建实例…" MaxLength="48" MinHeight="30" Padding="9,4" FontSize="12" TextChanged="EditInstanceName" KeyDown="SubmitInstanceName" AutomationProperties.Name="新实例名称" />
                 <Button Grid.Column="1" x:Name="CreateButton" Classes="soft" Content="+" Width="32" MinHeight="30" Padding="0" FontSize="14" Click="CreateInstance" HorizontalContentAlignment="Center" AutomationProperties.Name="创建实例" />
@@ -154,8 +149,8 @@
           <!-- 顶部无分割线拖拽区 + 上下文分段控制器 + 窗口控制 -->
           <Border Grid.Row="0" Background="Transparent" PointerPressed="BeginTitleBarDrag" DoubleTapped="ToggleMaximizeTitleBar">
             <Grid ColumnDefinitions="*,Auto,*">
-              <TextBlock x:Name="ChromeTitle" IsVisible="False" />
-              <TextBlock x:Name="TopInstanceLabel" IsVisible="False" />
+              <TextBlock x:Name="ChromeTitle" IsVisible="False" FontSize="12" TextWrapping="Wrap" />
+              <TextBlock x:Name="TopInstanceLabel" Grid.Column="1" IsVisible="True" TextTrimming="CharacterEllipsis" MaxWidth="400" FontSize="12.5" ToolTip.Tip="{Binding #TopInstanceLabel.Text}" />
 
               <Border x:Name="InstanceSegBar" Grid.Column="1" Classes="segmented" VerticalAlignment="Center" IsVisible="False">
                 <StackPanel x:Name="InstanceSegButtons" Orientation="Horizontal" Spacing="2">

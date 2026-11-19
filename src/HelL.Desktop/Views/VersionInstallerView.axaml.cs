@@ -35,6 +35,7 @@ public partial class VersionInstallerView : UserControl
     ];
     private IReadOnlyList<RemoteVersionRow> allVersions = DefaultPresets;
     private bool fetchedRemote;
+    private bool preparing;
     private string activeChannel = "release";
 
     public VersionInstallerView()
@@ -170,14 +171,33 @@ public partial class VersionInstallerView : UserControl
         bool hasInstance = InstancePicker.SelectedItem is InstanceEntry;
         bool hasVersion = VersionList.SelectedItem is RemoteVersionRow;
         bool loaderReady = SelectedLoader == "none" || LoaderBuildCombo.SelectedItem is LoaderVersion;
-        StartInstallButton.IsEnabled = hasInstance && hasVersion && loaderReady;
+        StartInstallButton.IsEnabled = !preparing && hasInstance && hasVersion && loaderReady;
+        if (InstancePicker.SelectedItem is InstanceEntry target && VersionList.SelectedItem is RemoteVersionRow selected)
+            InstallHintText.Text = BuildInstallSummary(target.Name, selected.Id, SelectedLoader);
     }
 
     private async void StartInstall(object? sender, RoutedEventArgs e)
     {
         if (host == null || InstancePicker.SelectedItem is not InstanceEntry instance || VersionList.SelectedItem is not RemoteVersionRow version) return;
+        if (preparing) return;
+        preparing = true;
+        UpdateInstallState();
+        try
+        {
         string loader = SelectedLoader;
         string? loaderBuild = (LoaderBuildCombo.SelectedItem as LoaderVersion)?.Id;
+        InstallationPlan? plan = null;
+        using (var planning = new CancellationTokenSource(TimeSpan.FromSeconds(20)))
+        {
+            try { plan = await Task.Run(() => InstallationPlan.ForVersion(new Instance(instance.Name), version.Id, loader, planning.Token), planning.Token); }
+            catch (Exception error) when (error is not OutOfMemoryException)
+            {
+                System.Diagnostics.Trace.TraceWarning("Installation plan: " + error.GetType().Name);
+                if (!await host.ConfirmAction("无法读取下载量", BuildInstallSummary(instance.Name, version.Id, loader) + "\n清单读取失败。取消后可重试；继续会按实际下载校验。", "明确继续")) return;
+            }
+        }
+        if (plan?.SpaceKnownInsufficient == true) { host.SetStatus(plan.Summary); return; }
+        if (!await host.ConfirmAction("确认安装计划", plan?.Summary ?? BuildInstallSummary(instance.Name, version.Id, loader), "开始安装")) return;
         await host.RunTask(async token =>
         {
             var progress = host.TaskProgress();
@@ -186,6 +206,18 @@ public partial class VersionInstallerView : UserControl
             RefreshInstances(instance.Name);
             host.SetStatus($"已安装 {installed}。");
         }, "InstallVersion");
+        }
+        finally { preparing = false; UpdateInstallState(); }
+    }
+
+    private static string BuildInstallSummary(string instance, string version, string loader)
+    {
+        string path = new Instance(instance).path;
+        string free;
+        try { free = $"{new DriveInfo(Path.GetPathRoot(path)!).AvailableFreeSpace / 1073741824d:F1} GB"; }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException) { free = "无法读取"; }
+        bool installed = File.Exists(Path.Combine(path, "versions", version, version + ".json"));
+        return $"目标实例：{instance}\n目标目录：{path}\n版本：{version} · 加载器：{loader}\n磁盘可用：{free}\n下载量与额外占用：清单解析前未知，不显示估算值。\n已有版本：{(installed ? "已存在，将校验并复用可用文件，修复缺失内容" : "新安装，已有其它版本保留")}";
     }
 
     private async void ImportModpack(object? sender, RoutedEventArgs e)

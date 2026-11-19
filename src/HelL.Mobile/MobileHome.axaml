@@ -1,11 +1,11 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
-             xmlns:pictures="using:HelL.Desktop.Controls"
+             xmlns:pictures="using:HelL.Desktop.Controls" xmlns:chat="using:HelL.Mobile.Controls"
              x:Class="HelL.Mobile.MobileHome" Background="{DynamicResource HelL.Window}">
   <Grid x:Name="Shell" ColumnDefinitions="0,*" RowDefinitions="46,*,Auto">
     <!-- 顶部极简导航栏 -->
     <Border Grid.ColumnSpan="2" Background="{DynamicResource HelL.Chrome}" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="0,0,0,1" Padding="16,0">
-      <Grid ColumnDefinitions="Auto,Auto,*,36,36" ColumnSpacing="8">
+      <Grid ColumnDefinitions="Auto,Auto,*,44,44" ColumnSpacing="8">
         <Border Width="20" Height="20" CornerRadius="5.5" Background="{DynamicResource HelL.Ink}" VerticalAlignment="Center">
           <TextBlock Text="H" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource HelL.OnAccent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Border>
@@ -23,11 +23,11 @@
         <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
           <StackPanel x:Name="RailNavigation" Spacing="2">
             <Button Tag="home" Classes="nav" Click="Navigate" AutomationProperties.Name="启动" ToolTip.Tip="启动" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"><StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"><icons:MaterialIcon Kind="PlayCircleOutline" Width="18" Height="18" /><TextBlock Text="启动" FontSize="13" VerticalAlignment="Center"/></StackPanel></Button>
-            <Button Tag="library" Classes="nav" Click="Navigate" AutomationProperties.Name="实例库" ToolTip.Tip="实例库" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"><StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"><icons:MaterialIcon Kind="FolderOutline" Width="18" Height="18" /><TextBlock Text="实例" FontSize="13" VerticalAlignment="Center"/></StackPanel></Button>
+            <Button Tag="library" Classes="nav" Click="Navigate" AutomationProperties.Name="我的实例" ToolTip.Tip="实例库" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"><StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"><icons:MaterialIcon Kind="FolderOutline" Width="18" Height="18" /><TextBlock Text="实例" FontSize="13" VerticalAlignment="Center"/></StackPanel></Button>
             <Button Tag="resources" Classes="nav" Click="Navigate" AutomationProperties.Name="下载资源" ToolTip.Tip="下载资源" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"><StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"><icons:MaterialIcon Kind="CompassOutline" Width="18" Height="18" /><TextBlock Text="资源" FontSize="13" VerticalAlignment="Center"/></StackPanel></Button>
             <Button Tag="ai" Classes="nav" Click="Navigate" AutomationProperties.Name="AI 助手" ToolTip.Tip="AI 助手" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"><StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"><icons:MaterialIcon Kind="CreationOutline" Width="18" Height="18"/><TextBlock Text="助手" FontSize="13" VerticalAlignment="Center"/></StackPanel></Button>
             <Button Tag="account" Classes="nav" Click="Navigate" AutomationProperties.Name="账号" ToolTip.Tip="账号" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"><StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"><icons:MaterialIcon Kind="AccountOutline" Width="18" Height="18" /><TextBlock Text="账户" FontSize="13" VerticalAlignment="Center"/></StackPanel></Button>
-            <Button Tag="more" Classes="nav" Click="Navigate" AutomationProperties.Name="我的" ToolTip.Tip="我的" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"><StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"><icons:MaterialIcon Kind="TuneVariant" Width="18" Height="18" /><TextBlock Text="设置" FontSize="13" VerticalAlignment="Center"/></StackPanel></Button>
+            <Button Tag="more" Classes="nav" Click="Navigate" AutomationProperties.Name="设置" ToolTip.Tip="我的" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"><StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"><icons:MaterialIcon Kind="TuneVariant" Width="18" Height="18" /><TextBlock Text="设置" FontSize="13" VerticalAlignment="Center"/></StackPanel></Button>
           </StackPanel>
         </ScrollViewer>
         <Button Grid.Row="2" Classes="nav" Tag="about" Click="Navigate" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" AutomationProperties.Name="关于 HelL" ToolTip.Tip="关于 HelL">
@@ -94,7 +94,7 @@
                   <StackPanel>
                     <Button Tag="mod" Click="SelectCategory" Classes="row-action"><TextBlock Text="浏览模组"/></Button>
                     <Button Tag="shader" Click="SelectCategory" Classes="row-action"><TextBlock Text="浏览光影"/></Button>
-                    <Button Click="OpenPackImport" Classes="row-action"><TextBlock Text="导入整合包"/></Button>
+                    <Button Click="OpenPackImport" Classes="row-action"><TextBlock Text="查找整合包"/></Button>
                     <Border Classes="group-row-last">
                       <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Text="运行环境" VerticalAlignment="Center"/>
@@ -144,13 +144,13 @@
               <Border Classes="group-sheet">
                 <ListBox x:Name="InstancesList" ItemContainerTheme="{StaticResource RowTheme}" SelectionChanged="SelectInstance" AutomationProperties.Name="实例列表">
                   <ListBox.ItemTemplate><DataTemplate><Border Padding="15,12">
-                    <Grid ColumnDefinitions="*,Auto,34" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="*,Auto,44" ColumnSpacing="10">
                       <StackPanel Spacing="2" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Name}" FontSize="14.5" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
                         <TextBlock Text="{Binding Detail}" FontSize="12" Classes="muted" TextTrimming="CharacterEllipsis"/>
                       </StackPanel>
                       <TextBlock Grid.Column="1" IsVisible="{Binding Current}" Text="当前" Classes="muted" FontSize="12" VerticalAlignment="Center"/>
-                      <Button Grid.Column="2" Classes="icon" Width="32" Height="32" Padding="5" Tag="{Binding Name}" Click="ManageRow" AutomationProperties.Name="管理此实例"><icons:MaterialIcon Kind="DotsHorizontal" Width="18" Height="18" /></Button>
+                      <Button Grid.Column="2" Classes="icon" Width="44" Height="44" Padding="5" Tag="{Binding Name}" Click="ManageRow" AutomationProperties.Name="管理此实例"><icons:MaterialIcon Kind="DotsHorizontal" Width="18" Height="18" /></Button>
                     </Grid>
                   </Border></DataTemplate></ListBox.ItemTemplate>
                 </ListBox>
@@ -166,9 +166,9 @@
         <!-- [3] 资源中心 -->
         <ScrollViewer x:Name="ResourcesPage" IsVisible="False" HorizontalScrollBarVisibility="Disabled">
           <StackPanel x:Name="ResourcesLayout" Margin="20,18,20,24" Spacing="14" MaxWidth="860">
-            <Grid ColumnDefinitions="*,36">
+            <Grid ColumnDefinitions="*,44">
               <StackPanel Spacing="2"><TextBlock Text="资源" Classes="title"/><TextBlock x:Name="ResourcesSubtitle" Text="Modrinth 与 CurseForge" Classes="caption"/></StackPanel>
-              <Button Grid.Column="1" Classes="icon" Click="ToggleSearch" AutomationProperties.Name="搜索与筛选"><icons:MaterialIcon Kind="Magnify" Width="18" Height="18"/></Button>
+              <Button Grid.Column="1" Classes="icon" Click="FocusSearch" AutomationProperties.Name="搜索资源关键词"><icons:MaterialIcon Kind="Magnify" Width="18" Height="18"/></Button>
             </Grid>
 
             <StackPanel x:Name="SearchPanel" Spacing="12">
@@ -185,13 +185,13 @@
                 </Border>
               </ScrollViewer>
 
+              <TextBlock x:Name="ResourceTarget" Classes="caption" TextWrapping="Wrap"/>
               <StackPanel x:Name="SearchFilters" IsVisible="False" Spacing="8">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8"><TextBox x:Name="Query" PlaceholderText="搜索资源名称…" KeyDown="SearchKey" AutomationProperties.Name="搜索资源"/><Button Grid.Column="1" Classes="primary" Content="搜索" Click="SearchResources"/></Grid>
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="8"><ComboBox x:Name="Kind" SelectedIndex="0" SelectionChanged="FiltersChanged" AutomationProperties.Name="资源类型"><ComboBoxItem Content="模组" Tag="mod"/><ComboBoxItem Content="整合包" Tag="modpack"/><ComboBoxItem Content="光影" Tag="shader"/><ComboBoxItem Content="资源包" Tag="resourcepack"/><ComboBoxItem Content="世界" Tag="world"/><ComboBoxItem Content="数据包" Tag="datapack"/></ComboBox><ComboBox x:Name="Provider" Grid.Column="1" SelectedIndex="0" SelectionChanged="FiltersChanged" AutomationProperties.Name="资源来源"><ComboBoxItem Content="Modrinth" Tag="modrinth"/><ComboBoxItem Content="CurseForge" Tag="curseforge"/></ComboBox></Grid>
-                <TextBlock x:Name="ResourceTarget" Classes="caption" TextWrapping="Wrap"/>
               </StackPanel>
 
-              <Grid ColumnDefinitions="*,36">
+              <Grid ColumnDefinitions="*,44">
                 <Border Classes="segmented" HorizontalAlignment="Left">
                   <StackPanel x:Name="ResourceSortTabs" Orientation="Horizontal" Spacing="2">
                     <Button Tag="relevance" Content="推荐" Classes="tab current" Click="SortResources"/>
@@ -206,6 +206,7 @@
               <TextBlock x:Name="SearchNotice" Text="选择分类或点击右上角搜索" Classes="caption" TextWrapping="Wrap"/>
               <Button x:Name="SearchRetry" Content="重新加载" Classes="secondary" Click="SearchResources" HorizontalAlignment="Left" IsVisible="False"/>
 
+              <Button x:Name="LoadMoreResourcesButton" Content="加载更多兼容资源" Classes="secondary" Click="LoadMoreResources" IsVisible="False" HorizontalAlignment="Stretch"/>
               <Border Classes="group-sheet">
                 <ListBox x:Name="Projects" ItemContainerTheme="{StaticResource RowTheme}" SelectionChanged="ProjectSelected" AutomationProperties.Name="资源结果">
                   <ListBox.ItemTemplate><DataTemplate><Border Padding="14,11">
@@ -215,7 +216,7 @@
                         <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
                         <TextBlock Text="{Binding PreviewSummary}" Classes="muted" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis"/>
                       </StackPanel>
-                      <Button Grid.Column="2" Content="获取" Classes="download" VerticalAlignment="Center" Click="OpenProjectRow" AutomationProperties.Name="选择资源文件"/>
+                      <Button Grid.Column="2" Content="获取" Classes="download" VerticalAlignment="Center" Click="OpenProjectRow" AutomationProperties.Name="{Binding Title, StringFormat='获取 {0} 的资源文件'}"/>
                     </Grid>
                   </Border></DataTemplate></ListBox.ItemTemplate>
                 </ListBox>
@@ -314,7 +315,7 @@
 
         <!-- [7] AI 助手 -->
         <Grid x:Name="AiPage" IsVisible="False" RowDefinitions="Auto,*,Auto" Margin="20,18,20,14" RowSpacing="12" MaxWidth="720">
-          <Grid ColumnDefinitions="*,36,36">
+          <Grid ColumnDefinitions="*,44,44">
             <StackPanel Spacing="2"><TextBlock Text="助手" Classes="title"/><TextBlock x:Name="AiProviderNotice" Text="连接模型后提问" Classes="caption" TextWrapping="Wrap"/></StackPanel>
             <Button Grid.Column="1" Classes="icon" Click="ToggleAiSettings" AutomationProperties.Name="AI 连接设置"><icons:MaterialIcon Kind="TuneVariant" Width="18" Height="18"/></Button>
             <Button x:Name="AiClearButton" Grid.Column="2" Classes="icon" Click="ClearAiChat" AutomationProperties.Name="清空本次 AI 对话"><icons:MaterialIcon Kind="TrashCanOutline" Width="18" Height="18"/></Button>
@@ -332,11 +333,11 @@
               <Border x:Name="AiEmpty" Classes="glass"><StackPanel Spacing="6"><TextBlock Text="需要排查什么问题？" Classes="section"/><TextBlock Text="支持询问版本搭配、模组冲突与报错原因。" Classes="muted" FontSize="13" TextWrapping="Wrap"/></StackPanel></Border>
               <ItemsControl x:Name="AiMessages">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="10"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate><DataTemplate><Border Classes="glass"><StackPanel Spacing="6"><TextBlock Text="{Binding Speaker}" Classes="caption"/><SelectableTextBlock Text="{Binding Content}" TextWrapping="Wrap" LineHeight="21"/><TextBlock Text="{Binding Notice}" Classes="caption"/></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate>
+                <ItemsControl.ItemTemplate><DataTemplate><Border Classes="glass"><StackPanel Spacing="6"><TextBlock Text="{Binding Speaker}" Classes="caption"/><chat:ChatContent Text="{Binding Content}"/><TextBlock Text="{Binding Notice}" Classes="caption"/></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate>
               </ItemsControl>
             </StackPanel></ScrollViewer>
           </Grid>
-          <StackPanel Grid.Row="2" Spacing="8"><TextBox x:Name="AiPrompt" AcceptsReturn="True" MinHeight="60" MaxHeight="120" MaxLength="8000" PlaceholderText="输入问题…" TextWrapping="Wrap" AutomationProperties.Name="AI 消息"/><Grid ColumnDefinitions="*,Auto" ColumnSpacing="10"><TextBlock x:Name="AiChatNotice" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center"/><Button x:Name="AiSendButton" Grid.Column="1" Content="发送" Classes="primary" Click="SendAiMessage" MinWidth="76"/></Grid></StackPanel>
+          <StackPanel Grid.Row="2" Spacing="8"><WrapPanel><Button x:Name="AiLatestButton" Content="回到最新消息" Classes="inline" Click="JumpToLatestAi" IsVisible="False"/><Button x:Name="AiRetryButton" Content="重试上个问题" Classes="inline" Click="RetryAiMessage" IsVisible="False"/><Button x:Name="AiEditRetryButton" Content="编辑后重发" Classes="inline" Click="EditFailedAi" IsVisible="False"/><Button x:Name="AiUndoClearButton" Content="撤销清空" Classes="inline" Click="UndoClearAi" IsVisible="False"/></WrapPanel><TextBlock x:Name="AiStorageNotice" Classes="caption" TextWrapping="Wrap"/><TextBox x:Name="AiPrompt" AcceptsReturn="True" MinHeight="60" MaxHeight="120" MaxLength="8000" PlaceholderText="输入问题…" TextWrapping="Wrap" AutomationProperties.Name="AI 消息"/><Grid ColumnDefinitions="*,Auto" ColumnSpacing="10"><TextBlock x:Name="AiChatNotice" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center"/><Button x:Name="AiSendButton" Grid.Column="1" Content="发送" Classes="primary" Click="SendAiMessage" MinWidth="76"/></Grid></StackPanel>
         </Grid>
 
         <!-- [8] 设置页（iOS Grouped Table） -->
@@ -390,11 +391,11 @@
     <!-- iOS 极简底部栏 -->
     <Border x:Name="BottomBar" Grid.Row="2" Grid.ColumnSpan="2" Background="{DynamicResource HelL.Chrome}" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="0,1,0,0" Padding="8,4,8,6">
       <UniformGrid x:Name="BottomNavigation" Rows="1" Columns="5">
-        <Button Tag="home" Classes="bottom-nav" Click="Navigate" AutomationProperties.Name="首页"><StackPanel Spacing="2"><icons:MaterialIcon Kind="PlayCircleOutline" Width="20" Height="20" HorizontalAlignment="Center"/><TextBlock Text="启动" FontSize="10.5" HorizontalAlignment="Center"/></StackPanel></Button>
-        <Button Tag="library" Classes="bottom-nav" Click="Navigate" AutomationProperties.Name="实例"><StackPanel Spacing="2"><icons:MaterialIcon Kind="FolderOutline" Width="20" Height="20" HorizontalAlignment="Center"/><TextBlock Text="实例" FontSize="10.5" HorizontalAlignment="Center"/></StackPanel></Button>
-        <Button Tag="resources" Classes="bottom-nav" Click="Navigate" AutomationProperties.Name="资源"><StackPanel Spacing="2"><icons:MaterialIcon Kind="CompassOutline" Width="20" Height="20" HorizontalAlignment="Center"/><TextBlock Text="资源" FontSize="10.5" HorizontalAlignment="Center"/></StackPanel></Button>
-        <Button Tag="ai" Classes="bottom-nav" Click="Navigate" AutomationProperties.Name="AI 助手"><StackPanel Spacing="2"><icons:MaterialIcon Kind="CreationOutline" Width="20" Height="20" HorizontalAlignment="Center"/><TextBlock Text="助手" FontSize="10.5" HorizontalAlignment="Center"/></StackPanel></Button>
-        <Button Tag="more" Classes="bottom-nav" Click="Navigate" AutomationProperties.Name="我的"><StackPanel Spacing="2"><icons:MaterialIcon Kind="TuneVariant" Width="20" Height="20" HorizontalAlignment="Center"/><TextBlock Text="设置" FontSize="10.5" HorizontalAlignment="Center"/></StackPanel></Button>
+        <Button Tag="home" Classes="bottom-nav" Click="Navigate" AutomationProperties.Name="首页"><StackPanel Spacing="2"><icons:MaterialIcon Kind="PlayCircleOutline" Width="20" Height="20" HorizontalAlignment="Center"/><TextBlock Text="启动" FontSize="12" HorizontalAlignment="Center"/></StackPanel></Button>
+        <Button Tag="library" Classes="bottom-nav" Click="Navigate" AutomationProperties.Name="实例"><StackPanel Spacing="2"><icons:MaterialIcon Kind="FolderOutline" Width="20" Height="20" HorizontalAlignment="Center"/><TextBlock Text="实例" FontSize="12" HorizontalAlignment="Center"/></StackPanel></Button>
+        <Button Tag="resources" Classes="bottom-nav" Click="Navigate" AutomationProperties.Name="资源"><StackPanel Spacing="2"><icons:MaterialIcon Kind="CompassOutline" Width="20" Height="20" HorizontalAlignment="Center"/><TextBlock Text="资源" FontSize="12" HorizontalAlignment="Center"/></StackPanel></Button>
+        <Button Tag="ai" Classes="bottom-nav" Click="Navigate" AutomationProperties.Name="AI 助手"><StackPanel Spacing="2"><icons:MaterialIcon Kind="CreationOutline" Width="20" Height="20" HorizontalAlignment="Center"/><TextBlock Text="助手" FontSize="12" HorizontalAlignment="Center"/></StackPanel></Button>
+        <Button Tag="more" Classes="bottom-nav" Click="Navigate" AutomationProperties.Name="设置"><StackPanel Spacing="2"><icons:MaterialIcon Kind="TuneVariant" Width="20" Height="20" HorizontalAlignment="Center"/><TextBlock Text="设置" FontSize="12" HorizontalAlignment="Center"/></StackPanel></Button>
       </UniformGrid>
     </Border>
   </Grid>

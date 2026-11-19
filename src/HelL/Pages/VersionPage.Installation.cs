@@ -35,7 +35,7 @@ public sealed partial class VersionPage
         _loaderVer.IsEnabled = false;
         var extras = Ui.H(16, _optifine, _lite); extras.Wrap = true;
         var advanced = new Expander { Header = "模组加载器与兼容组件", Content = Ui.V(12,
-            Ui.Field("加载器", _loader, "原版游戏不需要选择加载器。", 84), Ui.Field("兼容版本", _loaderVer, null, 84), extras).M(0, 12, 0, 0) };
+            Ui.Field("加载器", _loader, "原版游戏不需要选择加载器。", 84), Ui.Field("兼容版本", _loaderVer, "先选择加载器；列表仅显示所选 Minecraft 版本支持的兼容版本。", 84), extras).M(0, 12, 0, 0) };
         _install.MinHeight = 40; _install.BorderThickness = new Thickness(0);
         _cancelInstall.Click += (_, _) => RunOnce(_cancelInstall, async () => { await Api.CallAsync("cancel_task", new { task_id = _installTask }); _installStatus.Text = "正在取消安装…"; });
         _retryInstall.Click += (_, _) => RunOnce(_retryInstall, RetryInstall);
@@ -83,9 +83,12 @@ public sealed partial class VersionPage
         bool active = _installTask.Length > 0 && TaskStore.Get(_installTask)?.Finished != true;
         _install.Visibility = _installTask.Length > 0 ? Visibility.Collapsed : Visibility.Visible;
         _install.IsEnabled = selected != null && _inst.Str().Length > 0 && !_loaderLoading && _loaderError.Length == 0 && !_installStarting && !active;
-        _inst.IsEnabled = _list.IsEnabled = _loader.IsEnabled = !active && !_installStarting;
-        _search.IsEnabled = _release.IsEnabled = _snapshot.IsEnabled = _oldAlpha.IsEnabled = _oldBeta.IsEnabled = !active && !_installStarting;
+        _inst.IsEnabled = _loader.IsEnabled = !active && !_installStarting;
+        _list.IsEnabled = true;
+        _search.IsEnabled = _release.IsEnabled = _snapshot.IsEnabled = _oldAlpha.IsEnabled = _oldBeta.IsEnabled = true;
         _optifine.IsEnabled = !active && (_loader.Str() == I18n.L("无") || _loader.Str() == "Forge");
+        _optifine.ToolTip = _optifine.IsEnabled ? "为所选版本安装兼容 OptiFine" : active ? "当前安装参数已锁定" : "OptiFine 兼容选项仅适用于原版或 Forge";
+        _loaderVer.ToolTip = _loader.Str() == I18n.L("无") ? "原版不需要加载器版本" : _loaderLoading ? "正在读取兼容版本" : "仅列出所选 Minecraft 版本支持的加载器版本";
         _lite.IsEnabled = !active;
         _loaderVer.IsEnabled = !active && !_loaderLoading && _loader.Str() != I18n.L("无");
         _install.Content = selected == null ? "选择版本后安装" : "安装 " + selected.Version;

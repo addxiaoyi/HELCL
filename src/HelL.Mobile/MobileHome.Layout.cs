@@ -137,11 +137,11 @@ public sealed partial class MobileHome
         PresentInstances();
     }
 
-    private void OpenCreate(object? sender, RoutedEventArgs e) => ShowPage("create");
-    private void OpenManage(object? sender, RoutedEventArgs e)
+    private async void OpenCreate(object? sender, RoutedEventArgs e) => await NavigateCheckedAsync("create");
+    private async void OpenManage(object? sender, RoutedEventArgs e)
     {
-        if (selected.Length == 0) { ShowPage("create"); return; }
-        ShowPage("manage");
+        if (selected.Length == 0) { await NavigateCheckedAsync("create"); return; }
+        await NavigateCheckedAsync("manage");
     }
 
     private void ManageRow(object? sender, RoutedEventArgs e)
@@ -154,8 +154,7 @@ public sealed partial class MobileHome
 
     private void ExplainRuntime(object? sender, RoutedEventArgs e) =>
         Status.Text = "Android 运行层持续接入中。";
-    private void OpenNotifications(object? sender, RoutedEventArgs e) =>
-        Status.Text = operation == null ? "当前暂无进行中的任务。" : "任务执行中。";
+    private async void OpenNotifications(object? sender, RoutedEventArgs e) => await NavigateCheckedAsync("tasks");
     private void OpenServers(object? sender, RoutedEventArgs e) =>
         Status.Text = "暂无服务器。";
     private void OpenPackImport(object? sender, RoutedEventArgs e)
@@ -171,6 +170,15 @@ public sealed partial class MobileHome
     {
         SearchFilters.IsVisible = !SearchFilters.IsVisible;
         if (SearchFilters.IsVisible) Query.Focus();
+    }
+
+    private void FocusSearch(object? sender, RoutedEventArgs e)
+    {
+        SearchPanel.IsVisible = true;
+        DetailsPanel.IsVisible = false;
+        SearchFilters.IsVisible = true;
+        Query.Focus();
+        Query.BringIntoView();
     }
 
     private void DismissStatus(object? sender, RoutedEventArgs e)

@@ -11,6 +11,8 @@ public sealed class UiPrefs
     public string LibraryView { get; set; } = "covers";
     public bool LibraryDetails { get; set; } = true;
     public string? LibraryGroup { get; set; }
+    public int LibrarySort { get; set; }
+    public bool LibraryPinnedOnly { get; set; }
 
 	public bool Dark { get; set; } = true;
 

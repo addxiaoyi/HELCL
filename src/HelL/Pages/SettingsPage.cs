@@ -258,7 +258,7 @@ public sealed partial class SettingsPage : PageBase
 
 	private readonly TextBox _aiBase = Ui.Input("https://api.openai.com/v1");
 
-	private readonly TextBox _aiKey = Ui.Input("sk-…");
+	private readonly SecretInput _aiKey = new SecretInput("AI API Key");
 
 	private readonly ComboBox _aiModel = Ui.Combo(null, null, 220.0, I18n.L("模型名"), editable: true);
 
@@ -271,7 +271,7 @@ public sealed partial class SettingsPage : PageBase
 	private readonly CheckBox _aiConfirm = Ui.Switch(value: true);
 
 
-	private readonly TextBox _cfKey = Ui.Input(I18n.L("CurseForge API Key（留空用内置）"));
+	private readonly SecretInput _cfKey = new SecretInput("CurseForge API Key（留空不修改）");
 
 	private bool _cfSet;
 
@@ -750,7 +750,7 @@ public sealed partial class SettingsPage : PageBase
 	/// PCL 式设置页：左栏一行一个分类，右边只铺当前分类，保存操作常驻在底部（不随内容滚走）。
 	/// 顺序与调用方传进来的 sections 一一对应。
 	/// </summary>
-	private static FrameworkElement SettingsShell(Button check, Button save, params FrameworkElement[] sections)
+	private FrameworkElement SettingsShell(Button check, Button save, params FrameworkElement[] sections)
 	{
 		(string Key, string Label, string Glyph, FrameworkElement[] Sections)[] cats =
 		{
@@ -780,13 +780,15 @@ public sealed partial class SettingsPage : PageBase
 			host.Content = panes[rail.Key];
 		};
 		Grid bar = new PageHeader(
-			Ui.Small(I18n.L("外观即时预览，其他改动保存后生效")).Wrap().VCenter(),
+			_saveState.Wrap().VCenter(),
 			Ui.H(8, check, save).Right().VCenter());
 		bar.Margin = new Thickness(UiMetrics.PageInset, 12, UiMetrics.PageInset, 12);
         var footer = new Border { Child = bar, BorderThickness = new Thickness(0, 1, 0, 0) };
         footer.SetResourceReference(Border.BackgroundProperty, "B.SurfaceInset");
         footer.SetResourceReference(Border.BorderBrushProperty, "B.SurfaceEdge");
-		return new SettingsWorkspace(rail, host, footer);
+		        HookSettingsChanges();
+        return SettingsSearch.Wrap(new SettingsWorkspace(rail, host, footer), rail,
+            cats.Select(cat => new SettingsSearch.Section { Key = cat.Key, Label = cat.Label, Controls = cat.Sections }));
 	}
 
 	private static UIElement SliderRow(Slider s, TextBlock label)
@@ -797,7 +799,7 @@ public sealed partial class SettingsPage : PageBase
 		return grid;
 	}
 
-	private static UIElement SecretRow(TextBox box, Button reset)
+	private static UIElement SecretRow(SecretInput box, Button reset)
 	{
 		Grid grid = Ui.G(null, "*,Auto");
 		grid.Add(box, 0);
@@ -1088,7 +1090,7 @@ public sealed partial class SettingsPage : PageBase
 	{
 		string text = KeyOf(_aiMode);
 		TextBox aiBase = _aiBase;
-		TextBox aiKey = _aiKey;
+		SecretInput aiKey = _aiKey;
 		bool flag = (_aiKeyReset.IsEnabled = text == "custom");
 		bool flag3 = flag;
 		flag = (aiKey.IsEnabled = flag3);
@@ -1359,10 +1361,16 @@ public sealed partial class SettingsPage : PageBase
 			_sync = false;
 		}
 		await ReloadThemesAsync();
+        _changedSettings.Clear(); UpdateSaveState();
 	}
 
 	private async Task SaveAsync()
 	{
+        int width = FrontendValidation.Integer(_w, "分辨率宽度", 64, 16384);
+        int height = FrontendValidation.Integer(_h, "分辨率高度", 64, 16384);
+        int limit = FrontendValidation.Integer(_limit, "下载限速", 0, 1000000000);
+        int context = FrontendValidation.Integer(_aiCtx, "AI 上下文窗口", 8192, 2000000);
+        bool directoryChanged = false;
 		string typed = _gameDir.Text?.Trim() ?? "";
 		if (typed.Length > 0 && typed != _gameDir0)
 		{
@@ -1373,6 +1381,7 @@ public sealed partial class SettingsPage : PageBase
 					path = typed
 				})) ?? typed;
 				_gameDir.Text = _gameDir0;
+                directoryChanged = true;
 			}
 			catch (Exception ex)
 			{
@@ -1390,13 +1399,13 @@ public sealed partial class SettingsPage : PageBase
 		dictionary["default_memory_mb"] = (int)_mem.Value;
 		dictionary["default_resolution"] = new int[2]
 		{
-			Int(_w.Text, 854),
-			Int(_h.Text, 480)
+			width,
+			height
 		};
 		dictionary["download_source"] = KeyOf(_src);
 		dictionary["community_source"] = KeyOf(_comm);
 		dictionary["use_system_proxy"] = _proxy.IsChecked == true;
-		dictionary["download_limit_kbps"] = Int(_limit.Text, 0);
+		dictionary["download_limit_kbps"] = limit;
 		dictionary["default_isolation"] = KeyOf(_iso);
 		dictionary["default_jvm_args"] = _jvm.Text?.Trim() ?? "";
 		dictionary["gc_preset"] = KeyOf(_gc);
@@ -1412,7 +1421,7 @@ public sealed partial class SettingsPage : PageBase
 		dictionary["ai_gateway_url"] = _aiGateway.Text?.Trim() ?? "";
 		dictionary["ai_base_url"] = (IsBuiltinAi ? "" : (_aiBase.Text?.Trim() ?? ""));
 		dictionary[KeyOf(_aiMode) == "local" ? "ai_local_model" : "ai_model"] = AiModelValue();
-		dictionary["ai_context_window"] = (int.TryParse(_aiCtx.Text?.Trim(), out var result) ? Clamp.Of(result, 8192, 2000000) : 131072);
+		dictionary["ai_context_window"] = context;
 		dictionary["ai_fallback_model"] = _aiFallback.Text?.Trim() ?? "";
 		dictionary["ui_background"] = _bgPath.Text?.Trim() ?? "";
 		dictionary["ui_background_folder"] = _bgFolder.Text?.Trim() ?? "";
@@ -1451,10 +1460,13 @@ public sealed partial class SettingsPage : PageBase
 		{
 			dictionary2["ai_api_key_clear"] = true;
 		}
-		await PageBase.Api.CallAsync<object>("save_settings", new
-		{
-			data = dictionary2
-		});
+        try { await PageBase.Api.CallAsync<object>("save_settings", new { data = dictionary2 }); }
+        catch (Exception error)
+        {
+            throw new InvalidOperationException(directoryChanged
+                ? "游戏目录已更新，但其它设置未保存。请保留当前页面、修正错误后再次保存。原因：" + error.Message
+                : "设置未保存，请修正错误后重试。原因：" + error.Message, error);
+        }
 		Dictionary<string, JsonElement> dictionary3 = await PageBase.Api.TryCallAsync<Dictionary<string, JsonElement>>("get_settings");
 		if (dictionary3 != null)
 		{
@@ -1494,6 +1506,7 @@ public sealed partial class SettingsPage : PageBase
 		await Wallpaper.ReloadAsync();
 		SyncWallpaperInfo();
 		PageBase.Win?.SaveUiPrefs();
+        _changedSettings.Clear(); UpdateSaveState();
 		AppServices.Window?.Toast(I18n.L("设置已保存"), I18n.L("外观与动效已立即生效"), ToastKind.Success);
 		if (langChanged)
 		{

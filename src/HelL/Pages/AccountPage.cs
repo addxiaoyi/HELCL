@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Windows.Threading;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,7 +14,7 @@ using HelL.Services;
 
 namespace HelL.Pages;
 
-public sealed class AccountPage : PageBase
+public sealed partial class AccountPage : PageBase
 {
 	private readonly SPanel _list = Ui.V(10.0);
 
@@ -94,16 +96,14 @@ public sealed class AccountPage : PageBase
 		_hero.Width = 240.0;
 		_heroBody.Visibility = Visibility.Collapsed;
 		RenderOptions.SetBitmapScalingMode(_heroBody, BitmapScalingMode.NearestNeighbor);
-		Grid grid3 = Ui.G(null, "Auto,*");
-		grid3.Add(_hero.M(0.0, 0.0, 14.0).VTop(), 0);
-		grid3.Add(_list, 0, 1);
-		base.Content = PageBase.ScrollBody(grid, Ui.V(20, _loginActions, grid3));
+		base.Content = PageBase.ScrollBody(grid, Ui.V(16, _loginActions, BuildAccountFilters(), new AdaptiveColumns(_hero, _list, 240, 780, fixedFirst: true, gap: 14)));
 	}
 
 	protected override async Task LoadAsync()
 	{
 		(List<AccountRow> rows, string err) = await PageBase.Api.TryCallAsyncOrError("get_account_rows", null, new List<AccountRow>());
 		List<AccountRow> list = rows ?? new List<AccountRow>();
+        _accountRows = list;
 		_list.Children.Clear();
 		_count.Text = I18n.L("共 {0} 个", list.Count);
 		_loginActions.Visibility = list.Count > 0 || err != null ? Visibility.Visible : Visibility.Collapsed;
@@ -125,10 +125,8 @@ public sealed class AccountPage : PageBase
 			return;
 		}
 		_hero.Visibility = Visibility.Visible;
-		foreach (AccountRow item in list)
-		{
-			_list.Children.Add(Row(item));
-		}
+        _accountRows = list;
+        RenderAccountRows();
 		Motion.Stagger(_list, 22.0, 200.0, 10.0);
 		await RenderHeroAsync(list.FirstOrDefault((AccountRow r) => r.Active) ?? list[0]);
 	}
@@ -238,10 +236,7 @@ public sealed class AccountPage : PageBase
 		string text = TypeLabel(acc);
 		SPanel sPanel = Ui.H(7.0, Ui.Txt(acc.Name, 13.5, bold: true).Trim().VCenter(), acc.Active ? Ui.Tag(I18n.L("当前"), "B.OnAccentStrong", "B.AccentStrong") : null, Ui.Tag(text), string.IsNullOrEmpty(acc.SkinFile) ? null : Ui.Tag(I18n.L("自定义皮肤"), "B.OnOk", "B.Ok"));
 		string text2 = (string.IsNullOrEmpty(acc.Uuid) ? (text + I18n.L("账号")) : ("UUID " + acc.Uuid));
-		if (text2.Length > 40)
-		{
-			text2 = text2.Substring(0, 40) + "…";
-		}
+
 		SPanel sPanel2 = Ui.H(6.0, Ui.Btn(I18n.L("皮肤"), BtnKind.Chip, delegate
 		{
 			PageBase.Run(() => EditSkinAsync(acc), I18n.L("皮肤没能保存"));
@@ -257,11 +252,12 @@ public sealed class AccountPage : PageBase
 		{
 			PageBase.Run(() => DeleteAsync(acc), I18n.L("删除失败"));
 		}));
-		sPanel2.VCenter();
-		Grid grid = Ui.G(null, "Auto,*,Auto");
-		grid.Add(thumbTile.M(0.0, 0.0, 12.0), 0);
-		grid.Add(Ui.V(3.0, sPanel, Ui.Small(text2)).VCenter(), 0, 1);
-		grid.Add(sPanel2, 0, 2);
+        sPanel2.Wrap = true;
+        if (!string.IsNullOrWhiteSpace(acc.Uuid)) sPanel2.Children.Add(Ui.Btn("复制 UUID", BtnKind.Ghost, (_, _) => Ui.Copy(acc.Uuid, "已复制", "账号 UUID 已复制")));
+        sPanel.Wrap = true;
+        Grid grid = Ui.G(null, "Auto,*");
+        grid.Add(thumbTile.M(0, 0, 12).VTop(), 0);
+        grid.Add(new PageHeader(Ui.V(3, sPanel, Ui.Small(text2).Wrap()), sPanel2) { MinimumHeadingWidth = 170 }, 0, 1);
 		Border border = Ui.RowCard(grid);
 		if (!acc.Active)
 		{
@@ -504,10 +500,16 @@ public sealed class AccountPage : PageBase
 				Ui.OpenUrl(_loginUri);
 			}
 		}, "\ue71b");
-		SPanel body = Ui.V(10.0, textBlock, textBlock2, Ui.H(8.0, button, button2));
+		        _copyLoginCode = button; _openLoginBrowser = button2;
+        button.IsEnabled = button2.IsEnabled = false;
+        _loginExpiry.Text = "有效期将在获取验证码后显示。";
+        _renewLoginCode = Ui.Btn("重新获取验证码", BtnKind.Chip, (_, _) => PageBase.Run(RestartMicrosoftLogin));
+        _renewLoginCode.Visibility = Visibility.Collapsed;
+        SPanel body = Ui.V(10, textBlock, textBlock2, _loginExpiry, Ui.H(8, button, button2, _renewLoginCode));
 		_loginLayer = Dlg.Panel(I18n.L("微软账号登录"), body, 460.0, delegate
 		{
 			_loginLayer = null;
+            _loginClock.Stop();
 			if (_loginTask != null)
 			{
 				PageBase.Fire(() => PageBase.Api.TryCallAsync<object>("cancel_task", new
@@ -535,22 +537,17 @@ public sealed class AccountPage : PageBase
 			}
 		};
 		SPanel body = Ui.V(8.0, Ui.Muted(I18n.L("选择皮肤站，或直接填 Yggdrasil API 地址")), pick, api, user, pw);
-		if (await Dlg.Ask(I18n.L("皮肤站登录"), body, I18n.L("登录")))
-		{
-			if (string.IsNullOrWhiteSpace(api.Text) || string.IsNullOrWhiteSpace(user.Text))
-			{
-				PageBase.Toast(I18n.L("填写不完整"), I18n.L("API 地址和用户名都不能为空"), ToastKind.Warning);
-				return;
-			}
-			string cleanApi = AuthlibUrlParser.NormalizeAuthlibUrl(api.Text);
-			_authlibTask = await PageBase.Api.StartTaskAsync("start_authlib_login", new
-			{
-				api = cleanApi,
-				username = user.Text.Trim(),
-				password = (pw.Password ?? "")
-			});
-			PageBase.Toast(I18n.L("正在登录"), I18n.L("皮肤站验证中，结果看下载任务"));
-		}
+        await Dlg.EditAsync(I18n.L("皮肤站登录"), body, async () =>
+        {
+            Dlg.Require(!string.IsNullOrWhiteSpace(api.Text), api, "请输入皮肤站 API 地址");
+            Dlg.Require(!string.IsNullOrWhiteSpace(user.Text), user, "请输入邮箱或用户名");
+            Dlg.Require(!string.IsNullOrWhiteSpace(pw.Password), pw, "请输入密码");
+            string cleanApi;
+            try { cleanApi = AuthlibUrlParser.NormalizeAuthlibUrl(api.Text); }
+            catch (Exception) { Dlg.Require(false, api, "API 地址无效，请检查皮肤站地址。"); throw; }
+            _authlibTask = await PageBase.Api.StartTaskAsync("start_authlib_login", new { api = cleanApi, username = user.Text.Trim(), password = pw.Password });
+            PageBase.Toast("正在登录", "皮肤站验证中，结果会显示在任务与账号列表中。");
+        }, I18n.L("登录"));
 	}
 
 	private async Task Nide8LoginAsync()
@@ -559,24 +556,14 @@ public sealed class AccountPage : PageBase
 		TextBox user = Ui.Input(I18n.L("用户名"));
 		PasswordBox pw = Ui.Pw();
 		SPanel body = Ui.V(8.0, Ui.Muted(I18n.L("填 32 位服务器 ID，或把含该 ID 的链接贴进来")), sid, user, pw);
-		if (await Dlg.Ask(I18n.L("统一通行证登录"), body, I18n.L("登录")))
-		{
-			if (string.IsNullOrWhiteSpace(sid.Text))
-			{
-				PageBase.Toast(I18n.L("缺少服务器 ID"), I18n.L("请填写统一通行证服务器 ID"), ToastKind.Warning);
-				Motion.Shake(sid);
-			}
-			else
-			{
-				_nide8Task = await PageBase.Api.StartTaskAsync("start_nide8_login", new
-				{
-					server_id = sid.Text.Trim(),
-					username = (user.Text?.Trim() ?? ""),
-					password = (pw.Password ?? "")
-				});
-				PageBase.Toast(I18n.L("正在登录"), I18n.L("统一通行证验证中，结果看下载任务"));
-			}
-		}
+        await Dlg.EditAsync(I18n.L("统一通行证登录"), body, async () =>
+        {
+            Dlg.Require(!string.IsNullOrWhiteSpace(sid.Text), sid, "请输入统一通行证服务器 ID 或可识别链接");
+            Dlg.Require(!string.IsNullOrWhiteSpace(user.Text), user, "请输入用户名");
+            Dlg.Require(!string.IsNullOrWhiteSpace(pw.Password), pw, "请输入密码");
+            _nide8Task = await PageBase.Api.StartTaskAsync("start_nide8_login", new { server_id = sid.Text.Trim(), username = user.Text.Trim(), password = pw.Password });
+            PageBase.Toast("正在登录", "统一通行证验证中，结果会显示在任务与账号列表中。");
+        }, I18n.L("登录"));
 	}
 
 	public override void OnEvent(BridgeEvent ev)
@@ -587,6 +574,9 @@ public sealed class AccountPage : PageBase
 			if (_loginLayer != null)
 			{
 				_loginUri = ev.Uri;
+                SetLoginExpiry(ev.ExpiresIn);
+                if (_copyLoginCode != null) _copyLoginCode.IsEnabled = !string.IsNullOrWhiteSpace(ev.Code);
+                if (_openLoginBrowser != null) _openLoginBrowser.IsEnabled = System.Uri.TryCreate(ev.Uri, UriKind.Absolute, out var loginAddress) && loginAddress.Scheme == "https";
 				if (_loginCode != null)
 				{
 					_loginCode.Text = ev.Code;
@@ -607,6 +597,7 @@ public sealed class AccountPage : PageBase
 			if (ev.TaskId == _loginTask)
 			{
 				_loginTask = null;
+                _loginClock.Stop();
 				if (ev.Success)
 				{
 					_loginLayer?.Close();
@@ -617,6 +608,7 @@ public sealed class AccountPage : PageBase
 				else if (_loginHint != null)
 				{
 					_loginHint.Text = ev.Message;
+                    if (_renewLoginCode != null) _renewLoginCode.Visibility = Visibility.Visible;
 				}
 			}
 			else if (ev.TaskId == _authlibTask)

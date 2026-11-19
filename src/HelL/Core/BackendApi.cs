@@ -162,7 +162,7 @@ public partial class BackendApi
 		return Py.Fmt(I18nCore.Tr("已登录 {0}"), pyDict.Get("name"));
 		void on_code(object code, object uri, object exp)
 		{
-			worker?.LoginCode(code, uri);
+			worker?.LoginCode(code, uri, exp);
 			long num = Py.Int(exp);
 			long num2 = ((num >= 0) ? (num / 60) : (-((-num + 59) / 60)));
 			ctx.Log($"请在微软登录弹窗中查看授权代码（{num2} 分钟内有效）。");

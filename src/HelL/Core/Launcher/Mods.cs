@@ -1591,10 +1591,11 @@ public static class Mods
 			select p.Value).Cast<object>().ToList();
 	}
 
-	public static List<object> SearchCurseforge(DownloadManager dm, object query = null, long limit = 30L, string api_key = null, long class_id = 6L, object slug = null, object game_version = null, List<object> categories = null, string loader = "", string order = "")
+	public static List<object> SearchCurseforge(DownloadManager dm, object query = null, long limit = 30L, string api_key = null, long class_id = 6L, object slug = null, object game_version = null, List<object> categories = null, string loader = "", string order = "", int offset = 0)
 	{
+		if (offset < 0 || offset > 50000 || limit < 1 || limit > 100) throw new ArgumentOutOfRangeException(nameof(offset));
 		bool flag = categories != null && categories.Count > 0;
-		PyDict pyDict = PyDict.Of("gameId", 432L, "classId", class_id, "sortField", 2L, "sortOrder", "desc", "pageSize", Math.Min(50L, flag ? (limit * 2) : limit), "index", 0L);
+		PyDict pyDict = PyDict.Of("gameId", 432L, "classId", class_id, "sortField", 2L, "sortOrder", "desc", "pageSize", Math.Min(50L, flag ? (limit * 2) : limit), "index", offset);
         if (order.Length > 0) pyDict["sortField"] = order switch
         { "relevance" => 1L, "downloads" => 6L, "newest" => 11L, "updated" => 3L, _ => throw new ArgumentException("资源排序方式无效。") };
         if (CatalogLoader.CurseForge(loader) > 0) pyDict["modLoaderType"] = CatalogLoader.CurseForge(loader);
@@ -1673,9 +1674,11 @@ public static class Mods
 		return null;
 	}
 
-	public static List<object> SearchModrinthProjects(DownloadManager dm, object query, string project_type, long limit = 30L, object game_version = null, object categories = null, string loader = "", string order = "")
+	public static List<object> SearchModrinthProjects(DownloadManager dm, object query, string project_type, long limit = 30L, object game_version = null, object categories = null, string loader = "", string order = "", int offset = 0)
 	{
+		if (offset < 0 || offset > 50000 || limit < 1 || limit > 100) throw new ArgumentOutOfRangeException(nameof(offset));
 		PyDict ps = SearchParams(query, project_type, limit, game_version, categories);
+        ps["offset"] = offset;
         if (order.Length > 0) ps["index"] = order is "relevance" or "downloads" or "newest" or "updated"
             ? order : throw new ArgumentException("资源排序方式无效。");
         loader = CatalogLoader.Normalize(loader);

@@ -65,6 +65,7 @@ internal static class WorkspaceViewsCheck
         var resource = menu.Items.Cast<MenuItem>().Single(item => item.Header.ToString() == NavModel.NavLabel("resource"));
         resource.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); menu.IsOpen = false;
         await Program.WaitForPage(window, "resourcepack");
+        download = Find<ToggleButton>((Panel)window.FindName("NavHost")).Single(button => button.Tag as string == "download");
         Check(download.IsChecked == true, "active child selects the parent icon");
         Program.SaveSnapshot(window, Path.Combine(folder, "compact-navigation.png"));
         var reorder = NavModel.ReorderNavConfig(window.NavConfig, "ai", "launch", true)!;

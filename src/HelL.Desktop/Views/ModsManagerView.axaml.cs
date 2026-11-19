@@ -104,10 +104,12 @@ public partial class ModsManagerView : UserControl
         await host.RunTask(_ =>
         {
             var inst = new Instance(currentInstance);
-            foreach (var row in allRows.Where(r => r.Enabled != enable))
+            string query = SearchBox.Text?.Trim() ?? "";
+            var visible = allRows.Where(row => query.Length == 0 || row.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)).ToArray();
+            foreach (var row in visible.Where(r => r.Enabled != enable))
                 Mods.SetModEnabled(inst, row.FileName, enable);
             Reload(currentInstance);
-            host.SetStatus(enable ? "已启用全部模组。" : "已禁用全部模组。");
+            host.SetStatus($"已{(enable ? "启用" : "禁用")}当前筛选的 {visible.Length} 个模组。");
             return Task.CompletedTask;
         });
     }
@@ -154,11 +156,13 @@ public partial class ModsManagerView : UserControl
     private async void DeleteContentRow(object? sender, RoutedEventArgs e)
     {
         if (host == null || string.IsNullOrEmpty(currentInstance) || sender is not Button { Tag: string fileName }) return;
+        string target = currentInstance, kind = currentKind;
+        if (!await host.ConfirmAction("删除资源文件", $"实例：{target}\n类型：{kind}\n文件：{fileName}\n删除不会自动恢复，请确认已保存原文件。", "删除文件")) return;
         await host.RunTask(_ =>
         {
-            var inst = new Instance(currentInstance);
-            if (currentKind == "mods") Mods.DeleteMod(inst, fileName);
-            else Mods.DeleteContentFile(inst, currentKind, fileName);
+            var inst = new Instance(target);
+            if (kind == "mods") Mods.DeleteMod(inst, fileName);
+            else Mods.DeleteContentFile(inst, kind, fileName);
             Reload(currentInstance);
             host.SetStatus($"已删除 {fileName}");
             return Task.CompletedTask;

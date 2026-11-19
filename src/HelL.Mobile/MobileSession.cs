@@ -16,6 +16,7 @@ internal sealed class MobileSession
     internal SemaphoreSlim Operations { get; } = new(1, 1);
     internal bool AccountRestored { get; set; }
     internal Ai.MobileChat Chat { get; } = new();
+    internal Workflow.MobileOperationHistory Tasks { get; } = new();
 
     internal ISecretStore Secrets => PlatformServices.SecretStore ?? (OperatingSystem.IsAndroid()
         ? throw new InvalidOperationException("Android 凭据服务未就绪，请重新打开 HelL。")

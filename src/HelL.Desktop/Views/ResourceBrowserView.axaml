@@ -23,7 +23,7 @@
         </StackPanel>
       </Border>
 
-      <Grid ColumnDefinitions="*,126,126,Auto" ColumnSpacing="8">
+      <Grid x:Name="SearchBar" ColumnDefinitions="*,126,126,Auto" RowDefinitions="Auto,Auto" RowSpacing="8" ColumnSpacing="8">
         <TextBox x:Name="QueryBox" PlaceholderText="搜索中英文资源名（如 Sodium、Iris、Create）…" KeyDown="SearchKey" AutomationProperties.Name="搜索资源" />
         <ComboBox x:Name="KindPicker" IsVisible="False" SelectedIndex="0" SelectionChanged="KindChanged" AutomationProperties.Name="资源类型">
           <ComboBoxItem Content="资源包" Tag="resourcepack" /><ComboBoxItem Content="光影" Tag="shader" />
@@ -42,7 +42,7 @@
     </StackPanel>
 
     <Grid Grid.Row="3">
-      <Grid x:Name="BrowsePanel" RowDefinitions="Auto,*">
+      <Grid x:Name="BrowsePanel" RowDefinitions="Auto,*,Auto">
         <Grid ColumnDefinitions="*,Auto" Margin="2,0,0,8">
           <TextBlock x:Name="ResultNotice" Text="" Classes="muted" FontSize="12" VerticalAlignment="Center" />
           <Button x:Name="DetailsButton" Grid.Column="1" Content="详情 ›" Classes="ghost" MinHeight="24" Padding="8,2" FontSize="12" Click="OpenProject" IsEnabled="False" IsVisible="{Binding #DetailsButton.IsEnabled}" />
@@ -68,7 +68,7 @@
           <ScrollViewer x:Name="DiscoveryPanel" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Spacing="12">
               <TextBlock Text="社区精选专题（点击一键检索）" Classes="group-header" Margin="2,2,0,0" />
-              <UniformGrid Rows="2" Columns="4">
+              <UniformGrid x:Name="DiscoveryGrid" Columns="4">
                 <Button Classes="glass-card" Tag="mod|Sodium" Click="QuickPresetSearch" Margin="0,0,10,10">
                   <StackPanel Spacing="8">
                     <Grid ColumnDefinitions="*,Auto"><Border Classes="badge"><TextBlock Text="MOD" FontSize="10" Classes="muted" /></Border><icons:MaterialIcon Grid.Column="1" Kind="FlashOutline" Width="16" Height="16" Foreground="{DynamicResource HelL.InkSoft}" /></Grid>
@@ -129,6 +129,11 @@
             </StackPanel>
           </ScrollViewer>
         </Grid>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12" Margin="0,10,0,0">
+          <Button x:Name="PreviousPageButton" Content="上一页" Click="PreviousPage" IsEnabled="False" />
+          <TextBlock x:Name="PageLabel" Text="第 1 页" VerticalAlignment="Center" />
+          <Button x:Name="NextPageButton" Content="下一页" Click="NextPage" IsEnabled="False" />
+        </StackPanel>
       </Grid>
 
       <Grid x:Name="DetailPanel" IsVisible="False" RowDefinitions="*,Auto">
@@ -144,6 +149,7 @@
                 </StackPanel>
               </Grid>
               <TextBlock x:Name="ProjectSummary" TextWrapping="Wrap" LineHeight="21" />
+              <StackPanel x:Name="ProjectDocuments" Spacing="10" />
               <Button x:Name="OriginalButton" Content="切换原文" Classes="ghost" Click="ToggleOriginal" HorizontalAlignment="Left" />
               <Border Classes="tile" Padding="14,12">
                 <StackPanel Spacing="8">

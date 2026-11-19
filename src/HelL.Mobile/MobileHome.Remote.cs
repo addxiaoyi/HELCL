@@ -71,7 +71,7 @@ public sealed partial class MobileHome
             RemoteLayout.Children.Add(remoteSettings);
             remoteSettings.Children.Add(RemoteText("已信任的电脑", "section"));
             remoteSettings.Children.Add(remoteHosts);
-            remoteSettings.Children.Add(remoteRevokeConfirmed);
+            // Revocation is confirmed against its specific device in a modal.
             var publicInfo = new StackPanel { Spacing = 10 };
             publicInfo.Children.Add(RemoteText("1 · 向电脑提供手机公开信息", "section"));
             publicInfo.Children.Add(RemoteText("此处只有设备名称、公钥指纹和设备 ID；电脑也必须核对后才能信任手机。", "caption"));
@@ -79,11 +79,13 @@ public sealed partial class MobileHome
             publicInfo.Children.Add(Pin(remote.OwnOffer.Fingerprint));
             publicInfo.Children.Add(new SelectableTextBlock { Text = remote.OfferJson, TextWrapping = TextWrapping.Wrap, FontSize = 12 });
             publicInfo.Children.Add(RemoteButton("复制手机公开配对信息", CopyRemoteOffer));
+            publicInfo.Children.Add(RemoteButton("导出手机公开配对文件", ExportRemoteOffer));
             remoteSettings.Children.Add(new Expander { Header = "手机公开配对信息", Content = publicInfo, HorizontalAlignment = HorizontalAlignment.Stretch });
             var pairing = new StackPanel { Spacing = 10 };
             pairing.Children.Add(RemoteText("2 · 导入电脑公开信息并核对", "section"));
             pairing.Children.Add(RemoteText("电脑公开配对信息 JSON", "field-label"));
             pairing.Children.Add(remoteOfferInput);
+            pairing.Children.Add(RemoteButton("从文件导入电脑公开信息", ImportRemoteOfferFile));
             pairing.Children.Add(RemoteButton("显示电脑指纹", StageRemoteOffer));
             pairing.Children.Add(remoteHostPin);
             pairing.Children.Add(remoteVerified);
@@ -99,6 +101,7 @@ public sealed partial class MobileHome
             invitation.Children.Add(RemoteText("邀请必须来自刚才核对的电脑，并只发给本机。它包含私密连接凭据，勿粘贴管理员令牌或 host 票据。", "caption"));
             invitation.Children.Add(RemoteText("本机专属连接邀请 JSON（输入隐藏）", "field-label"));
             invitation.Children.Add(remoteInviteInput);
+            invitation.Children.Add(RemoteButton("从私密文件导入邀请", ImportRemoteInviteFile));
             invitation.Children.Add(RemoteButton("导入 / 更新邀请", ImportRemoteInvitation));
             remoteInvitation.Content = invitation;
             remoteSettings.Children.Add(remoteInvitation);
@@ -128,44 +131,15 @@ public sealed partial class MobileHome
         remoteProgress.IsVisible = remoteCancel.IsVisible = remote.Busy;
         remoteActions.IsVisible = remote.Invitation is not null || remote.Busy || remote.Tasks.Length > 0;
         remoteUpdateControls.IsVisible = remote.Invitation?.Feed is not null;
-        remoteRevokeConfirmed.IsVisible = remote.Hosts.Length > 0;
+        remoteRevokeConfirmed.IsVisible = false;
         remoteRefresh.IsEnabled = !remote.Busy && remote.Invitation is not null;
         remotePairing.IsEnabled = remoteInvitation.IsEnabled = !remote.Busy;
         remoteHostPin.Text = remote.PendingHost is { } pending
             ? $"电脑：{pending.Name}\n电脑 SHA-256：\n{FormatPin(pending.Fingerprint)}\n\n手机 SHA-256：\n{FormatPin(remote.OwnOffer.Fingerprint)}"
             : "先导入电脑公开信息。仅粘贴邀请不会自动建立信任。";
-        remoteHosts.Children.Clear();
-        if (remote.Hosts.Length == 0) remoteHosts.Children.Add(RemoteText("还没有已信任的电脑。展开下方配对步骤开始。", "caption"));
-        foreach (PairedDevice host in remote.Hosts)
-        {
-            var row = new StackPanel { Spacing = 5 };
-            row.Children.Add(RemoteText(host.Name, "section"));
-            AddRemoteHostActions(row, host);
-            row.Children.Add(RemoteText(host.Permissions.Contains(HelL.Contracts.HostPermission.CancelTasks) ? "允许读取及请求取消任务" : "只读 · 无法从手机取消任务", "caption"));
-            row.Children.Add(Pin(host.Fingerprint));
-            Button edit = RemoteButton("重新核对 / 修改权限", EditRemoteHost); edit.Tag = host;
-            Button revoke = RemoteButton("撤销此电脑信任", RevokeRemoteHost); revoke.Tag = host.DeviceId;
-            row.Children.Add(edit); row.Children.Add(revoke);
-            remoteHosts.Children.Add(RemoteGroup(row));
-        }
-        remoteTasks.Children.Clear();
-        if (remote.Tasks.Length == 0) remoteTasks.Children.Add(RemoteText(remote.Invitation is null ? "尚无任务快照，请先完成配对并导入邀请。" : "暂无可显示任务。读取快照后这里会显示电脑状态。", "caption"));
-        foreach (HelL.Contracts.HostTask task in remote.Tasks)
-        {
-            var row = new StackPanel { Spacing = 6 };
-            row.Children.Add(RemoteText(string.IsNullOrWhiteSpace(task.Title) ? task.Id : task.Title, "section"));
-            row.Children.Add(RemoteText(task.State switch { "running" => "运行中", "completed" => "已完成", "failed" => "失败 / 已取消", _ => "状态未知，请刷新" }, "caption"));
-            AddRemoteTaskDetails(row, task);
-            if (task.State == "running")
-            {
-                Button cancel = RemoteButton("请求取消此任务", CancelRemoteTask);
-                cancel.Tag = task.Id; cancel.IsEnabled = remote.CanCancel && !remote.Busy;
-                cancel.Classes.Add("remote-task-cancel");
-                row.Children.Add(cancel);
-            }
-            remoteTasks.Children.Add(RemoteGroup(row));
-        }
+        PresentStableRemoteRows();
         PresentRemoteDetails();
+        ApplyTextScale();
     }
 
     private async Task RemoteAction(Func<Task> action)
@@ -202,12 +176,11 @@ public sealed partial class MobileHome
     });
     private async void ImportRemoteInvitation(object? sender, RoutedEventArgs e) => await RemoteAction(() =>
     { remote!.ImportInvitation(remoteInviteInput.Text ?? ""); remoteInviteInput.Clear(); return Task.CompletedTask; });
-    private async void RevokeRemoteHost(object? sender, RoutedEventArgs e) => await RemoteAction(() =>
+    private async void RevokeRemoteHost(object? sender, RoutedEventArgs e) => await RemoteAction(async () =>
     {
-        if (remoteRevokeConfirmed.IsChecked != true) throw new InvalidOperationException("请先勾选撤销确认，再选择要撤销的电脑。");
-        if (sender is Button { Tag: string id }) remote!.Revoke(id);
-        remoteRevokeConfirmed.IsChecked = false;
-        return Task.CompletedTask;
+        if (sender is not Button { Tag: string id } || remote!.Hosts.FirstOrDefault(host => host.DeviceId == id) is not { } host) return;
+        bool accepted = await ConfirmAsync("撤销此电脑的信任？", $"电脑：{host.Name}\nSHA-256：{FormatPin(host.Fingerprint)}\n只删除此电脑在本机的信任与邀请；电脑端授权需在电脑上单独撤销。", "撤销 " + host.Name);
+        if (accepted) remote.Revoke(id);
     });
     private async void EditRemoteHost(object? sender, RoutedEventArgs e) => await RemoteAction(() =>
     {

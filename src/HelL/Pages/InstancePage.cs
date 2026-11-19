@@ -40,7 +40,7 @@ public sealed partial class InstancePage : PageBase
 	private readonly InstanceTiles _list = new InstanceTiles
 	{
 		Focusable = true,
-		FocusVisualStyle = null
+		FocusVisualStyle = (Style)System.Windows.Application.Current.FindResource(SystemParameters.FocusVisualStyleKey)
 	};
 
 	private readonly TextBlock _count = Ui.Muted("");
@@ -125,7 +125,10 @@ public sealed partial class InstancePage : PageBase
             if (Win != null) { Win.Prefs.LibraryGroup = SelectedGroup; Win.SaveUiPrefs(); }
             Render();
         };
-		_sort.SelectionChanged += (_, _) => Render(); _pinnedOnly.Click += (_, _) => Render();
+		_sort.SelectedIndex = Math.Max(0, Math.Min(2, Win?.Prefs.LibrarySort ?? 0));
+        _pinnedOnly.IsChecked = Win?.Prefs.LibraryPinnedOnly == true;
+        _sort.SelectionChanged += (_, _) => { if (Win != null) { Win.Prefs.LibrarySort = _sort.SelectedIndex; Win.SaveUiPrefs(); } _visibleLimit = LibraryPageSize; Render(); };
+        _pinnedOnly.Click += (_, _) => { if (Win != null) { Win.Prefs.LibraryPinnedOnly = _pinnedOnly.IsChecked == true; Win.SaveUiPrefs(); } _visibleLimit = LibraryPageSize; Render(); };
 		_debounce.Tick += delegate
 		{
 			_debounce.Stop();
@@ -133,6 +136,7 @@ public sealed partial class InstancePage : PageBase
 		};
 		_search.TextChanged += delegate
 		{
+            _visibleLimit = LibraryPageSize;
 			_debounce.Stop();
 			_debounce.Start();
 		};
@@ -203,7 +207,10 @@ public sealed partial class InstancePage : PageBase
 	private void Render()
 	{
 		string q = _search.Text?.Trim() ?? "";
-		List<InstanceInfo> list = FilterLibrary(q);
+        List<InstanceInfo> matches = FilterLibrary(q);
+        List<InstanceInfo> list = matches.Take(_visibleLimit).ToList();
+        _loadMore.Visibility = matches.Count > list.Count ? Visibility.Visible : Visibility.Collapsed;
+        _loadMore.Content = "继续显示（" + list.Count + " / " + matches.Count + "）";
 		_count.Text = ((q.Length == 0 && _pinnedOnly.IsChecked != true && SelectedGroup == null) ? I18n.L("共 {0} 个", _rows.Count) : I18n.L("{0} / {1} 个", list.Count, _rows.Count));
 		_empty.Show(list.Count == 0);
 		bool failed = _loadError != null && _rows.Count == 0;
@@ -445,8 +452,7 @@ public sealed partial class InstancePage : PageBase
 
 	private async Task LaunchWithAsync(string instance)
 	{
-		await SetDefaultAsync(instance);
-		_defaultInstance = instance;
+
 		if (PageBase.Win?.GetPage("launch") is LaunchPage launchPage)
 		{
 			launchPage.PreferInstance(instance);

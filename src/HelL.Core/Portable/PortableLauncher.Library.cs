@@ -48,7 +48,7 @@ public sealed partial class PortableLauncher
     public void SetReferenceVersion(string name, string version, string loader = "vanilla")
     {
         RequireVersionId(version);
-        if (!System.Text.RegularExpressions.Regex.IsMatch(version, @"\A1\.\d+(?:\.\d+)?\z"))
+        if (!System.Text.RegularExpressions.Regex.IsMatch(version, @"\A(?:1|[2-9]\d)\.\d+(?:\.\d+)?\z"))
             throw new ArgumentException("请输入正式 Minecraft 版本，例如 1.21.1。此设置仅用于资源兼容性筛选。");
         string normalized = CatalogLoader.Normalize(loader);
         var game = RequireInstance(name);

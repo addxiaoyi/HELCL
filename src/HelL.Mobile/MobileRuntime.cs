@@ -3,6 +3,8 @@ namespace HelL.Mobile;
 public static class MobileRuntime
 {
     public static string Root { get; set; } = "";
+    public static double TextScale { get; set; } = 1;
+    public static double SystemTextScale { get; set; } = 1;
     public static bool Smoke { get; set; }
     public static bool RemotePreview { get; set; }
     public static Action? BeginRemotePreview { get; set; }

@@ -10,6 +10,7 @@ public sealed partial class MobileHome
 {
     private async Task CheckFrontendRemediationAsync()
     {
+        await CheckMobileRecheckAsync();
         await CheckMobileSafetyGuardsAsync();
         ShowPage("manage");
         string originalName = InstanceName.Text ?? "";

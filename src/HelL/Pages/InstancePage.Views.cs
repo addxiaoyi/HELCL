@@ -42,9 +42,8 @@ public sealed partial class InstancePage
         if (_coverView == covers) return;
         _coverView = covers; _list.Covers = covers;
         // The selected instance and sorting belong to the library, not to either presentation.
-        _list.Children.Clear(); _cards.Clear(); _order.Clear();
         Render();
-        if (_selected != null && _cards.TryGetValue(_selected, out Row selected)) selected.Root.BringIntoView();
+        if (_selected != null) _list.ScrollToIndex(_filtered.FindIndex(row => row.Name == _selected));
         if (Win != null)
         {
             Win.Prefs.LibraryView = covers ? "covers" : "list";

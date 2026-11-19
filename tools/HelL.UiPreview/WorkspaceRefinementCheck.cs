@@ -48,7 +48,7 @@ internal static class WorkspaceRefinementCheck
         var library = Find<InstancePage>(window).Single(); await library.RefreshAsync();
         var groups = Field<ComboBox>(library, "_groupFilter");
         groups.SelectedItem = groups.Items.Cast<ComboBoxItem>().Single(item => item.Tag as string == "创作");
-        Check(Field<Panel>(library, "_list").Children.Count == 1, "custom group narrows the instance library");
+        Check(Field<List<InstanceInfo>>(library, "_filtered").Single().Name == "红石实验室 · 验收实例", "custom group narrows the instance library");
         await library.RefreshAsync(); Check((groups.SelectedItem as ComboBoxItem)?.Tag as string == "创作", "group selection survives refresh");
         await (Task)Invoke(library, "EditGroup", "红石实验室 · 验收实例")!; await MaterialControlsPreview.Layout(window);
         var name = Find<ComboBox>(Dlg.Host!).Single(combo => AutomationProperties.GetName(combo) == "实例分组名称"); name.Text = "共享创作";
@@ -64,7 +64,7 @@ internal static class WorkspaceRefinementCheck
             {
                 Invoke(library, "SetLibraryView", covers); await MaterialControlsPreview.Layout(window);
                 Find<ScrollViewer>(library).First().ScrollToHome(); await MaterialControlsPreview.Layout(window);
-                Check(Field<Panel>(library, "_list").Children.Count == 5, "view switch preserves all instances");
+                Check(Field<List<InstanceInfo>>(library, "_filtered").Count == 5, "view switch preserves all instances");
                 Check(groups.ActualWidth >= 100 && groups.IsVisible, "group filter remains usable at " + width);
                 Program.SaveSnapshot(window, Path.Combine(folder, $"library-{dark}-{width}-{covers}.png"));
             }

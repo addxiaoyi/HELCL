@@ -61,7 +61,7 @@ public sealed partial class InstancePage
     private void MarkVisible()
     {
         _batchToggle.IsChecked = true;
-        foreach (var row in _order) _marked.Add(row.Key);
+        foreach (var row in _filtered) _marked.Add(row.Name);
         SyncBatch();
     }
 

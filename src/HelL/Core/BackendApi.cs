@@ -3861,6 +3861,7 @@ public partial class BackendApi
 		pyDict["ui_dark"] = Py.Truthy(GD("ui_dark", true));
 		pyDict["theme_color"] = Py.Or(_norm_theme_color(G("theme_color")), "#A99AFF");
 		pyDict["ui_bg_preset"] = _norm_bg_preset(G("ui_bg_preset"));
+        if (G("ui_wpf_theme") is PyDict theme) pyDict["ui_wpf_theme"] = Py.DeepCopy(theme);
 		pyDict["ui_background"] = Py.Or(G("ui_background"), "");
 		pyDict["ui_wallpaper_mode"] = Py.Or(G("ui_wallpaper_mode"), "local");
 		pyDict["ui_font_family"] = Py.Or(G("ui_font_family"), "");
@@ -4343,8 +4344,12 @@ public partial class BackendApi
 			}
 			pyDict["ui_sidebar_width"] = ((num2 != 0L) ? ((object)num2) : null);
 		}
-		CONFIG.Update(pyDict);
-		CONFIG.Save();
+        if (Has("allow_multi_instance")) pyDict["allow_multi_instance"] = Py.Truthy(G("allow_multi_instance"));
+        if (Has("language")) pyDict["language"] = Py.S(G("language"));
+        if (Has("ui_wpf_theme")) pyDict["ui_wpf_theme"] = G("ui_wpf_theme");
+        ValidateSettingsCommit(pyDict);
+        CONFIG.Commit(pyDict);
+        if (pyDict.ContainsKey("language")) I18nCore.CurrentLang = Py.S(pyDict["language"]);
 		if (pyDict.ContainsKey("use_system_proxy")) { Net.ApplyProxyPolicy(); Net.ResetClients(); }
 		if (pyDict.ContainsKey("download_source") || pyDict.ContainsKey("use_system_proxy")) Source.InvalidateProbe();
 		if (pyDict.ContainsKey("instances_dir"))

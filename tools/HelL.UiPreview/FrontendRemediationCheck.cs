@@ -60,9 +60,17 @@ internal static class FrontendRemediationCheck
         window.Navigate("account", true); await Program.WaitForPage(window, "account");
         var account = (AccountPage)window.GetPage("account")!;
         Task form = (Task)Call(account, "AuthlibLoginAsync")!;
-        await Task.Delay(100);
+        Button? login = null;
+        var deadline = System.Diagnostics.Stopwatch.StartNew();
+        while (deadline.Elapsed < TimeSpan.FromSeconds(10))
+        {
+            if (Dlg.Host is not null) login = Find<Button>(Dlg.Host).SingleOrDefault(button => button.Content?.ToString() == "登录");
+            if (login is not null) break;
+            if (form.IsCompleted) { await form; throw new IOException("The account editor closed before presenting its login action."); }
+            await Task.Delay(25);
+        }
+        if (login is null) throw new TimeoutException("The account editor did not open after loading skin-site presets.");
         var layer = Dlg.Host!;
-        var login = Find<Button>(layer).Single(button => button.Content?.ToString() == "登录");
         login.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await Task.Delay(80);
         Check(Dlg.AnyOpen && !form.IsCompleted, "invalid account form remains open for correction");
@@ -99,9 +107,13 @@ internal static class FrontendRemediationCheck
         var instances = Enumerable.Range(0, 125).Select(index => new InstanceInfo { Name = "controlled-library-" + index }).ToList();
         library.GetType().GetField("_rows", Hidden)!.SetValue(library, instances);
         Call(library, "Render");
-        Check(((System.Collections.IDictionary)Field(library, "_cards")).Count == 60, "large library initially builds only a bounded page of cards");
-        var loadMore = (Button)Field(library, "_loadMore"); loadMore.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Check(((System.Collections.IDictionary)Field(library, "_cards")).Count == 120 && loadMore.IsVisible, "large library progressively exposes further results");
+        window.UpdateLayout(); await Task.Delay(100);
+        Check(((System.Collections.IDictionary)Field(library, "_cards")).Count is > 0 and < 60, "large library realizes only a bounded viewport of cards");
+        object surface = Field(library, "_list");
+        surface.GetType().GetMethod("ScrollToIndex")!.Invoke(surface, new object[] { 124 });
+        window.UpdateLayout(); await Task.Delay(100);
+        var realized = (System.Collections.IDictionary)Field(library, "_cards");
+        Check(realized.Count < 60 && realized.Contains("controlled-library-99"), "large library reaches its final sorted result without retaining prior cards");
 
         window.Navigate("ai", true); await Program.WaitForPage(window, "ai");
         var ai = (AiPage)window.GetPage("ai")!;

@@ -19,6 +19,13 @@ internal static class Program
             MobileRuntime.PreviewHeight = height;
         }
         MobileRuntime.Root = positional[0];
+        string? systemScale = Environment.GetEnvironmentVariable("HELL_MOBILE_SYSTEM_TEXT_SCALE");
+        if (systemScale is not null)
+        {
+            if (!double.TryParse(systemScale, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture,
+                out double scale) || scale is < 1 or > 2 || !double.IsFinite(scale)) return 2;
+            MobileRuntime.SystemTextScale = scale;
+        }
         if (interactive)
         {
             Directory.CreateDirectory(MobileRuntime.Root);

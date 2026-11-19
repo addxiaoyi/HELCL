@@ -33,7 +33,7 @@ public sealed partial class MobileHome
         NavigationRail.Padding = fullSidebar ? new Thickness(10, 12) : new Thickness(6, 10);
         foreach (Button button in RailNavigation.Children.OfType<Button>())
         {
-            button.MinHeight = 38;
+            button.MinHeight = 44;
             button.Padding = fullSidebar ? new Thickness(11, 6) : new Thickness(9, 7);
             foreach (TextBlock label in button.GetLogicalDescendants().OfType<TextBlock>())
                 label.IsVisible = fullSidebar;
@@ -56,7 +56,10 @@ public sealed partial class MobileHome
         Grid.SetRowSpan(InstanceContent, wide ? 2 : 1);
         Grid.SetRow(HomeLibrary, wide ? 1 : 2);
         Grid.SetRow(QuickActions, wide ? 2 : 3);
-        HomeGameTitle.FontSize = compact ? 22 : 26;
+        double titleSize = compact ? 22 : 26;
+        originalFontSizes.Remove(HomeGameTitle);
+        originalFontSizes.Add(HomeGameTitle, new FontSizeSnapshot(titleSize));
+        HomeGameTitle.FontSize = titleSize * EffectiveTextScale;
         ResourcesLayout.Margin = margin;
         LibraryLayout.Margin = new Thickness(margin.Left, margin.Top, margin.Right, 84);
         LibraryAddDock.Margin = new Thickness(0, 0, margin.Right, 18);
@@ -65,6 +68,39 @@ public sealed partial class MobileHome
         ReferenceFields.RowSpacing = compact ? 10 : 0;
         Grid.SetRow(ReferenceFields.Children[1], compact ? 1 : 0);
         Grid.SetColumn(ReferenceFields.Children[1], compact ? 0 : 1);
+        ArrangeTextLayout();
+    }
+
+    private void ArrangeTextLayout()
+    {
+        bool stacked = !wide && EffectiveTextScale >= 1.5;
+        InstancePickerLayout.ColumnDefinitions = new ColumnDefinitions(stacked ? "*,16" : "*,Auto,16");
+        InstancePickerLayout.RowDefinitions = new RowDefinitions(stacked ? "Auto,Auto" : "Auto");
+        InstancePickerLayout.RowSpacing = stacked ? 4 : 0;
+        Grid.SetRow(InstancePickerDetails, stacked ? 1 : 0);
+        Grid.SetColumn(InstancePickerDetails, stacked ? 0 : 1);
+        InstancePickerDetails.HorizontalAlignment = stacked ? Avalonia.Layout.HorizontalAlignment.Stretch : Avalonia.Layout.HorizontalAlignment.Right;
+        SelectedVersionDetail.HorizontalAlignment = SelectedVersion.HorizontalAlignment = stacked
+            ? Avalonia.Layout.HorizontalAlignment.Left : Avalonia.Layout.HorizontalAlignment.Right;
+        Grid.SetColumn(InstancePickerChevron, stacked ? 1 : 2);
+        Grid.SetRowSpan(InstancePickerChevron, stacked ? 2 : 1);
+        HomeAccountLayout.ColumnDefinitions = new ColumnDefinitions(stacked ? "*,16" : "*,Auto,16");
+        HomeAccountLayout.RowDefinitions = new RowDefinitions(stacked ? "Auto,Auto" : "Auto");
+        HomeAccountLayout.RowSpacing = stacked ? 4 : 0;
+        Grid.SetRow(HomeAccountLabel, stacked ? 1 : 0);
+        Grid.SetColumn(HomeAccountLabel, stacked ? 0 : 1);
+        Grid.SetColumn(HomeAccountChevron, stacked ? 1 : 2);
+        Grid.SetRowSpan(HomeAccountChevron, stacked ? 2 : 1);
+        foreach (Button button in BottomNavigation.Children.OfType<Button>())
+        {
+            button.Padding = EffectiveTextScale >= 1.5 ? new Thickness(2, 4) : new Thickness(6, 4);
+            button.Margin = EffectiveTextScale >= 1.5 ? new Thickness(0, 2) : new Thickness(4, 2);
+            foreach (TextBlock label in button.GetLogicalDescendants().OfType<TextBlock>())
+            {
+                label.Classes.Add("single-line");
+                label.TextWrapping = Avalonia.Media.TextWrapping.NoWrap;
+            }
+        }
     }
 
     private void UpdateHome(LibraryInstance? entry)
@@ -212,6 +248,7 @@ public sealed partial class MobileHome
     {
         if (sender is not Button { Tag: string order }) return;
         resourceOrder = order;
+        InvalidateResourceSelection();
         foreach (Button button in ResourceSortTabs.Children.OfType<Button>()) button.Classes.Set("current", (string?)button.Tag == order);
         Projects.ItemsSource = PortableCatalog.OrderProjects(searchResults, order);
         if (!MobileRuntime.Smoke) SearchResources(sender, e);
@@ -220,6 +257,7 @@ public sealed partial class MobileHome
     private async void OpenProjectRow(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button { DataContext: CatalogProject entry }) return;
+        if (!CanOpenProject(entry)) return;
         Projects.SelectedItem = entry;
         PresentProject(entry);
         await LoadReleases();

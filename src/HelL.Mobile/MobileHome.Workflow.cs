@@ -18,6 +18,7 @@ public sealed partial class MobileHome
     private readonly TextBlock createError = WorkflowText("");
     private readonly TextBlock editError = WorkflowText("");
     private readonly Stack<string> pageHistory = new();
+    private bool backNavigationPending;
     private string currentPage = "home";
     private int navigationRevision;
     private string? savedEditState;
@@ -84,15 +85,30 @@ public sealed partial class MobileHome
 
     private void ApplyTextScale()
     {
-        foreach (Control control in this.GetLogicalDescendants().OfType<Control>())
+        Control[] controls = this.GetLogicalDescendants().OfType<Control>().ToArray();
+        // Restore parents before sampling new children so inherited sizes do not compound.
+        foreach (Control control in controls)
+            if (originalFontSizes.TryGetValue(control, out FontSizeSnapshot? saved)) SetFontSize(control, saved.Value);
+        var fonts = controls.Select(control => (Control: control, Font: ReadFontSize(control)))
+            .Where(entry => entry.Font > 0).ToArray();
+        foreach (var entry in fonts)
         {
-            double font = control is TextBlock label ? label.FontSize : control is Avalonia.Controls.Primitives.TemplatedControl field ? field.FontSize : 0;
-            if (font <= 0) continue;
-            double original = originalFontSizes.GetValue(control, _ => new FontSizeSnapshot(font)).Value;
-            double scaled = Math.Max(12, original) * Math.Max(MobileRuntime.SystemTextScale, MobileRuntime.TextScale);
-            if (control is TextBlock text) { text.FontSize = scaled; text.TextWrapping = TextWrapping.Wrap; }
-            else if (control is Avalonia.Controls.Primitives.TemplatedControl target) target.FontSize = scaled;
+            double original = originalFontSizes.GetValue(entry.Control, _ => new FontSizeSnapshot(entry.Font)).Value;
+            SetFontSize(entry.Control, Math.Max(12, original) * EffectiveTextScale);
+            if (entry.Control is TextBlock text)
+                text.TextWrapping = text.Classes.Contains("single-line") || text.TextTrimming != TextTrimming.None
+                    ? TextWrapping.NoWrap : TextWrapping.Wrap;
         }
+        ArrangeTextLayout();
+    }
+
+    private static double EffectiveTextScale => Math.Max(MobileRuntime.SystemTextScale, MobileRuntime.TextScale);
+    private static double ReadFontSize(Control control) => control is TextBlock text ? text.FontSize
+        : control is Avalonia.Controls.Primitives.TemplatedControl field ? field.FontSize : 0;
+    private static void SetFontSize(Control control, double size)
+    {
+        if (control is TextBlock text) text.FontSize = size;
+        else if (control is Avalonia.Controls.Primitives.TemplatedControl field) field.FontSize = size;
     }
 
     private static TextBlock WorkflowText(string text) => new() { Text = text, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap };
@@ -127,15 +143,16 @@ public sealed partial class MobileHome
     private string EditState() => string.Join("\n", InstanceName.Text, InstanceGroup.Text, ReferenceVersion.Text,
         (ReferenceLoader.SelectedItem as ComboBoxItem)?.Tag);
 
-    private async Task NavigateCheckedAsync(string page, bool remember = true)
+    private async Task<bool> NavigateCheckedAsync(string page, bool remember = true)
     {
-        if (confirmation is not null) return;
+        if (disposed || confirmation is not null) return false;
         if (currentPage == "manage" && page != "manage" && savedEditState != EditState())
         {
-            if (!await ConfirmAsync("离开实例编辑？", "这些修改尚未保存。选择继续编辑可保留当前内容。", "放弃修改并离开")) return;
+            if (!await ConfirmAsync("离开实例编辑？", "这些修改尚未保存。选择继续编辑可保留当前内容。", "放弃修改并离开") || disposed) return false;
             if (instances.FirstOrDefault(item => item.Name == selected) is { } existing) PresentInstance(existing);
         }
         ShowPage(page, remember);
+        return true;
     }
 
     public bool RequestBack()
@@ -143,9 +160,21 @@ public sealed partial class MobileHome
         if (confirmation is not null) { CompleteConfirmation(false); return true; }
         if (DetailsPanel.IsVisible && ResourcesPage.IsVisible) { BackToSearch(this, new RoutedEventArgs()); return true; }
         if (currentPage == "home") return false;
-        string target = pageHistory.Count > 0 ? pageHistory.Pop() : "home";
-        _ = NavigateCheckedAsync(target, remember: false);
+        if (backNavigationPending) return true;
+        _ = NavigateBackAsync();
         return true;
+    }
+
+    private async Task NavigateBackAsync()
+    {
+        backNavigationPending = true;
+        string target = pageHistory.Count > 0 ? pageHistory.Peek() : "home";
+        try
+        {
+            if (await NavigateCheckedAsync(target, remember: false) && pageHistory.Count > 0 && pageHistory.Peek() == target)
+                pageHistory.Pop();
+        }
+        finally { backNavigationPending = false; }
     }
 
     private void WorkflowKeyDown(object? sender, KeyEventArgs e)

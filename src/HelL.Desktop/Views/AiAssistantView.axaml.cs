@@ -13,7 +13,9 @@ public partial class AiAssistantView : UserControl
     private DesktopAiProfile? activeProfile;
     private int paintQueued;
     private string failedPrompt = "";
+    private bool failedPromptNeedsReview;
     private bool reviewLog;
+    internal Func<string, CancellationToken, Task>? SendFixture { get; set; }
 
     public AiAssistantView() => InitializeComponent();
 
@@ -128,7 +130,9 @@ public partial class AiAssistantView : UserControl
         }
     }
 
-    private async void SendPrompt(object? sender, RoutedEventArgs e)
+    private async void SendPrompt(object? sender, RoutedEventArgs e) => await SendCurrentPromptAsync();
+
+    internal async Task SendCurrentPromptAsync()
     {
         if (host == null) return;
         string prompt = PromptInput.Text?.Trim() ?? "";
@@ -140,7 +144,8 @@ public partial class AiAssistantView : UserControl
         DesktopAiProfile profile;
         try { profile = DesktopAiProfile.Read(Config.CONFIG, session.Secrets); }
         catch (Exception error) { host.SetStatus("AI 配置尚未就绪，请检查服务地址、模型和系统密钥库。" ); System.Diagnostics.Trace.TraceWarning(error.GetType().Name); return; }
-        if (reviewLog)
+        bool requiresReview = reviewLog;
+        if (requiresReview)
         {
             prompt = LogPreview.Redact(prompt);
             if (!await host.ConfirmAction("发送日志分析", $"目标服务：{new Uri(profile.Endpoint).Host}\n模式：{profile.Mode}\n请确认以下脱敏内容可以发送：\n\n{prompt}", "确认发送")) return;
@@ -148,16 +153,24 @@ public partial class AiAssistantView : UserControl
         await host.RunTask(async token =>
         {
             PromptInput.Clear();
+            reviewLog = false;
             host.SetStatus($"正在请求 {profile.Model} 生成回复…");
             try
             {
-                await Task.Run(() => session.Send(profile, prompt, QueueRefresh, token), token);
+                if (SendFixture is { } fixture) await fixture(prompt, token);
+                else await Task.Run(() => session.Send(profile, prompt, QueueRefresh, token), token);
+                ClearFailedPrompt();
                 host.SetStatus("飞鱼 AI 回复完成。");
             }
             catch
             {
                 failedPrompt = prompt;
-                if (string.IsNullOrWhiteSpace(PromptInput.Text)) PromptInput.Text = prompt;
+                failedPromptNeedsReview = requiresReview;
+                if (string.IsNullOrWhiteSpace(PromptInput.Text))
+                {
+                    PromptInput.Text = prompt;
+                    reviewLog = requiresReview;
+                }
                 RetryPromptButton.IsVisible = true;
                 throw;
             }
@@ -181,6 +194,7 @@ public partial class AiAssistantView : UserControl
         try
         {
             session.Clear();
+            ClearFailedPrompt();
             RefreshMessages();
             host?.SetStatus("已清空本次 AI 会话记录。");
         }
@@ -201,7 +215,28 @@ public partial class AiAssistantView : UserControl
     }
 
     private void JumpToLatest(object? sender, RoutedEventArgs e) { ChatScroll.ScrollToEnd(); LatestReplyButton.IsVisible = false; }
-    private void RetryPrompt(object? sender, RoutedEventArgs e) { if (failedPrompt.Length == 0) return; PromptInput.Text = failedPrompt; SendPrompt(sender, e); }
+    private async void RetryPrompt(object? sender, RoutedEventArgs e) => await RetryFailedPromptAsync();
+    internal async Task RetryFailedPromptAsync()
+    {
+        if (failedPrompt.Length == 0) return;
+        string draft = PromptInput.Text?.Trim() ?? "";
+        if (draft.Length > 0 && draft != failedPrompt)
+        {
+            host?.SetStatus("新草稿已保留。请先发送或清空草稿，再重试上次问题。");
+            PromptInput.Focus();
+            return;
+        }
+        PromptInput.Text = failedPrompt;
+        reviewLog = failedPromptNeedsReview;
+        await SendCurrentPromptAsync();
+    }
+
+    private void ClearFailedPrompt()
+    {
+        failedPrompt = "";
+        failedPromptNeedsReview = false;
+        RetryPromptButton.IsVisible = false;
+    }
 
     private void RefreshMessages()
     {

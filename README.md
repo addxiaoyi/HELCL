@@ -1,5 +1,6 @@
 <div align="center">
 
+
 <img src="docs/icon.png" width="140" alt="TipCL" />
 
 # TipCL
@@ -151,3 +152,7 @@ Claude Desktop 等只支持 stdio 的客户端可以通过 `npx mcp-remote http:
 ## 🙏 致谢
 
 - QQ `368****168`：帮忙测试了正版（微软）验证
+
+## 前端百项复核（2026-11-19）
+
+本次增量修复真实实例虚拟化、原子设置保存与三端异步状态边界，验收与未验证设备条件见 [复核交付说明](docs/frontend-recheck-2026-11-19.md) 和 [100 项状态](docs/frontend-completion-status.json)。基于 Draft PR #6，不包含合并、发布或部署。

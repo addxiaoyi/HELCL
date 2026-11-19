@@ -41,6 +41,8 @@ public sealed partial class MainWindow
             throw new IOException("A rotated log replaced the draft or leaked its read failure.");
         await CheckImportTarget(instance);
         await CheckResourceBinding();
+        await CheckDocumentReleaseBinding();
+        await CheckDesktopRecheckSafetyAsync();
 
         var document = new MessageDocument { Text = "# Heading\ntext\n```sh\necho fixture\n```" };
         if (document.Content is not StackPanel { Children.Count: > 2 }) throw new IOException("Structured AI document did not render its code block.");

@@ -18,6 +18,8 @@ public partial class SavesManagerView : UserControl
     private MainWindow? host;
     private string currentInstance = "";
     private string currentTab = "worlds";
+    private int logReadRevision;
+    internal Func<string, Task<string>>? LogReadFixture { get; set; }
 
     public SavesManagerView() => InitializeComponent();
 
@@ -26,6 +28,7 @@ public partial class SavesManagerView : UserControl
     internal void Reload(string? instanceName = null)
     {
         if (host == null) return;
+        logReadRevision++;
         currentInstance = instanceName ?? host.GameLauncher.SelectedInstance;
         if (string.IsNullOrWhiteSpace(currentInstance) || !host.GameLauncher.InstancesList().Any(i => i.Name == currentInstance))
             currentInstance = host.GameLauncher.InstancesList().FirstOrDefault()?.Name ?? "";
@@ -36,6 +39,9 @@ public partial class SavesManagerView : UserControl
             BackupsList.ItemsSource = Array.Empty<BackupItemRow>();
             WorldsEmpty.IsVisible = BackupsEmpty.IsVisible = true;
             CountBadge.Text = "0 项";
+            LogFilePicker.ItemsSource = Array.Empty<LogEntryItem>();
+            LogViewer.Text = "请先选择一个实例后查看日志。";
+            DiagnoseLogButton.IsEnabled = false;
             return;
         }
         SubtitleText.Text = $"当前实例：{currentInstance} · 支持世界快照备份、还原与崩溃堆栈读取";
@@ -182,21 +188,36 @@ public partial class SavesManagerView : UserControl
     {
         if (LogFilePicker.SelectedItem is not LogEntryItem entry || !File.Exists(entry.FullPath))
         {
+            logReadRevision++;
             DiagnoseLogButton.IsEnabled = false;
             return;
         }
+        await ReadSelectedLogAsync(entry);
+    }
+
+    internal async Task ReadSelectedLogAsync(LogEntryItem entry)
+    {
+        int revision = ++logReadRevision;
+        string instance = currentInstance;
+        DiagnoseLogButton.IsEnabled = false;
+        LogViewer.Text = "正在读取所选日志…";
         try
         {
-            string excerpt = await Task.Run(() => HelL.Desktop.Services.LogPreview.ReadTail(entry.FullPath, 180));
-            if ((LogFilePicker.SelectedItem as LogEntryItem)?.FullPath != entry.FullPath) return;
+            string excerpt = await (LogReadFixture?.Invoke(entry.FullPath) ?? Task.Run(() => HelL.Desktop.Services.LogPreview.ReadTail(entry.FullPath, 180)));
+            if (!IsCurrentLog()) return;
             LogViewer.Text = excerpt.Length == 0 ? "（日志文件为空）" : excerpt;
             DiagnoseLogButton.IsEnabled = excerpt.Length > 0;
         }
         catch (Exception ex)
         {
-            LogViewer.Text = "读取日志失败：" + ex.Message;
+            if (!IsCurrentLog()) return;
+            LogViewer.Text = "读取日志失败，文件可能已轮换、移除或被占用。请刷新后重试。";
             DiagnoseLogButton.IsEnabled = false;
+            System.Diagnostics.Trace.TraceWarning("Desktop selected log: " + ex.GetType().Name);
         }
+
+        bool IsCurrentLog() => revision == logReadRevision && instance == currentInstance
+            && (LogFilePicker.SelectedItem as LogEntryItem)?.FullPath == entry.FullPath;
     }
 
     private async void CopyLogOutput(object? sender, RoutedEventArgs e)

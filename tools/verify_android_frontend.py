@@ -82,6 +82,20 @@ def native_home_visible() -> bool:
                for node in document.iter("node"))
 
 
+def smoke_receipt(evidence: str, label: str):
+    failure = adb("shell", "cat", evidence + "/mobile-smoke-error.txt", allow_failure=True)
+    if failure and not failure.startswith("cat:"):
+        raise RuntimeError(label + " frontend smoke failed: " + failure)
+    return read_json(evidence + "/mobile-smoke.json")
+
+
+def require_receipt(evidence: str, filename: str) -> dict:
+    receipt = read_json(evidence + "/" + filename)
+    if not isinstance(receipt, dict) or receipt.get("ok") is not True:
+        raise RuntimeError("Android frontend receipt did not pass: " + filename)
+    return receipt
+
+
 def verify(apk: Path, output: Path) -> None:
     if adb("shell", "getprop", "ro.kernel.qemu") != "1":
         raise RuntimeError("This check only accepts a disposable emulator; physical devices are excluded.")
@@ -90,6 +104,8 @@ def verify(apk: Path, output: Path) -> None:
     output.mkdir(parents=True)
     session = uuid.uuid4().hex
     evidence = f"/sdcard/Android/data/{PACKAGE}/files/ui-evidence/{session}"
+    session_200 = uuid.uuid4().hex
+    evidence_200 = f"/sdcard/Android/data/{PACKAGE}/files/ui-evidence/{session_200}"
     original_scale = adb("shell", "settings", "get", "system", "font_scale")
     try:
         adb("install", "-r", str(apk))
@@ -98,18 +114,15 @@ def verify(apk: Path, output: Path) -> None:
         adb("shell", "am", "start", "-W", "-n", ACTIVITY, "--ez", "hell_ui_smoke", "true",
             "--es", "hell_smoke_session", session)
 
-        def smoke_finished():
-            failure = adb("shell", "cat", evidence + "/mobile-smoke-error.txt", allow_failure=True)
-            if failure and not failure.startswith("cat:"):
-                raise RuntimeError("Android frontend smoke failed: " + failure)
-            return read_json(evidence + "/mobile-smoke.json")
-
-        report = wait_for(smoke_finished, "Android UI smoke did not finish.", seconds=240)
+        report = wait_for(lambda: smoke_receipt(evidence, "Android"), "Android UI smoke did not finish.", seconds=240)
         if not report.get("ok"):
             raise RuntimeError("Android UI smoke returned an unsuccessful receipt.")
         remediation = read_json(evidence + "/mobile-frontend-remediation.json")
         if not remediation or not remediation.get("ok"):
             raise RuntimeError("Android frontend remediation assertions did not pass.")
+        recheck = read_json(evidence + "/mobile-recheck-preview.json")
+        if not isinstance(recheck, dict) or recheck.get("ok") is not True:
+            raise RuntimeError("Android frontend recheck assertions did not pass.")
         screenshot(output / "01-home.png")
         tap_match(("管理当前实例", "管理实例"))
         time.sleep(0.5)
@@ -147,22 +160,77 @@ def verify(apk: Path, output: Path) -> None:
         wait_for(native_home_visible, "The recreated Activity did not render its home content at the larger system font.")
         time.sleep(0.5)
         screenshot(output / "04-system-font-150.png")
+
+        # A fresh profile creates its own credential fixture before the second process-restart check.
+        adb("shell", "am", "force-stop", PACKAGE)
+        adb("shell", "settings", "put", "system", "font_scale", "2.0")
+        adb("shell", "am", "start", "-W", "-n", ACTIVITY, "--ez", "hell_ui_smoke", "true",
+            "--es", "hell_smoke_session", session_200)
+        wait_for(lambda: smoke_receipt(evidence_200, "Android 200%"), "Android 200% UI smoke did not finish.", seconds=240)
+        smoke_200 = require_receipt(evidence_200, "mobile-smoke.json")
+        remediation_200 = require_receipt(evidence_200, "mobile-frontend-remediation.json")
+        recheck_200 = require_receipt(evidence_200, "mobile-recheck-preview.json")
+        layout_200 = require_receipt(evidence_200, "mobile-system-font-200.json")
+        if layout_200.get("systemTextScale", 0) < 1.99 or any(layout_200.get(key) is not True for key in
+                ("primaryActionVisible", "dynamicInheritedTextStable", "bottomLabelsSingleLine")):
+            raise RuntimeError("Android 200% text layout did not keep its action and navigation accessible.")
+        credentials_200 = require_receipt(evidence_200, "mobile-credentials.json")
+        if credentials_200.get("encrypted") is not True:
+            raise RuntimeError("Android 200% credential fixture did not report encrypted storage.")
+        smoke_process_200 = adb("shell", "pidof", PACKAGE)
+        if not smoke_process_200:
+            raise RuntimeError("The Android 200% smoke process is no longer running.")
+        adb("shell", "am", "force-stop", PACKAGE)
+        adb("shell", "rm", evidence_200 + "/mobile-platform-events.json")
+        adb("shell", "am", "start", "-W", "-n", ACTIVITY, "--ez", "hell_verify_restart", "true",
+            "--es", "hell_smoke_session", session_200)
+        enlarged_200 = wait_for(lambda: (value if (value := read_json(evidence_200 + "/mobile-platform-events.json"))
+                                         and value.get("systemTextScale", 0) >= 1.99 else None),
+                                "The 200% system font setting was not applied after process restart.")
+        wait_for(lambda: read_json(evidence_200 + "/mobile-credentials-restart.json"),
+                 "The Android 200% credential restart receipt was not written.")
+        credentials_restart_200 = require_receipt(evidence_200, "mobile-credentials-restart.json")
+        if credentials_restart_200.get("restored") is not True or credentials_restart_200.get("removed") is not True:
+            raise RuntimeError("Android 200% credential restart did not restore and remove the fixture.")
+        wait_for(lambda: read_json(evidence_200 + "/mobile-restart.json"),
+                 "The Android 200% instance restart receipt was not written.")
+        instance_restart_200 = require_receipt(evidence_200, "mobile-restart.json")
+        if instance_restart_200.get("restoredInstances") != 1:
+            raise RuntimeError("Android 200% restart did not restore its single isolated instance.")
+        wait_for(native_home_visible, "The restarted Activity did not render its home content at 200% system font.")
+        restarted_process_200 = adb("shell", "pidof", PACKAGE)
+        if not restarted_process_200 or restarted_process_200 == smoke_process_200:
+            raise RuntimeError("The Android 200% acceptance did not observe a new application process.")
+        time.sleep(0.5)
+        screenshot(output / "05-system-font-200.png")
         adb("pull", evidence, str(output / "ui"))
+        adb("pull", evidence_200, str(output / "ui-200"))
         acceptance = {"ok": True, "scope": "Disposable Android emulator; not a physical device or TalkBack certification.",
                       "session": session, "abi": adb("shell", "getprop", "ro.product.cpu.abi"),
                       "keyboardOpenClose": keyboard["keyboardEvents"] < closed["keyboardEvents"],
                       "keyboardBackOrdering": True, "applicationBack": True, "measuredInputTarget": field, "platform": returned,
                       "fontScaleObserved": enlarged["systemTextScale"], "fontHomeRendered": True,
+                      "frontendRecheck": True, "fontScale200Observed": enlarged_200["systemTextScale"],
+                      "fontHome200Rendered": True, "font200ProcessRestarted": restarted_process_200 != smoke_process_200,
+                      "font200Session": session_200, "font200Smoke": smoke_200["ok"],
+                      "font200Remediation": remediation_200["ok"], "font200Recheck": recheck_200["ok"],
+                      "font200Layout": layout_200,
+                      "font200CredentialsRestored": credentials_restart_200["restored"],
+                      "font200CredentialsRemoved": credentials_restart_200["removed"],
+                      "font200RestoredInstances": instance_restart_200["restoredInstances"],
                       "physicalDeviceVerified": False, "talkBackVerified": False}
         (output / "acceptance.json").write_text(json.dumps(acceptance, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(acceptance))
     finally:
-        screenshot(output / "last-native-screen.png")
-        adb("pull", "/sdcard/hell-frontend-window.xml", str(output / "last-native-tree.xml"), allow_failure=True)
-        adb("pull", evidence, str(output / "ui-failure-or-final"), allow_failure=True)
-        adb("shell", "settings", "put", "system", "font_scale", original_scale if original_scale != "null" else "1.0", allow_failure=True)
-        adb("shell", "am", "force-stop", PACKAGE, allow_failure=True)
-        (output / "logcat.txt").write_text(adb("logcat", "-d", "-t", "1500", allow_failure=True), encoding="utf-8")
+        try:
+            screenshot(output / "last-native-screen.png")
+        finally:
+            adb("pull", "/sdcard/hell-frontend-window.xml", str(output / "last-native-tree.xml"), allow_failure=True)
+            adb("pull", evidence, str(output / "ui-failure-or-final"), allow_failure=True)
+            adb("pull", evidence_200, str(output / "ui-200-failure-or-final"), allow_failure=True)
+            adb("shell", "settings", "put", "system", "font_scale", original_scale if original_scale != "null" else "1.0", allow_failure=True)
+            adb("shell", "am", "force-stop", PACKAGE, allow_failure=True)
+            (output / "logcat.txt").write_text(adb("logcat", "-d", "-t", "1500", allow_failure=True), encoding="utf-8")
 
 
 if __name__ == "__main__":

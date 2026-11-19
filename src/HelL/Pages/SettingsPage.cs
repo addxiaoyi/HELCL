@@ -386,7 +386,6 @@ public sealed partial class SettingsPage : PageBase
 		if (!string.Equals(Extras.ThemeColor, text, StringComparison.OrdinalIgnoreCase))
 		{
 			Extras.ThemeColor = text;
-			SaveExtras();
 		}
 		return result;
 	}
@@ -403,7 +402,6 @@ public sealed partial class SettingsPage : PageBase
 		if (Extras.Background != text)
 		{
 			Extras.Background = text;
-			SaveExtras();
 		}
 		return result;
 	}
@@ -412,6 +410,13 @@ public sealed partial class SettingsPage : PageBase
 	{
 		try
 		{
+            string settings = Path.Combine(Path.GetDirectoryName(ExtrasPath), "config.json");
+            if (File.Exists(settings))
+            {
+                using var saved = JsonDocument.Parse(File.ReadAllText(settings));
+                if (saved.RootElement.TryGetProperty("ui_wpf_theme", out JsonElement theme))
+                    return JsonSerializer.Deserialize<ThemeExtras>(theme.GetRawText()) ?? new ThemeExtras();
+            }
 			if (File.Exists(ExtrasPath))
 			{
 				return JsonSerializer.Deserialize<ThemeExtras>(File.ReadAllText(ExtrasPath)) ?? new ThemeExtras();
@@ -423,19 +428,12 @@ public sealed partial class SettingsPage : PageBase
 		return new ThemeExtras();
 	}
 
-	private static void SaveExtras()
-	{
-		try
-		{
-			File.WriteAllText(ExtrasPath, JsonSerializer.Serialize(Extras, new JsonSerializerOptions
-			{
-				WriteIndented = true
-			}));
-		}
-		catch
-		{
-		}
-	}
+	private Dictionary<string, object> ThemeSnapshot() => new Dictionary<string, object>
+    {
+        ["ThemeColor"] = _color, ["Background"] = KeyOf(_bg), ["Skin"] = KeyOf(_skin),
+        ["Tint"] = (int)_tint.Value, ["AutoAccent"] = AutoAccent,
+        ["FlyAnimation"] = _fly.IsChecked == true, ["FlyDurationMs"] = (int)_flyDur.Value
+    };
 
 	private static ComboBox KeyCombo(IEnumerable<(string Key, string Label)> items, double width = 200.0)
 	{
@@ -519,7 +517,6 @@ public sealed partial class SettingsPage : PageBase
 			{
 				AutoAccent = true;
 				Extras.AutoAccent = true;
-				SaveExtras();
 				ApplySkin();
 				PageBase.Win?.ApplySkinNow();
 			}
@@ -530,7 +527,6 @@ public sealed partial class SettingsPage : PageBase
 			{
 				AutoAccent = false;
 				Extras.AutoAccent = false;
-				SaveExtras();
 				ApplySkin();
 				PageBase.Win?.ApplySkinNow();
 			}
@@ -1214,7 +1210,10 @@ public sealed partial class SettingsPage : PageBase
 
 	protected override async Task LoadAsync()
 	{
+        if (_savingSettings || DeferSettingsRefresh() || _sync) return;
 		_sync = true;
+        bool wasEnabled = IsEnabled;
+        IsEnabled = false;
 		try
 		{
 			Dictionary<string, JsonElement> dictionary = await PageBase.Api.TryCallAsync<Dictionary<string, JsonElement>>("get_settings");
@@ -1280,6 +1279,14 @@ public sealed partial class SettingsPage : PageBase
 				_bgIntervalLbl.Text = I18n.L("{0} 分钟", (int)_bgInterval.Value);
 				_bgBlurLbl.Text = $"{(int)_bgBlur.Value} px";
 				_bgDimLbl.Text = $"{(int)_bgDim.Value} %";
+                if (dictionary.TryGetValue("ui_wpf_theme", out var appearance) && appearance.ValueKind == JsonValueKind.Object)
+                {
+                    ThemeExtras theme = JsonSerializer.Deserialize<ThemeExtras>(appearance.GetRawText()) ?? new ThemeExtras();
+                    Extras.Skin = NormalizeSkin(theme.Skin); Extras.Tint = NormalizeTint(theme.Tint);
+                    Extras.AutoAccent = theme.AutoAccent; AutoAccent = theme.AutoAccent;
+                    Extras.FlyAnimation = theme.FlyAnimation; Extras.FlyDurationMs = theme.FlyDurationMs;
+                    _autoAccent.IsChecked = AutoAccent;
+                }
 				SyncPersistedThemeColor(GetStr(dictionary, "theme_color"));
 				SyncPersistedBackground(GetStr(dictionary, "ui_bg_preset"));
 			}
@@ -1355,42 +1362,36 @@ public sealed partial class SettingsPage : PageBase
 				ApplyVisuals();
 				PageBase.Win?.SyncThemeIndicator();
 			}
+            await ReloadThemesAsync();
+            _changedSettings.Clear(); UpdateSaveState();
 		}
 		finally
 		{
 			_sync = false;
+            IsEnabled = wasEnabled;
 		}
-		await ReloadThemesAsync();
-        _changedSettings.Clear(); UpdateSaveState();
 	}
 
+    private bool _savingSettings;
 	private async Task SaveAsync()
 	{
+        if (_savingSettings || _sync) return;
         int width = FrontendValidation.Integer(_w, "分辨率宽度", 64, 16384);
         int height = FrontendValidation.Integer(_h, "分辨率高度", 64, 16384);
         int limit = FrontendValidation.Integer(_limit, "下载限速", 0, 1000000000);
         int context = FrontendValidation.Integer(_aiCtx, "AI 上下文窗口", 8192, 2000000);
-        bool directoryChanged = false;
+        _savingSettings = true;
+        bool wasEnabled = IsEnabled;
+        IsEnabled = false;
+        try { await SaveSettingsAsync(width, height, limit, context); }
+        finally { _savingSettings = false; IsEnabled = wasEnabled; }
+    }
+
+    private async Task SaveSettingsAsync(int width, int height, int limit, int context)
+    {
 		string typed = _gameDir.Text?.Trim() ?? "";
-		if (typed.Length > 0 && typed != _gameDir0)
-		{
-			try
-			{
-				_gameDir0 = (await PageBase.Api.CallAsync<string>("set_game_dir", new
-				{
-					path = typed
-				})) ?? typed;
-				_gameDir.Text = _gameDir0;
-                directoryChanged = true;
-			}
-			catch (Exception ex)
-			{
-				_gameDir.Text = _gameDir0;
-				PageBase.Toast(I18n.L("游戏目录无效"), ex.Message, ToastKind.Error);
-				Motion.Shake(_gameDir);
-				return;
-			}
-		}
+        string lang = KeyOf(_lang);
+        bool langChanged = !string.IsNullOrEmpty(lang) && lang != _lang0;
 		bool dark = _dark.IsChecked == true;
 		Dictionary<string, object> dictionary = new Dictionary<string, object>();
 		dictionary["ui_dark"] = dark;
@@ -1435,6 +1436,10 @@ public sealed partial class SettingsPage : PageBase
 		dictionary["ui_fly_animation"] = _fly.IsChecked == true;
 		dictionary["ui_fly_duration_ms"] = (int)_flyDur.Value;
 		Dictionary<string, object> dictionary2 = dictionary;
+        if (typed.Length > 0) dictionary2["instances_dir"] = typed;
+        dictionary2["allow_multi_instance"] = _multi.IsChecked == true;
+        if (!string.IsNullOrEmpty(lang)) dictionary2["language"] = lang;
+        dictionary2["ui_wpf_theme"] = ThemeSnapshot();
 		string text = _cfKey.Text?.Trim() ?? "";
 		if (text.Length > 0)
 		{
@@ -1463,25 +1468,15 @@ public sealed partial class SettingsPage : PageBase
         try { await PageBase.Api.CallAsync<object>("save_settings", new { data = dictionary2 }); }
         catch (Exception error)
         {
-            throw new InvalidOperationException(directoryChanged
-                ? "游戏目录已更新，但其它设置未保存。请保留当前页面、修正错误后再次保存。原因：" + error.Message
-                : "设置未保存，请修正错误后重试。原因：" + error.Message, error);
+            throw new InvalidOperationException("未收到保存确认。当前输入已保留，请重试或重新读取配置核对结果。原因：" + error.Message, error);
         }
+        if (typed.Length > 0) _gameDir0 = typed;
+        if (langChanged) _lang0 = lang;
+        _changedSettings.Clear(); UpdateSaveState();
 		Dictionary<string, JsonElement> dictionary3 = await PageBase.Api.TryCallAsync<Dictionary<string, JsonElement>>("get_settings");
 		if (dictionary3 != null)
 		{
 			ApplySecretState(dictionary3);
-		}
-		await PageBase.Api.CallAsync<object>("set_multi_instance", new
-		{
-			allow = (_multi.IsChecked == true)
-		});
-		string lang = KeyOf(_lang);
-		bool langChanged = !string.IsNullOrEmpty(lang) && lang != _lang0;
-		if (langChanged)
-		{
-			await PageBase.Api.TryCallAsync<object>("set_language", new { lang });
-			_lang0 = lang;
 		}
 		Extras.ThemeColor = _color;
 		Extras.Background = KeyOf(_bg);
@@ -1490,7 +1485,6 @@ public sealed partial class SettingsPage : PageBase
 		Extras.AutoAccent = AutoAccent;
 		Extras.FlyAnimation = _fly.IsChecked == true;
 		Extras.FlyDurationMs = (int)_flyDur.Value;
-		SaveExtras();
 		ApplySkin();
 		MainWindow win = PageBase.Win;
 		if (win != null)
@@ -1503,10 +1497,10 @@ public sealed partial class SettingsPage : PageBase
 		}
 		Motion.Enabled = _motion.IsChecked == true;
 		ApplyVisuals();
-		await Wallpaper.ReloadAsync();
+		try { await Wallpaper.ReloadAsync(); }
+        catch (Exception error) { PageBase.Toast("设置已保存，背景预览未完成", error.Message, ToastKind.Warning); }
 		SyncWallpaperInfo();
 		PageBase.Win?.SaveUiPrefs();
-        _changedSettings.Clear(); UpdateSaveState();
 		AppServices.Window?.Toast(I18n.L("设置已保存"), I18n.L("外观与动效已立即生效"), ToastKind.Success);
 		if (langChanged)
 		{
@@ -1625,16 +1619,14 @@ public sealed partial class SettingsPage : PageBase
 		}
 	}
 
-	private async Task BrowseGameDirAsync()
+	private Task BrowseGameDirAsync()
 	{
 		string path = Dlg.PickFolder(I18n.L("选择游戏目录"));
 		if (path != null)
 		{
-			_gameDir0 = (await PageBase.Api.CallAsync<string>("set_game_dir", new { path })) ?? path;
-			_gameDir.Text = _gameDir0;
-			PageBase.Toast(I18n.L("已切换目录"), _gameDir0, ToastKind.Success);
-			await LoadAsync();
+            _gameDir.Text = path;
 		}
+        return Task.CompletedTask;
 	}
 
 	private async Task CheckUpdateAsync()
@@ -1824,12 +1816,12 @@ public sealed partial class SettingsPage : PageBase
 				{
 					["theme_color"] = _color,
 					["ui_dark"] = App.IsDark,
-					["ui_bg_preset"] = KeyOf(_bg)
+					["ui_bg_preset"] = KeyOf(_bg),
+                    ["ui_wpf_theme"] = ThemeSnapshot()
 				}
 			});
 			Extras.ThemeColor = _color;
 			Extras.Background = KeyOf(_bg);
-			SaveExtras();
 			await PageBase.Api.CallAsync<object>("save_theme", new
 			{
 				name = name.Trim()
@@ -1841,16 +1833,27 @@ public sealed partial class SettingsPage : PageBase
 
 	private async Task LoadThemeAsync()
 	{
+        if (_savingSettings || _sync) return;
 		string name = _themePack.Str();
 		if (string.IsNullOrEmpty(name))
 		{
 			PageBase.Toast(I18n.L("没有主题包"), I18n.L("先保存一个再来加载"), ToastKind.Warning);
 			return;
 		}
-		await PageBase.Api.CallAsync<object>("load_theme", new { name });
-		await LoadAsync();
-		await Wallpaper.ReloadAsync();
-		SyncWallpaperInfo();
+        if (_changedSettings.Count > 0 && !await Dlg.Confirm("加载主题包", "加载「" + name + "」会重新读取设置并放弃本页未保存的更改。是否继续？", "加载并放弃草稿", "保留草稿")) return;
+        _savingSettings = true;
+        bool wasEnabled = IsEnabled;
+        IsEnabled = false;
+        try
+        {
+		    await PageBase.Api.CallAsync<object>("load_theme", new { name });
+            _changedSettings.Clear(); UpdateSaveState();
+            _savingSettings = false;
+		    await LoadAsync();
+		    await Wallpaper.ReloadAsync();
+		    SyncWallpaperInfo();
+        }
+        finally { _savingSettings = false; IsEnabled = wasEnabled; }
 		PageBase.Toast(I18n.L("已加载"), I18n.L("主题包「{0}」已应用", name), ToastKind.Success);
         if (await AppearanceDialog.NeedsRestart()) await AppearanceDialog.Show();
 	}

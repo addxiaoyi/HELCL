@@ -7,6 +7,10 @@ namespace HelL.Remote;
 
 public static class DeviceTunnel
 {
+    // Apple's SslStream provider supports TLS 1.2; other peers also offer it for cross-platform pairing.
+    private static SslProtocols EnabledProtocols => OperatingSystem.IsMacOS()
+        ? SslProtocols.Tls12 : SslProtocols.Tls12 | SslProtocols.Tls13;
+
     public static X509Certificate2 CreateIdentity(string device)
     {
         if (string.IsNullOrWhiteSpace(device)) throw new ArgumentException("Device name is required.", nameof(device));
@@ -44,7 +48,7 @@ public static class DeviceTunnel
             await tls.AuthenticateAsClientAsync(new SslClientAuthenticationOptions
             {
                 TargetHost = "hell-paired-device",
-                EnabledSslProtocols = SslProtocols.Tls13,
+                EnabledSslProtocols = EnabledProtocols,
                 ClientCertificates = new X509CertificateCollection { identity },
                 CertificateRevocationCheckMode = X509RevocationMode.NoCheck
             }, cancellation).ConfigureAwait(false);
@@ -64,7 +68,7 @@ public static class DeviceTunnel
             {
                 ServerCertificate = identity,
                 ClientCertificateRequired = true,
-                EnabledSslProtocols = SslProtocols.Tls13,
+                EnabledSslProtocols = EnabledProtocols,
                 CertificateRevocationCheckMode = X509RevocationMode.NoCheck
             }, cancellation).ConfigureAwait(false);
             return tls;

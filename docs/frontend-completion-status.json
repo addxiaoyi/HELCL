@@ -166,10 +166,11 @@
       "id": 19,
       "platform": "WPF",
       "title": "实例卡片全部创建，缺少可见区域虚拟化",
-      "implementation": "implemented-alternative",
-      "disposition": "Implemented with bounded progressive rendering: initially 60 instance cards, explicit loading of further pages. This avoids constructing every card on initial load; it is deliberately described as paging, not claimed to be recycling virtualization.",
+      "implementation": "implemented",
+      "disposition": "Implemented: responsive rows use a real recycling virtualizing ListBox. Direct access to record 2000, repeated scrolling, compact view and keyboard traversal keep realized cards bounded by the viewport; all filtered records remain selectable.",
       "acceptance": "source-and-available-regressions",
-      "physical_device_verified": false
+      "physical_device_verified": false,
+      "recheck_evidence": "frontend-recheck.json"
     },
     {
       "id": 20,
@@ -248,9 +249,10 @@
       "platform": "WPF",
       "title": "保存设置可能先改目录、后续保存失败而部分生效",
       "implementation": "implemented",
-      "disposition": "Implemented as transparent staged behavior: all numeric input validates before any directory mutation; if directory change succeeds but main settings save fails, the error explicitly identifies partial application. This is not an atomic transaction claim.",
+      "disposition": "Implemented: directory, general settings, language, multi-instance and WPF appearance use one validated save_settings RPC and one atomic configuration replacement. File promotion failure preserves both the prior memory snapshot and disk bytes. Input is locked during the request; failure retains the draft. Lost acknowledgement is reported as unknown rather than claiming rollback.",
       "acceptance": "source-and-available-regressions",
-      "physical_device_verified": false
+      "physical_device_verified": false,
+      "recheck_evidence": "SettingsCommitTests + frontend-recheck.json"
     },
     {
       "id": 29,
@@ -275,9 +277,10 @@
       "platform": "WPF",
       "title": "设置混合即时、保存后和重启后生效规则",
       "implementation": "implemented",
-      "disposition": "Implemented: the visible footer distinguishes immediate preview/save/restart behavior and counts pending changes; leaving with pending edits warns that the draft remains unsaved.",
+      "disposition": "Implemented: effect timing and pending changes are visible. Background refresh preserves dirty drafts; directory browsing only fills the draft. Explicit theme loading confirms draft replacement, selection alone is not dirty, and successful loads refresh the form. Appearance writes use the bridge rather than a GUI configuration snapshot.",
       "acceptance": "source-and-available-regressions",
-      "physical_device_verified": false
+      "physical_device_verified": false,
+      "recheck_evidence": "settings-theme-recheck.json + frontend-recheck.json"
     },
     {
       "id": 32,
@@ -365,9 +368,10 @@
       "platform": "Mobile",
       "title": "资源搜索最多三十条，没有下一页入口",
       "implementation": "implemented",
-      "disposition": "“加载更多兼容资源” uses upstream offset/pageSize; offsets advance by requested page size and distinct source/project IDs append. Nonempty results allow trying another batch; only an empty upstream page marks the end, avoiding alias/dedup truncation.",
+      "disposition": "Implemented: load-more requests use real offset/pageSize. Shared Modrinth rows carry project_id as canonical id; mobile deduplication also supports legacy blank-ID rows using slug. Nonempty pages allow continuing; only empty upstream pages end pagination.",
       "acceptance": "source-and-available-regressions",
-      "physical_device_verified": false
+      "physical_device_verified": false,
+      "recheck_evidence": "CatalogPagingFlowTests + mobile-recheck-preview.json"
     },
     {
       "id": 42,
@@ -383,9 +387,10 @@
       "platform": "Mobile",
       "title": "资源文件默认选第一项，推荐依据不清楚",
       "implementation": "implemented",
-      "disposition": "File summary identifies the recommendation basis, title, date, compatibility and filename before download.",
+      "disposition": "Implemented: download summary shows recommendation basis, file name/date/compatibility. Release responses bind project, instance, version, loader and all search filters; changed context cannot reactivate old files.",
       "acceptance": "source-and-available-regressions",
-      "physical_device_verified": false
+      "physical_device_verified": false,
+      "recheck_evidence": "mobile-recheck-preview.json"
     },
     {
       "id": 44,
@@ -419,9 +424,10 @@
       "platform": "Mobile",
       "title": "离开实例编辑页没有未保存提醒",
       "implementation": "implemented",
-      "disposition": "Instance edits have a saved-state comparison and target-specific discard dialog; cancel retains the draft.",
+      "disposition": "Implemented: leaving an edited instance requires a target-specific discard decision. Cancel keeps both the draft and the navigation-history entry. Cover import and ZIP export also capture instance and navigation revisions across picker awaits.",
       "acceptance": "source-and-available-regressions",
-      "physical_device_verified": false
+      "physical_device_verified": false,
+      "recheck_evidence": "mobile-recheck-preview.json"
     },
     {
       "id": 48,
@@ -554,9 +560,10 @@
       "platform": "Mobile",
       "title": "图标与内联按钮的可视尺寸偏小，触控命中区待测",
       "implementation": "implemented",
-      "disposition": "Main icon, tab, inline, ComboBox and text-entry controls use 44 logical-pixel targets; explicit 32-pixel row buttons were enlarged.",
+      "disposition": "Implemented: relevant primary, tablet-navigation and icon controls have at least 44 logical-pixel touch targets. Desktop-hosted geometry checks do not certify physical-device touch or TalkBack.",
       "acceptance": "native-or-assistive-testing-separate",
-      "physical_device_verified": false
+      "physical_device_verified": false,
+      "recheck_evidence": "mobile-recheck-preview.json"
     },
     {
       "id": 63,
@@ -572,9 +579,10 @@
       "platform": "Mobile",
       "title": "小字号与 Android 大字体适配尚需专项验收",
       "implementation": "implemented",
-      "disposition": "Android system FontScale is read and combined with a saved app 100/125/150/200% preference; text sizes are enlarged and labels wrap.",
+      "disposition": "Implemented: font scaling restores known baselines and samples new controls before applying one scale factor, including inherited dynamic labels. At 200%, narrow home rows stack and bottom labels remain single-line; the primary action stays in the initial viewport. Native acceptance requires a fresh 200% profile, full UI rechecks, process restart, credential restoration/removal and rendered home. Physical devices and TalkBack remain separate.",
       "acceptance": "native-or-assistive-testing-separate",
-      "physical_device_verified": false
+      "physical_device_verified": false,
+      "recheck_evidence": "mobile-system-font-200.json + native acceptance.json"
     },
     {
       "id": 65,
@@ -662,27 +670,30 @@
       "platform": "Desktop",
       "title": "分析实例日志会直接发送，缺少上传前内容预览",
       "implementation": "implemented",
-      "disposition": "Log analysis loads a redacted preview first. Sending that preview requires a second confirmation displaying the receiving host/mode and exact content.",
+      "disposition": "Implemented: cloud log analysis requires an asynchronous bounded preview and explicit upload confirmation. Filtering covers common secret lines, URLs, local paths including spaces, email, IPv4/IPv6 and punctuation boundaries. Ambiguous unquoted paths conservatively hide the remaining line. Filtering is not a guarantee that arbitrary identifiers are removed; preview consent remains required.",
       "acceptance": "source-and-available-regressions",
-      "physical_device_verified": false
+      "physical_device_verified": false,
+      "recheck_evidence": "FrontendRecoveryTests"
     },
     {
       "id": 75,
       "platform": "Desktop",
       "title": "日志分析在 UI 线程读取整个文件后取尾部",
       "implementation": "implemented",
-      "disposition": "Log reading runs off the UI thread and reads at most 64 KiB from the file tail, rather than reading the entire file.",
+      "disposition": "Implemented: bounded tail reads and redaction run outside the UI thread. Both success and failure responses bind instance, file and request revision, preventing old-instance errors from replacing current content.",
       "acceptance": "source-and-available-regressions",
-      "physical_device_verified": false
+      "physical_device_verified": false,
+      "recheck_evidence": "desktop-recheck.json"
     },
     {
       "id": 76,
       "platform": "Desktop",
       "title": "AI 请求前清空草稿，失败后不恢复输入",
       "implementation": "implemented",
-      "disposition": "Failed AI prompts remain in the composer and expose a retry button.",
+      "disposition": "Implemented: failed AI sends restore the prompt when the input is empty. Successful sends clear the previous retry prompt; retry preserves any newer user draft.",
       "acceptance": "source-and-available-regressions",
-      "physical_device_verified": false
+      "physical_device_verified": false,
+      "recheck_evidence": "desktop-recheck.json"
     },
     {
       "id": 77,
@@ -833,9 +844,10 @@
       "platform": "Desktop",
       "title": "资源详情缺 WPF 已有的图库和完整介绍入口",
       "implementation": "implemented",
-      "disposition": "Resource details load real upstream gallery, full body and selected-file changelog using the shared typed Details API. Failure presents a retry action; upstream absence is stated explicitly.",
+      "disposition": "Implemented: real upstream gallery, full body and selected-file changelog. Requests bind project, filters, release id and an independent revision, including A-B-A changes; pending work loads the latest selection after the current task. Failed/canceled documents support retry without an infinite loading state.",
       "acceptance": "source-and-available-regressions",
-      "physical_device_verified": false
+      "physical_device_verified": false,
+      "recheck_evidence": "document-release-binding.json"
     },
     {
       "id": 94,
@@ -903,5 +915,7 @@
   ],
   "count": 100,
   "implementation_count": 100,
-  "verified_all_physical_conditions": false
+  "verified_all_physical_conditions": false,
+  "recheck_baseline": "4aec4742068479a84521747c51a2db3d40ba383e",
+  "recheck_scope": "Residual behavior checks supplement the original 100-item mapping; this does not claim 100 independent native-device certifications."
 }

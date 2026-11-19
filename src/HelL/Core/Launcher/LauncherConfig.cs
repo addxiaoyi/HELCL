@@ -180,6 +180,19 @@ public sealed class LauncherConfig
 		}
 	}
 
+    public void Commit(PyDict patch)
+    {
+        if (patch == null) throw new System.ArgumentNullException(nameof(patch));
+        lock (_lock)
+        {
+            var next = (PyDict)Py.DeepCopy(data);
+            next.Update(patch);
+            Utils.WriteJson(Config.CONFIG_FILE, next);
+            data = next;
+            revision++;
+        }
+    }
+
 	public object Get(string key, object dflt = null)
 	{
 		return data.Get(key, dflt);

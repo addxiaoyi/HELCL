@@ -71,11 +71,23 @@ public sealed partial class MobileHome
                 schema = 1, platform = "android", backEvents = nativeBackEvents, keyboardEvents = nativeKeyboardEvents,
                 safeAreaEvents = nativeSafeAreaEvents, safeArea = new { left = Padding.Left, top = Padding.Top, right = Padding.Right, bottom = Padding.Bottom },
                 systemTextScale = MobileRuntime.SystemTextScale, page = currentPage,
+                instanceNameTap = NativeAuditTap(InstanceName),
                 keyboardOpen = inputPane?.State == InputPaneState.Open, backHook = platformTop is not null,
                 insetsHook = insets is not null, inputPaneHook = inputPane is not null
             }));
         }
         catch (Exception error) when (error is not OutOfMemoryException)
         { System.Diagnostics.Trace.TraceWarning("Mobile platform evidence: " + error.GetType().Name); }
+    }
+
+    private object? NativeAuditTap(Control control)
+    {
+        if (!control.IsEffectivelyVisible || control.Bounds.Width <= 0 || control.Bounds.Height <= 0) return null;
+        var center = new Point(control.Bounds.Width / 2, control.Bounds.Height / 2);
+        Point? location = control.TranslatePoint(center, this);
+        if (location is null || location.Value.X < 0 || location.Value.Y < 0
+            || location.Value.X > Bounds.Width || location.Value.Y > Bounds.Height) return null;
+        PixelPoint screen = control.PointToScreen(center);
+        return new { x = screen.X, y = screen.Y };
     }
 }

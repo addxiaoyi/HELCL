@@ -107,7 +107,10 @@ def verify(apk: Path, output: Path) -> None:
         tap_match(("管理当前实例", "管理实例"))
         time.sleep(0.5)
         screenshot(output / "01b-manage.png")
-        tap_match(("实例名称",), editable=True, scroll=True)
+        field = wait_for(lambda: (value.get("instanceNameTap") if (value := read_json(evidence + "/mobile-platform-events.json"))
+                                  and value.get("page") == "manage" else None),
+                         "The visible instance-name field did not publish its measured native bounds.")
+        adb("shell", "input", "tap", str(field["x"]), str(field["y"]))
         keyboard = wait_for(lambda: (value if (value := read_json(evidence + "/mobile-platform-events.json"))
                                     and value.get("keyboardOpen") else None), "The real Android keyboard-open event was not observed.")
         screenshot(output / "02-keyboard.png")
@@ -138,7 +141,7 @@ def verify(apk: Path, output: Path) -> None:
         acceptance = {"ok": True, "scope": "Disposable Android emulator; not a physical device or TalkBack certification.",
                       "session": session, "abi": adb("shell", "getprop", "ro.product.cpu.abi"),
                       "keyboardOpenClose": keyboard["keyboardEvents"] < closed["keyboardEvents"],
-                      "keyboardBackOrdering": True, "applicationBack": True, "platform": returned,
+                      "keyboardBackOrdering": True, "applicationBack": True, "measuredInputTarget": field, "platform": returned,
                       "fontScaleObserved": enlarged["systemTextScale"], "physicalDeviceVerified": False, "talkBackVerified": False}
         (output / "acceptance.json").write_text(json.dumps(acceptance, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(acceptance))

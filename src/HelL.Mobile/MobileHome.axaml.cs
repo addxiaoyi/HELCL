@@ -209,6 +209,8 @@ public sealed partial class MobileHome : UserControl, IDisposable
         if (page != currentPage) ++navigationRevision;
         if (remember && currentPage != page && (pageHistory.Count == 0 || pageHistory.Peek() != currentPage)) pageHistory.Push(currentPage);
         currentPage = page;
+        if (OperatingSystem.IsAndroid() && MobileRuntime.ReportRoot.Length > 0)
+            Avalonia.Threading.Dispatcher.UIThread.Post(RecordPlatformAudit, Avalonia.Threading.DispatcherPriority.Background);
         ChromeTitle.Text = page switch
         {
             "diagnostics" => "诊断包",

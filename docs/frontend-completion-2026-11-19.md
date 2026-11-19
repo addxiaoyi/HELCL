@@ -141,7 +141,7 @@
 
 63. **已实现；原生/辅助技术验收单列｜资源获取按钮的辅助名称不含项目名。** Resource-row action accessible name includes its bound project title.
 
-64. **已实现；原生/辅助技术验收单列｜小字号与 Android 大字体适配尚需专项验收。** Android system FontScale is read and combined with a saved app 100/125/150/200% preference; text sizes are enlarged and labels wrap.
+64. **已实现；原生/辅助技术验收单列｜小字号与 Android 大字体适配尚需专项验收。** Implemented: font scaling restores known baselines and samples new controls before applying one scale factor, including inherited dynamic labels. At 200%, narrow home rows stack and bottom labels remain single-line; the primary action stays in the initial viewport. Native acceptance requires a fresh 200% profile, full UI rechecks, process restart, credential restoration/removal and rendered home. Physical devices and TalkBack remain separate.
 
 65. **已实现；原生/辅助技术验收单列｜Android 系统返回没有显式应用页栈接线。** TopLevel.BackRequested and Escape feed a page stack, resource-detail back and confirmation dismissal.
 

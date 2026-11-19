@@ -160,6 +160,7 @@ public sealed partial class MobileHome
             await CheckResponsiveNavigation();
             await CheckActivitySession();
             await CheckFrontendRemediationAsync();
+            await CheckSystemTextLayoutAsync();
             File.WriteAllText(Path.Combine(EvidenceRoot, "mobile-smoke.json"), JsonSerializer.Serialize(new
             {
                 ok = true, platform = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier,

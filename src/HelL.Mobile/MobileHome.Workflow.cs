@@ -12,7 +12,8 @@ namespace HelL.Mobile;
 
 public sealed partial class MobileHome
 {
-    private readonly StackPanel localTasks = new() { Spacing = 12 };
+    private const double TaskScrollBarClearance = 12;
+    private readonly StackPanel localTasks = new() { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Left };
     private ScrollViewer? localTasksPage;
     private readonly TextBlock createError = WorkflowText("");
     private readonly TextBlock editError = WorkflowText("");
@@ -38,7 +39,15 @@ public sealed partial class MobileHome
         if (NewVersion.Parent is StackPanel createVersion) AddVersionPicker(createVersion, NewVersion);
         if (ReferenceVersion.Parent is StackPanel editVersion) AddVersionPicker(editVersion, ReferenceVersion);
         localTasksPage = new ScrollViewer { IsVisible = false, Content = localTasks,
-            HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled, Margin = new Thickness(20, 18) };
+            HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
+            HorizontalContentAlignment = HorizontalAlignment.Left, Margin = new Thickness(20, 18) };
+        localTasksPage.PropertyChanged += (_, change) =>
+        {
+            if (change.Property != ScrollViewer.ViewportProperty) return;
+            double width = localTasksPage.Viewport.Width - TaskScrollBarClearance;
+            // Overlay scrollbars do not reduce Avalonia's reported viewport width.
+            if (width > 0 && double.IsFinite(width)) localTasks.Width = width;
+        };
         Pages.Children.Add(localTasksPage);
         Status.PropertyChanged += (_, change) =>
         {

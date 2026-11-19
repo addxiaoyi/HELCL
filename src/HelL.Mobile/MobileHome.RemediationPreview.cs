@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia;
+using Avalonia.VisualTree;
 
 namespace HelL.Mobile;
 
@@ -30,6 +32,14 @@ public sealed partial class MobileHome
         await working;
         if (session.Tasks.Entries[0].State != "completed") throw new IOException("A completed operation did not reach task history.");
         await Capture("task-center");
+        double safeTaskWidth = Math.Max(0, (localTasksPage?.Viewport.Width ?? 0) - TaskScrollBarClearance);
+        foreach (TextBlock label in localTasks.GetVisualDescendants().OfType<TextBlock>().Where(label => label.IsEffectivelyVisible))
+        {
+            Point position = label.TranslatePoint(default, localTasksPage!) ?? default;
+            double textRight = position.X + label.TextLayout.WidthIncludingTrailingWhitespace + Math.Max(0, label.TextLayout.OverhangTrailing);
+            if (position.X < -1 || textRight > safeTaskWidth + 1)
+                throw new IOException($"Task text exceeds its safe viewport beside the overlay scrollbar (x={position.X:0.0}, glyphRight={textRight:0.0}, safeWidth={safeTaskWidth:0.0}).");
+        }
 
         ShowPage("resources");
         SearchFilters.IsVisible = false;

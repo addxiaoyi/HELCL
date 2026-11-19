@@ -105,6 +105,8 @@ jobs:
   android:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
+    env:
+      ANDROID_AVD_HOME: ${{ runner.temp }}/hell-frontend-avds
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -120,18 +122,29 @@ jobs:
         with:
           packages: 'platform-tools'
           log-accepted-android-sdk-licenses: false
-      - name: Build Android x64 APK and prepare disposable emulator
+      - name: Build Android x64 APK
+        timeout-minutes: 15
         shell: bash
         run: |
           dotnet workload install android --skip-manifest-update
           sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'system-images;android-35;google_apis;x86_64' 'platform-tools' 'emulator'
           dotnet publish src/HelL.Android -c Release -r android-x64 -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME" -o artifacts/android-apk
-          echo no | avdmanager create avd --force --name hell_frontend --package 'system-images;android-35;google_apis;x86_64'
+      - name: Prepare disposable Android emulator
+        timeout-minutes: 6
+        shell: bash
+        run: |
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo no | avdmanager create avd --force --name hell_frontend --path "$ANDROID_AVD_HOME/hell_frontend.avd" --package 'system-images;android-35;google_apis;x86_64'
+          test -f "$ANDROID_AVD_HOME/hell_frontend.avd/config.ini"
+          printf 'avd.ini.encoding=UTF-8\npath=%s\ntarget=android-35\n' "$ANDROID_AVD_HOME/hell_frontend.avd" > "$ANDROID_AVD_HOME/hell_frontend.ini"
+          "$ANDROID_HOME/emulator/emulator" -list-avds
           sudo chmod a+rw /dev/kvm
           "$ANDROID_HOME/emulator/emulator" -avd hell_frontend -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot > emulator.log 2>&1 &
-          adb wait-for-device
+          emulator_pid=$!
+          timeout 180 adb wait-for-device || { cat emulator.log; exit 1; }
           for attempt in $(seq 1 120); do
             if [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = '1' ]; then break; fi
+            kill -0 "$emulator_pid" || { cat emulator.log; exit 1; }
             sleep 2
           done
           test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = '1'

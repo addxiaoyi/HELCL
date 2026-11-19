@@ -52,5 +52,64 @@ public sealed class FrontendRecoveryTests : IDisposable
         Assert.Equal("{broken", File.ReadAllText(path));
     }
 
+    [Theory]
+    [InlineData("{broken")]
+    [InlineData("[{\"Title\":\"bad record\",\"State\":0,\"Message\":\"running\",\"Lines\":[]}]")]
+    public void NewTerminalTaskArchivesCorruptHistoryBeforeReplacingIt(string broken)
+    {
+        string path = Path.Combine(root, "desktop-task-history.json");
+        File.WriteAllText(path, broken);
+        Assert.ThrowsAny<Exception>(() => DesktopTaskHistory.Read(root));
+        var terminal = new DesktopTask("new completed task");
+        terminal.Finish(DesktopTaskState.Completed, "complete");
+
+        DesktopTaskHistory.Save(root, [terminal]);
+
+        string archived = Assert.Single(Directory.GetFiles(root, "desktop-task-history.*.corrupt"));
+        Assert.Equal(broken, File.ReadAllText(archived));
+        Assert.Equal("new completed task", Assert.Single(DesktopTaskHistory.Read(root)).Title);
+        Assert.False(File.Exists(path + ".tmp"));
+        Assert.Empty(Directory.GetFiles(root, ".desktop-task-history-*.tmp"));
+        Assert.Null(DesktopTaskHistory.Save(root, [terminal]));
+        Assert.Single(Directory.GetFiles(root, "desktop-task-history.*.corrupt"));
+    }
+
+    [Fact]
+    public void UnicodeTaskLogsRemainInsideTheReadableHistoryBudget()
+    {
+        var tasks = Enumerable.Range(0, 100).Select(index =>
+        {
+            var task = new DesktopTask("任务 " + index);
+            for (int line = 0; line < 80; line++) task.Log.Add(new string('测', 512));
+            task.Finish(DesktopTaskState.Completed, "complete");
+            return task;
+        }).ToArray();
+        DesktopTaskHistory.Save(root, tasks);
+        Assert.True(new FileInfo(Path.Combine(root, "desktop-task-history.json")).Length <= 2 * 1024 * 1024);
+        DesktopTask[] restored = DesktopTaskHistory.Read(root);
+        Assert.NotEmpty(restored);
+        Assert.Equal("任务 0", restored[0].Title);
+    }
+
+    [UnixFact]
+    public void NewHistoryIsPrivateAndCorruptArchiveRetainsItsOriginalMode()
+    {
+        if (OperatingSystem.IsWindows()) return;
+        string path = Path.Combine(root, "desktop-task-history.json");
+        File.WriteAllText(path, "{broken");
+        const UnixFileMode mode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
+        File.SetUnixFileMode(path, mode);
+        var terminal = new DesktopTask("complete");
+        terminal.Finish(DesktopTaskState.Completed, "complete");
+        string archived = DesktopTaskHistory.Save(root, [terminal])!;
+        Assert.Equal(mode, File.GetUnixFileMode(path));
+        Assert.Equal(mode, File.GetUnixFileMode(Path.Combine(root, archived)));
+    }
+
+    private sealed class UnixFactAttribute : FactAttribute
+    {
+        public UnixFactAttribute() { if (OperatingSystem.IsWindows()) Skip = "Unix file modes are verified on Unix runners."; }
+    }
+
     public void Dispose() => Directory.Delete(root, true);
 }

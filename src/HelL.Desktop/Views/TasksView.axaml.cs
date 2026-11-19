@@ -54,7 +54,11 @@ public partial class TasksView : UserControl
         if (e.PropertyName == nameof(DesktopTask.State))
         {
             Refresh();
-            if (historyRoot.Length > 0) try { Services.DesktopTaskHistory.Save(historyRoot, tasks); }
+            if (historyRoot.Length > 0) try
+            {
+                string? archived = Services.DesktopTaskHistory.Save(historyRoot, tasks);
+                if (archived is not null) host?.SetStatus("新的任务历史已保存。损坏的旧记录已保留为：" + archived);
+            }
             catch (Exception error) { host?.SetStatus("任务结果已完成，但历史保存失败。" ); System.Diagnostics.Trace.TraceWarning(error.GetType().Name); }
         }
         if (ReferenceEquals(sender, selected)) UpdateDetails();

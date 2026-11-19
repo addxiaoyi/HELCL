@@ -75,6 +75,13 @@ def screenshot(path: Path) -> None:
         subprocess.run(["adb", "exec-out", "screencap", "-p"], stdout=output, check=True, timeout=30)
 
 
+def native_home_visible() -> bool:
+    adb("shell", "uiautomator", "dump", "/sdcard/hell-frontend-window.xml")
+    document = ET.fromstring(adb("shell", "cat", "/sdcard/hell-frontend-window.xml"))
+    return any("管理当前实例" in node.get("text", "") + node.get("content-desc", "")
+               for node in document.iter("node"))
+
+
 def verify(apk: Path, output: Path) -> None:
     if adb("shell", "getprop", "ro.kernel.qemu") != "1":
         raise RuntimeError("This check only accepts a disposable emulator; physical devices are excluded.")
@@ -137,13 +144,16 @@ def verify(apk: Path, output: Path) -> None:
         enlarged = wait_for(lambda: (value if (value := read_json(evidence + "/mobile-platform-events.json"))
                                      and value.get("systemTextScale", 0) >= 1.49 else None),
                             "The system font setting was not applied after Activity recreation.")
+        wait_for(native_home_visible, "The recreated Activity did not render its home content at the larger system font.")
+        time.sleep(0.5)
         screenshot(output / "04-system-font-150.png")
         adb("pull", evidence, str(output / "ui"))
         acceptance = {"ok": True, "scope": "Disposable Android emulator; not a physical device or TalkBack certification.",
                       "session": session, "abi": adb("shell", "getprop", "ro.product.cpu.abi"),
                       "keyboardOpenClose": keyboard["keyboardEvents"] < closed["keyboardEvents"],
                       "keyboardBackOrdering": True, "applicationBack": True, "measuredInputTarget": field, "platform": returned,
-                      "fontScaleObserved": enlarged["systemTextScale"], "physicalDeviceVerified": False, "talkBackVerified": False}
+                      "fontScaleObserved": enlarged["systemTextScale"], "fontHomeRendered": True,
+                      "physicalDeviceVerified": False, "talkBackVerified": False}
         (output / "acceptance.json").write_text(json.dumps(acceptance, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(acceptance))
     finally:

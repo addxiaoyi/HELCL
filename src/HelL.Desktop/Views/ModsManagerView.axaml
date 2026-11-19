@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="HelL.Desktop.Views.ModsManagerView"
+             DragDrop.AllowDrop="True">
+  <Grid Margin="36,10,36,24" RowDefinitions="Auto,Auto,*">
+    <!-- 简洁顶栏 -->
+    <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="2,0,0,14">
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+        <TextBlock Text="模组与资源" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
+        <TextBlock x:Name="InstanceSubtitle" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
+        <TextBlock x:Name="SummaryBadge" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+      </StackPanel>
+      <Button Grid.Column="1" Content="导入…" Classes="soft" Click="ImportFiles" Margin="0,0,8,0" />
+      <Button Grid.Column="2" Content="打开目录" Classes="soft" Click="OpenContentFolder" Margin="0,0,8,0" />
+      <Button Grid.Column="3" Content="浏览资源" Classes="accent" Click="JumpToDownload" />
+    </Grid>
+
+    <!-- macOS Segmented Control + 筛选框 + 批量操作 -->
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Margin="0,0,0,12">
+      <Border Classes="segmented">
+        <StackPanel x:Name="KindTabs" Orientation="Horizontal" Spacing="2">
+          <Button Tag="mods" Content="模组" Classes="seg-item current" Click="SwitchKind" />
+          <Button Tag="resourcepacks" Content="资源包" Classes="seg-item" Click="SwitchKind" />
+          <Button Tag="shaderpacks" Content="光影" Classes="seg-item" Click="SwitchKind" />
+          <Button Tag="datapacks" Content="数据包" Classes="seg-item" Click="SwitchKind" />
+        </StackPanel>
+      </Border>
+      <TextBox x:Name="SearchBox" Grid.Column="1" PlaceholderText="筛选文件名…" TextChanged="SearchChanged" />
+      <StackPanel x:Name="BatchActions" Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+        <Button Content="全部启用" Classes="ghost" MinHeight="28" Padding="9,3" FontSize="12" Click="EnableAllMods" />
+        <Button Content="全部禁用" Classes="ghost" MinHeight="28" Padding="9,3" FontSize="12" Click="DisableAllMods" />
+      </StackPanel>
+      <TextBlock x:Name="HintBar" IsVisible="False" />
+    </Grid>
+
+    <!-- 单张分组列表 -->
+    <Border Grid.Row="2" Classes="inset-group" ClipToBounds="True">
+      <Grid>
+        <ListBox x:Name="ContentList" Classes="rows" AutomationProperties.Name="已安装内容列表">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10" Opacity="{Binding RowOpacity}">
+                <StackPanel VerticalAlignment="Center" Spacing="1">
+                  <TextBlock Text="{Binding DisplayName}" FontSize="13.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding SubLabel}" Classes="muted" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="{Binding StateBadge}" Classes="muted" FontSize="11.5" VerticalAlignment="Center" />
+                <Button Grid.Column="2" Content="{Binding ToggleText}" Classes="soft" IsVisible="{Binding CanToggle}" Click="ToggleModRow" Tag="{Binding FileName}" MinHeight="27" Padding="11,3" FontSize="12" VerticalAlignment="Center" />
+                <Button Grid.Column="3" Classes="icon-btn" ToolTip.Tip="删除" Click="DeleteContentRow" Tag="{Binding FileName}" VerticalAlignment="Center">
+                  <icons:MaterialIcon Kind="TrashCanOutline" Width="15" Height="15" />
+                </Button>
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel x:Name="EmptyPanel" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+          <TextBlock x:Name="EmptyTitle" Text="暂无本地文件" FontSize="15" FontWeight="Medium" HorizontalAlignment="Center" />
+          <TextBlock Text="支持直接拖入 .jar / .zip 文件安装" Classes="muted" FontSize="12.5" HorizontalAlignment="Center" />
+        </StackPanel>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

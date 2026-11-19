@@ -1,0 +1,168 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:HelL.Desktop.Controls"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="HelL.Desktop.Views.ResourceBrowserView">
+  <Grid Margin="32,8,32,24" RowDefinitions="Auto,Auto,Auto,*">
+    <Grid ColumnDefinitions="*,Auto" Margin="2,0,0,14">
+      <TextBlock Text="资源下载中心" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+        <TextBlock x:Name="TargetLabel" Text="未选择实例" FontSize="12.5" Classes="muted" MaxWidth="168" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+        <ComboBox x:Name="VersionPicker" Width="138" MinHeight="30" Padding="10,3" FontSize="12" SelectionChanged="TargetChanged" PlaceholderText="全部版本" AutomationProperties.Name="资源安装目标版本" />
+      </StackPanel>
+    </Grid>
+
+    <StackPanel x:Name="SearchControls" Grid.Row="1" Spacing="10" Margin="0,0,0,14">
+      <Border Classes="segmented" HorizontalAlignment="Left">
+        <StackPanel x:Name="CategoryGrid" Orientation="Horizontal" Spacing="2">
+          <Button Tag="resourcepack" Content="资源包" Classes="seg-item current" Click="PickCategoryChip" />
+          <Button Tag="mod" Content="模组" Classes="seg-item" Click="PickCategoryChip" />
+          <Button Tag="modpack" Content="整合包" Classes="seg-item" Click="PickCategoryChip" />
+          <Button Tag="shader" Content="光影" Classes="seg-item" Click="PickCategoryChip" />
+          <Button Tag="datapack" Content="数据包" Classes="seg-item" Click="PickCategoryChip" />
+          <Button Tag="world" Content="世界" Classes="seg-item" Click="PickCategoryChip" />
+        </StackPanel>
+      </Border>
+
+      <Grid ColumnDefinitions="*,126,126,Auto" ColumnSpacing="8">
+        <TextBox x:Name="QueryBox" PlaceholderText="搜索中英文资源名（如 Sodium、Iris、Create）…" KeyDown="SearchKey" AutomationProperties.Name="搜索资源" />
+        <ComboBox x:Name="KindPicker" IsVisible="False" SelectedIndex="0" SelectionChanged="KindChanged" AutomationProperties.Name="资源类型">
+          <ComboBoxItem Content="资源包" Tag="resourcepack" /><ComboBoxItem Content="光影" Tag="shader" />
+          <ComboBoxItem Content="模组" Tag="mod" /><ComboBoxItem Content="整合包" Tag="modpack" />
+          <ComboBoxItem Content="数据包" Tag="datapack" /><ComboBoxItem Content="世界" Tag="world" />
+        </ComboBox>
+        <ComboBox x:Name="SourcePicker" Grid.Column="1" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="SourceChanged" AutomationProperties.Name="资源来源">
+          <ComboBoxItem Content="Modrinth" Tag="modrinth" /><ComboBoxItem Content="CurseForge" Tag="curseforge" />
+        </ComboBox>
+        <ComboBox x:Name="OrderPicker" Grid.Column="2" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="OrderChanged" AutomationProperties.Name="资源排序">
+          <ComboBoxItem Content="综合推荐" Tag="relevance" /><ComboBoxItem Content="下载最多" Tag="downloads" />
+          <ComboBoxItem Content="最新发布" Tag="newest" /><ComboBoxItem Content="最近更新" Tag="updated" />
+        </ComboBox>
+        <Button Grid.Column="3" Content="搜索" Classes="accent" Click="SearchResources" />
+      </Grid>
+    </StackPanel>
+
+    <Grid Grid.Row="3">
+      <Grid x:Name="BrowsePanel" RowDefinitions="Auto,*">
+        <Grid ColumnDefinitions="*,Auto" Margin="2,0,0,8">
+          <TextBlock x:Name="ResultNotice" Text="" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+          <Button x:Name="DetailsButton" Grid.Column="1" Content="详情 ›" Classes="ghost" MinHeight="24" Padding="8,2" FontSize="12" Click="OpenProject" IsEnabled="False" IsVisible="{Binding #DetailsButton.IsEnabled}" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+          <Border Classes="inset-group" ClipToBounds="True" IsVisible="{Binding !#DiscoveryPanel.IsVisible}">
+            <ListBox x:Name="Results" Classes="rows" SelectionChanged="SelectProject" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="资源搜索结果">
+              <ListBox.ItemTemplate><DataTemplate>
+                <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="12">
+                  <local:ProjectPicture Source="{Binding Icon}" Width="42" Height="42" CornerRadius="9" VerticalAlignment="Center" />
+                  <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding PreviewSummary}" FontSize="12" Classes="muted" MaxLines="1" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                  <Button Grid.Column="2" Content="获取" Classes="soft" Click="OpenRowProject" VerticalAlignment="Center" MinHeight="28" Padding="14,3" FontSize="12" CornerRadius="99" />
+                </Grid>
+              </DataTemplate></ListBox.ItemTemplate>
+            </ListBox>
+          </Border>
+
+          <!-- 充实饱满的 2×4 VisionOS 冰晶玻璃精选展墙（单色极简、高信息量） -->
+          <ScrollViewer x:Name="DiscoveryPanel" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="12">
+              <TextBlock Text="社区精选专题（点击一键检索）" Classes="group-header" Margin="2,2,0,0" />
+              <UniformGrid Rows="2" Columns="4">
+                <Button Classes="glass-card" Tag="mod|Sodium" Click="QuickPresetSearch" Margin="0,0,10,10">
+                  <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto"><Border Classes="badge"><TextBlock Text="MOD" FontSize="10" Classes="muted" /></Border><icons:MaterialIcon Grid.Column="1" Kind="FlashOutline" Width="16" Height="16" Foreground="{DynamicResource HelL.InkSoft}" /></Grid>
+                    <TextBlock Text="Sodium · 钠" FontSize="14.5" FontWeight="SemiBold" />
+                    <TextBlock Text="现代 OpenGL 渲染管线重写，大幅提升帧率表现。" Classes="muted" FontSize="11.5" TextWrapping="Wrap" LineHeight="17" />
+                  </StackPanel>
+                </Button>
+                <Button Classes="glass-card" Tag="mod|Iris" Click="QuickPresetSearch" Margin="0,0,10,10">
+                  <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto"><Border Classes="badge"><TextBlock Text="MOD" FontSize="10" Classes="muted" /></Border><icons:MaterialIcon Grid.Column="1" Kind="CreationOutline" Width="16" Height="16" Foreground="{DynamicResource HelL.InkSoft}" /></Grid>
+                    <TextBlock Text="Iris Shaders" FontSize="14.5" FontWeight="SemiBold" />
+                    <TextBlock Text="与 Sodium 原生协同的新一代光影加载器。" Classes="muted" FontSize="11.5" TextWrapping="Wrap" LineHeight="17" />
+                  </StackPanel>
+                </Button>
+                <Button Classes="glass-card" Tag="shader|Complementary" Click="QuickPresetSearch" Margin="0,0,10,10">
+                  <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto"><Border Classes="badge"><TextBlock Text="SHADER" FontSize="10" Classes="muted" /></Border><icons:MaterialIcon Grid.Column="1" Kind="WhiteBalanceSunny" Width="16" Height="16" Foreground="{DynamicResource HelL.InkSoft}" /></Grid>
+                    <TextBlock Text="Complementary" FontSize="14.5" FontWeight="SemiBold" />
+                    <TextBlock Text="兼顾通透光感与高帧率表现的体积云水反光影。" Classes="muted" FontSize="11.5" TextWrapping="Wrap" LineHeight="17" />
+                  </StackPanel>
+                </Button>
+                <Button Classes="glass-card" Tag="mod|Create" Click="QuickPresetSearch" Margin="0,0,0,10">
+                  <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto"><Border Classes="badge"><TextBlock Text="MOD" FontSize="10" Classes="muted" /></Border><icons:MaterialIcon Grid.Column="1" Kind="CogSyncOutline" Width="16" Height="16" Foreground="{DynamicResource HelL.InkSoft}" /></Grid>
+                    <TextBlock Text="Create · 机械动力" FontSize="14.5" FontWeight="SemiBold" />
+                    <TextBlock Text="齿轮传动、流体管网与列车自动化工程体系。" Classes="muted" FontSize="11.5" TextWrapping="Wrap" LineHeight="17" />
+                  </StackPanel>
+                </Button>
+                <Button Classes="glass-card" Tag="mod|Lithium" Click="QuickPresetSearch" Margin="0,0,10,0">
+                  <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto"><Border Classes="badge"><TextBlock Text="MOD" FontSize="10" Classes="muted" /></Border><icons:MaterialIcon Grid.Column="1" Kind="Speedometer" Width="16" Height="16" Foreground="{DynamicResource HelL.InkSoft}" /></Grid>
+                    <TextBlock Text="Lithium · 锂" FontSize="14.5" FontWeight="SemiBold" />
+                    <TextBlock Text="不改变原版特性的物理、生物 AI 与区块刻优化。" Classes="muted" FontSize="11.5" TextWrapping="Wrap" LineHeight="17" />
+                  </StackPanel>
+                </Button>
+                <Button Classes="glass-card" Tag="mod|JEI" Click="QuickPresetSearch" Margin="0,0,10,0">
+                  <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto"><Border Classes="badge"><TextBlock Text="MOD" FontSize="10" Classes="muted" /></Border><icons:MaterialIcon Grid.Column="1" Kind="GridLarge" Width="15" Height="15" Foreground="{DynamicResource HelL.InkSoft}" /></Grid>
+                    <TextBlock Text="JEI 物品管理" FontSize="14.5" FontWeight="SemiBold" />
+                    <TextBlock Text="实时查询全部模组物品用途与合成配方。" Classes="muted" FontSize="11.5" TextWrapping="Wrap" LineHeight="17" />
+                  </StackPanel>
+                </Button>
+                <Button Classes="glass-card" Tag="resourcepack|Faithful" Click="QuickPresetSearch" Margin="0,0,10,0">
+                  <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto"><Border Classes="badge"><TextBlock Text="PACK" FontSize="10" Classes="muted" /></Border><icons:MaterialIcon Grid.Column="1" Kind="LayersTripleOutline" Width="16" Height="16" Foreground="{DynamicResource HelL.InkSoft}" /></Grid>
+                    <TextBlock Text="Faithful 32x" FontSize="14.5" FontWeight="SemiBold" />
+                    <TextBlock Text="保留原版神韵的双倍精细度经典材质包。" Classes="muted" FontSize="11.5" TextWrapping="Wrap" LineHeight="17" />
+                  </StackPanel>
+                </Button>
+                <Button Classes="glass-card" Tag="mod|" Click="QuickPresetSearch">
+                  <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto"><Border Classes="badge"><TextBlock Text="TOP" FontSize="10" Classes="muted" /></Border><icons:MaterialIcon Grid.Column="1" Kind="TrendingUp" Width="16" Height="16" Foreground="{DynamicResource HelL.InkSoft}" /></Grid>
+                    <TextBlock Text="热门下载总榜" FontSize="14.5" FontWeight="SemiBold" />
+                    <TextBlock Text="按社区总下载量浏览适配当前实例的热门作品。" Classes="muted" FontSize="11.5" TextWrapping="Wrap" LineHeight="17" />
+                  </StackPanel>
+                </Button>
+              </UniformGrid>
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
+      </Grid>
+
+      <Grid x:Name="DetailPanel" IsVisible="False" RowDefinitions="*,Auto">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <Border Classes="inset-group" Padding="24,20">
+            <StackPanel Spacing="14">
+              <Button Content="‹ 返回" Classes="ghost" Click="BackToResults" HorizontalAlignment="Left" Padding="8,3" />
+              <Grid ColumnDefinitions="60,*" ColumnSpacing="14">
+                <local:ProjectPicture x:Name="DetailPicture" Width="54" Height="54" CornerRadius="11" />
+                <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                  <TextBlock x:Name="ProjectTitle" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  <TextBlock x:Name="ProjectAuthor" FontSize="12" Classes="muted" TextWrapping="Wrap" />
+                </StackPanel>
+              </Grid>
+              <TextBlock x:Name="ProjectSummary" TextWrapping="Wrap" LineHeight="21" />
+              <Button x:Name="OriginalButton" Content="切换原文" Classes="ghost" Click="ToggleOriginal" HorizontalAlignment="Left" />
+              <Border Classes="tile" Padding="14,12">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="兼容文件" FontWeight="Medium" FontSize="12.5" />
+                  <ComboBox x:Name="ReleasePicker" HorizontalAlignment="Stretch" SelectionChanged="ReleaseChanged" PlaceholderText="正在获取版本…" AutomationProperties.Name="资源文件版本" />
+                  <TextBlock x:Name="ReleaseNotice" Classes="muted" FontSize="11.5" TextWrapping="Wrap" />
+                  <ComboBox x:Name="WorldPicker" IsVisible="False" HorizontalAlignment="Stretch" PlaceholderText="选择世界存档" SelectionChanged="ReleaseChanged" AutomationProperties.Name="数据包目标存档" />
+                  <TextBlock x:Name="InstallNotice" Classes="muted" FontSize="11.5" TextWrapping="Wrap" />
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </Border>
+        </ScrollViewer>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,12,0,0">
+          <Button x:Name="DownloadButton" Content="安装" Classes="accent" IsEnabled="False" Click="DownloadResource" />
+          <Button Content="刷新文件" Classes="soft" Click="RefreshReleases" />
+          <Button Content="项目主页" Classes="ghost" Click="OpenWebsite" />
+        </StackPanel>
+      </Grid>
+    </Grid>
+  </Grid>
+</UserControl>

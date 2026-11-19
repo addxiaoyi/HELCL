@@ -1,0 +1,97 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="HelL.Desktop.Views.SettingsAppearanceView">
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="44,10,44,32" Spacing="20" MaxWidth="720">
+      <TextBlock Text="外观与通透度" FontSize="22" FontWeight="SemiBold" Margin="2,0,0,0" />
+
+      <!-- 分组 1：色调与桌面亚克力磨砂通透度 -->
+      <StackPanel Spacing="8">
+        <TextBlock Text="视觉与磨砂材质" Classes="group-header" Margin="4,0" />
+        <Border Classes="inset-group">
+          <StackPanel>
+            <Border Classes="group-row">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="2" VerticalAlignment="Center">
+                  <TextBlock Text="界面色调" FontWeight="Medium" />
+                  <TextBlock Text="切换深色冰晶或浅色纸白层级" Classes="muted" FontSize="11.5" />
+                </StackPanel>
+                <Border Grid.Column="1" Classes="segmented" VerticalAlignment="Center">
+                  <StackPanel x:Name="ThemeCards" Orientation="Horizontal" Spacing="2">
+                    <Button Tag="dark" Content="深色" Classes="seg-item current" Click="PickThemeCard" />
+                    <Button Tag="light" Content="浅色" Classes="seg-item" Click="PickThemeCard" />
+                    <Button Tag="system" Content="跟随系统" Classes="seg-item" Click="PickThemeCard" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+            </Border>
+
+            <Border Classes="group-row-last">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="2" VerticalAlignment="Center">
+                  <TextBlock Text="窗口通透度" FontWeight="Medium" />
+                  <TextBlock Text="调节桌面壁纸透过 Acrylic 磨砂层的比例" Classes="muted" FontSize="11.5" />
+                </StackPanel>
+                <Border Grid.Column="1" Classes="segmented" VerticalAlignment="Center">
+                  <StackPanel x:Name="GlassCards" Orientation="Horizontal" Spacing="2">
+                    <Button Tag="ultra" Content="极透" Classes="seg-item" Click="PickGlassCard" />
+                    <Button Tag="standard" Content="标准冰晶" Classes="seg-item current" Click="PickGlassCard" />
+                    <Button Tag="deep" Content="深邃微透" Classes="seg-item" Click="PickGlassCard" />
+                    <Button Tag="solid" Content="实色" Classes="seg-item" Click="PickGlassCard" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+            </Border>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <!-- 分组 2：下载与网络 -->
+      <StackPanel Spacing="8">
+        <TextBlock Text="网络与下载" Classes="group-header" Margin="4,0" />
+        <Border Classes="inset-group">
+          <StackPanel>
+            <Border Classes="group-row">
+              <Grid ColumnDefinitions="130,*" ColumnSpacing="14">
+                <TextBlock Text="下载源" FontWeight="Medium" VerticalAlignment="Center" />
+                <ComboBox x:Name="MirrorCombo" Grid.Column="1" HorizontalAlignment="Stretch" SelectedIndex="0">
+                  <ComboBoxItem Content="自动（推荐）" Tag="auto" />
+                  <ComboBoxItem Content="BMCLAPI 镜像" Tag="bmclapi" />
+                  <ComboBoxItem Content="官方源直连" Tag="official" />
+                </ComboBox>
+              </Grid>
+            </Border>
+            <Border Classes="group-row-last">
+              <Grid ColumnDefinitions="130,*,Auto" ColumnSpacing="14">
+                <TextBlock Text="并发线程" FontWeight="Medium" VerticalAlignment="Center" />
+                <TextBox x:Name="ThreadsBox" Grid.Column="1" Width="96" HorizontalAlignment="Left" Text="32" MaxLength="2" />
+                <Button Grid.Column="2" Content="保存" Classes="soft" Click="SaveNetworkSettings" VerticalAlignment="Center" />
+              </Grid>
+            </Border>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <!-- 分组 3：存储与版本 -->
+      <StackPanel Spacing="8">
+        <TextBlock Text="存储" Classes="group-header" Margin="4,0" />
+        <Border Classes="inset-group">
+          <StackPanel>
+            <Border Classes="group-row">
+              <Grid ColumnDefinitions="130,*,Auto" ColumnSpacing="14">
+                <TextBlock Text="数据目录" FontWeight="Medium" VerticalAlignment="Center" />
+                <SelectableTextBlock x:Name="DataRootText" Grid.Column="1" Classes="muted" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" />
+                <Button Grid.Column="2" Content="打开" Classes="soft" Click="OpenDataRoot" VerticalAlignment="Center" />
+              </Grid>
+            </Border>
+            <Border Classes="group-row-last">
+              <Grid ColumnDefinitions="130,*" ColumnSpacing="14">
+                <TextBlock Text="版本" FontWeight="Medium" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="HelL 3.2 · Avalonia 12 · MIT" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
+              </Grid>
+            </Border>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

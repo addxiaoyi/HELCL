@@ -1,0 +1,72 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>annotations</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>HelL</AssemblyName>
+    <RootNamespace>HelL</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>HelL.ico</ApplicationIcon>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+
+    <Version>3.2.0</Version>
+    <Product>HelL 启动器</Product>
+    <AssemblyTitle>HelL 启动器</AssemblyTitle>
+    <Company>HelL</Company>
+    <!-- 反编译还原的代码会有大量风格类警告，这里不当成错误 -->
+    <NoWarn>$(NoWarn);CS0168;CS0219;CS0162;CS0649;CS0414;CS8981;CS8632</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../HelL.Contracts/HelL.Contracts.csproj" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <!-- 把依赖 DLL 打进单个 exe -->
+    <PackageReference Include="Costura.Fody" Version="6.0.0" PrivateAssets="all" />
+    <PackageReference Include="Fody" Version="6.9.2" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../HelL.WallpaperCapture/HelL.WallpaperCapture.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+  </ItemGroup>
+  <Target Name="EmbedWallpaperCapture" BeforeTargets="AssignTargetPaths" DependsOnTargets="ResolveProjectReferences">
+    <MSBuild Projects="../HelL.WallpaperCapture/HelL.WallpaperCapture.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="_WallpaperCaptureAssembly" />
+    </MSBuild>
+    <ItemGroup>
+      <EmbeddedResource Include="@(_WallpaperCaptureAssembly)" LogicalName="HelL.WallpaperCapture.dll" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <Resource Include="Resources\Brand\Helstera.png" />
+    <Resource Include="HelL.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 内置资源：词表与 AI 模型规则（CoreResources 以 HelL.Core.<路径> 读取） -->
+    <EmbeddedResource Include="..\..\tools\HelL.MinecraftMcp\package.json" LogicalName="HelL.Core.minecraft.package.json" />
+    <EmbeddedResource Include="..\..\tools\HelL.MinecraftMcp\package-lock.json" LogicalName="HelL.Core.minecraft.package-lock.json" />
+    <EmbeddedResource Include="..\..\tools\HelL.MinecraftMcp\dist\*.js" LogicalName="HelL.Core.minecraft.dist.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\tools\HelL.MinecraftMcp\dist\versions.json" LogicalName="HelL.Core.minecraft.dist.versions.json" />
+    <EmbeddedResource Include="Resources\locales\en.json" LogicalName="HelL.Core.locales.en.json" />
+    <EmbeddedResource Include="Resources\locales\zh_CN.json" LogicalName="HelL.Core.locales.zh_CN.json" />
+    <EmbeddedResource Include="Resources\ai\model_rules.json" LogicalName="HelL.Core.ai.model_rules.json" />
+    <EmbeddedResource Include="Resources\news\zh_CN.json" LogicalName="HelL.Core.news.zh_CN.json" />
+    <EmbeddedResource Include="Resources\catalog\names-zh.json" LogicalName="HelL.Core.catalog.names-zh.json" />
+  </ItemGroup>
+
+</Project>

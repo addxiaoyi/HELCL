@@ -1,0 +1,107 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="HelL.Desktop.Views.VersionInstallerView">
+  <Grid Margin="36,10,36,24" RowDefinitions="Auto,*">
+    <Grid ColumnDefinitions="*,Auto,Auto" Margin="2,0,0,14">
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+        <TextBlock Text="安装" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
+        <TextBlock x:Name="SubtitleText" IsVisible="False" />
+        <TextBlock x:Name="VersionCountLabel" Text="" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
+      </StackPanel>
+      <Button Grid.Column="1" Content="导入整合包…" Classes="soft" Click="ImportModpack" Margin="0,0,8,0" />
+      <Button x:Name="FetchButton" Grid.Column="2" Content="刷新清单" Classes="soft" Click="FetchManifest" />
+    </Grid>
+
+    <Grid Grid.Row="1" ColumnDefinitions="1.3*,*" ColumnSpacing="16">
+      <!-- 左侧：纯净版本列表（无方块贴图） -->
+      <Grid RowDefinitions="Auto,*">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,10">
+          <TextBox x:Name="SearchBox" PlaceholderText="筛选版本号（如 1.21.1）…" TextChanged="FilterVersions" AutomationProperties.Name="搜索 Minecraft 版本" />
+          <Border Grid.Column="1" Classes="segmented">
+            <StackPanel x:Name="ChannelTabs" Orientation="Horizontal" Spacing="2">
+              <Button Tag="release" Content="正式版" Classes="seg-item current" Click="SelectChannel" />
+              <Button Tag="snapshot" Content="快照" Classes="seg-item" Click="SelectChannel" />
+              <Button Tag="legacy" Content="远古" Classes="seg-item" Click="SelectChannel" />
+              <Button Tag="all" Content="全部" Classes="seg-item" Click="SelectChannel" />
+            </StackPanel>
+          </Border>
+        </Grid>
+
+        <Border Grid.Row="1" Classes="inset-group" ClipToBounds="True">
+          <Grid>
+            <ListBox x:Name="VersionList" Classes="rows" SelectionChanged="ChooseVersion" AutomationProperties.Name="Minecraft 版本列表">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel VerticalAlignment="Center" Spacing="1">
+                      <TextBlock Text="{Binding Id}" FontSize="13.5" FontWeight="Medium" />
+                      <TextBlock Text="{Binding ReleaseDate}" Classes="muted" FontSize="11.5" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding TypeLabel}" Classes="muted" FontSize="11.5" VerticalAlignment="Center" />
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6" Margin="16">
+              <TextBlock x:Name="EmptyText" Text="暂无匹配版本" Classes="muted" FontSize="12.5" TextAlignment="Center" MaxWidth="260" TextWrapping="Wrap" />
+              <UniformGrid x:Name="PresetGrid" IsVisible="False" />
+            </StackPanel>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- 右侧：macOS Inset Grouped 安装面单 -->
+      <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="14">
+          <Border Classes="inset-group">
+            <StackPanel>
+              <Border Classes="group-row">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="目标实例" Classes="group-header" />
+                  <ComboBox x:Name="InstancePicker" HorizontalAlignment="Stretch" PlaceholderText="请先创建实例" SelectionChanged="TargetInstanceChanged" />
+                </StackPanel>
+              </Border>
+
+              <Border Classes="group-row">
+                <StackPanel Spacing="3">
+                  <TextBlock Text="所选版本" Classes="group-header" />
+                  <TextBlock x:Name="SelectedVersionLabel" Text="未选择版本" FontSize="14" FontWeight="Medium" />
+                  <TextBlock x:Name="SelectedVersionHint" Text="" Classes="muted" FontSize="11.5" />
+                </StackPanel>
+              </Border>
+
+              <Border Classes="group-row">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="模组加载器" Classes="group-header" />
+                  <ComboBox x:Name="LoaderCombo" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="LoaderKindChanged">
+                    <ComboBoxItem Content="原版（无加载器）" Tag="none" />
+                    <ComboBoxItem Content="Fabric" Tag="fabric" />
+                    <ComboBoxItem Content="NeoForge" Tag="neoforge" />
+                    <ComboBoxItem Content="Forge" Tag="forge" />
+                    <ComboBoxItem Content="Quilt" Tag="quilt" />
+                    <ComboBoxItem Content="OptiFine" Tag="optifine" />
+                    <ComboBoxItem Content="LiteLoader" Tag="liteloader" />
+                  </ComboBox>
+
+                  <StackPanel x:Name="LoaderBuildSection" Spacing="6" IsVisible="False">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Text="构建版本" Classes="muted" FontSize="11.5" VerticalAlignment="Center" />
+                      <Button x:Name="FetchLoaderButton" Grid.Column="1" Content="刷新" Classes="ghost" MinHeight="24" Padding="6,2" FontSize="11.5" Click="FetchLoaderBuilds" />
+                    </Grid>
+                    <ComboBox x:Name="LoaderBuildCombo" HorizontalAlignment="Stretch" PlaceholderText="选择加载器版本" SelectionChanged="LoaderBuildChanged" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              <Border Classes="group-row-last">
+                <StackPanel Spacing="10">
+                  <TextBlock x:Name="InstallHintText" Text="已下载的核心与依赖文件会自动复用。" Classes="muted" FontSize="11.5" TextWrapping="Wrap" />
+                  <Button x:Name="StartInstallButton" Content="安装到实例" Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" IsEnabled="False" Click="StartInstall" />
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</UserControl>

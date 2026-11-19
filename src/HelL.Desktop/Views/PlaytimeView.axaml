@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="HelL.Desktop.Views.PlaytimeView">
+  <Grid Margin="48,10,48,24" RowDefinitions="Auto,Auto,*" MaxWidth="740">
+    <Grid ColumnDefinitions="*,Auto" Margin="2,0,0,16">
+      <TextBlock Text="游玩统计" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
+      <Button Grid.Column="1" Content="刷新" Classes="soft" Click="RefreshStats" />
+    </Grid>
+
+    <!-- 纯净黑白灰指标概览单（无彩色底框） -->
+    <Border Grid.Row="1" Classes="inset-group" Padding="22,16" Margin="0,0,0,18">
+      <Grid ColumnDefinitions="*,1,*,1,*" ColumnSpacing="20">
+        <StackPanel Spacing="4">
+          <TextBlock Text="累计时长" Classes="group-header" />
+          <TextBlock x:Name="TotalDurationLabel" Text="0 分钟" FontSize="22" FontWeight="SemiBold" />
+        </StackPanel>
+        <Border Grid.Column="1" Background="{DynamicResource HelL.Line}" />
+        <StackPanel Grid.Column="2" Spacing="4">
+          <TextBlock Text="活跃实例" Classes="group-header" />
+          <TextBlock x:Name="InstanceCountLabel" Text="0 个实例" FontSize="22" FontWeight="SemiBold" />
+        </StackPanel>
+        <Border Grid.Column="3" Background="{DynamicResource HelL.Line}" />
+        <StackPanel Grid.Column="4" Spacing="4">
+          <TextBlock Text="启动场次" Classes="group-header" />
+          <TextBlock x:Name="SessionCountLabel" Text="0 场" FontSize="22" FontWeight="SemiBold" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Border Grid.Row="2" Classes="inset-group" ClipToBounds="True">
+      <Grid>
+        <ListBox x:Name="RankList" Classes="rows" AutomationProperties.Name="各实例游玩时长列表">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <Grid ColumnDefinitions="28,*" ColumnSpacing="10">
+                <TextBlock Text="{Binding RankLabel}" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Spacing="6">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding InstanceName}" FontSize="13.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="1" Text="{Binding DurationText}" FontSize="13" FontWeight="Medium" />
+                  </Grid>
+                  <ProgressBar MinWidth="0" Minimum="0" Maximum="100" Value="{Binding SharePercent}" Height="3" />
+                  <TextBlock Text="{Binding SubDetail}" Classes="muted" FontSize="11.5" />
+                </StackPanel>
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+        <StackPanel x:Name="EmptyStats" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+          <TextBlock Text="暂无游玩记录" FontSize="15" FontWeight="Medium" HorizontalAlignment="Center" />
+          <TextBlock Text="启动并退出游戏后会自动统计时长" Classes="muted" FontSize="12.5" HorizontalAlignment="Center" />
+        </StackPanel>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

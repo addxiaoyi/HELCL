@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 单元测试：直接引用启动器程序集，只测不依赖界面的逻辑，Windows 和 Linux 都能跑 -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <NoWarn>$(NoWarn);NU1702;MSB3277</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+    <!-- CI 上把失败的测试显示成 GitHub 注解 -->
+    <PackageReference Include="GitHubActionsTestLogger" Version="2.4.1" PrivateAssets="all" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\HelL\HelL.csproj" SetTargetFramework="TargetFramework=net48" SkipGetTargetFrameworkProperties="true" ReferenceOutputAssembly="true" Private="true" />
+  </ItemGroup>
+
+  <Target Name="CopyLocalSystemTextJson" AfterTargets="Build" Condition="'$(TargetFramework)' == 'net8.0'">
+    <Copy SourceFiles="$(NuGetPackageRoot)\system.text.json\8.0.5\lib\net8.0\System.Text.Json.dll"
+          DestinationFolder="$(TargetDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="RemoveTestHostExe" AfterTargets="Build">
+    <Delete Files="$(TargetDir)testhost.exe" Condition="Exists('$(TargetDir)testhost.exe')" />
+  </Target>
+
+</Project>

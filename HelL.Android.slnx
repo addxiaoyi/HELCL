@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HelL.Contracts/HelL.Contracts.csproj" />
+    <Project Path="src/HelL.Core/HelL.Core.csproj" />
+    <Project Path="src/HelL.Mobile/HelL.Mobile.csproj" />
+    <Project Path="src/HelL.Android/HelL.Android.csproj" />
+  </Folder>
+</Solution>

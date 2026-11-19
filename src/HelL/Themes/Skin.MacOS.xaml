@@ -1,0 +1,24 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:system="clr-namespace:System;assembly=mscorlib">
+  <!-- Windows Acrylic with a macOS-inspired palette; the outer window shape belongs to DWM. -->
+  <system:Double x:Key="S.Radius">0</system:Double>
+  <system:Double x:Key="S.Frame">0</system:Double>
+  <system:Double x:Key="S.Gap">0</system:Double>
+  <system:Double x:Key="S.DockInset">0</system:Double>
+  <system:Double x:Key="S.Tint">34</system:Double>
+  <system:Double x:Key="S.CardAlpha">0.58</system:Double>
+  <system:Double x:Key="S.SideAlpha">0.68</system:Double>
+  <system:Double x:Key="S.ChromeAlpha">0.69</system:Double>
+  <system:Double x:Key="S.PopupAlpha">0.82</system:Double>
+  <system:Double x:Key="S.WallDimLight">0</system:Double>
+  <system:Double x:Key="S.WallDimDark">0.22</system:Double>
+  <system:String x:Key="S.Acrylic">0</system:String>
+  <system:String x:Key="S.Caption">dot</system:String>
+  <system:String x:Key="S.Nav">capsule</system:String>
+  <system:String x:Key="S.NavIcon">1</system:String>
+  <system:String x:Key="S.Fly">0</system:String>
+  <system:Double x:Key="S.PadX">14</system:Double>
+  <system:Double x:Key="S.Rest">2</system:Double>
+  <system:Double x:Key="S.Lead">30</system:Double>
+  <system:Double x:Key="S.Tab">0</system:Double>
+  <system:Double x:Key="S.FrostRound">30</system:Double>
+</ResourceDictionary>

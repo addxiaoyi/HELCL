@@ -1,0 +1,59 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="HelL.Desktop.Views.TasksView">
+  <Grid Margin="48,10,48,24" RowDefinitions="Auto,Auto,*,Auto" MaxWidth="760">
+    <StackPanel Orientation="Horizontal" Spacing="10" Margin="2,0,0,14">
+      <TextBlock Text="任务队列" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
+      <TextBlock x:Name="CountLabel" Text="暂无任务" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
+    </StackPanel>
+
+    <Grid Grid.Row="1" ColumnDefinitions="*,140" ColumnSpacing="8" Margin="0,0,0,14">
+      <TextBox x:Name="SearchBox" PlaceholderText="筛选任务…" AutomationProperties.Name="搜索任务" />
+      <ComboBox x:Name="StatePicker" Grid.Column="1" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="FilterTasks" AutomationProperties.Name="任务状态">
+        <ComboBoxItem Content="全部" Tag="all" />
+        <ComboBoxItem Content="进行中" Tag="active" />
+        <ComboBoxItem Content="失败" Tag="failed" />
+        <ComboBoxItem Content="已完成" Tag="completed" />
+        <ComboBoxItem Content="已取消" Tag="cancelled" />
+      </ComboBox>
+    </Grid>
+
+    <Grid Grid.Row="2" RowDefinitions="*,Auto" RowSpacing="12">
+      <Border Classes="inset-group" ClipToBounds="True">
+        <Grid>
+          <ListBox x:Name="TaskList" Classes="rows" SelectionChanged="ChooseTask" AutomationProperties.Name="本次会话任务列表">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+                  <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                  <Border Grid.Column="1" Background="{Binding BadgeBackground}" CornerRadius="6" Padding="7,1.5" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding StateLabel}" FontSize="11" Foreground="{Binding BadgeForeground}" />
+                  </Border>
+                  <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                    <TextBlock Text="{Binding Message}" Classes="muted" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="1" Text="{Binding StartedLabel}" Classes="muted" FontSize="11" Margin="10,0,0,0" />
+                  </Grid>
+                  <ProgressBar Grid.Row="2" Grid.ColumnSpan="2" MinWidth="0" HorizontalAlignment="Stretch" Height="2.5" Margin="0,6,0,0" IsVisible="{Binding IsActive}" IsIndeterminate="{Binding Indeterminate}" Value="{Binding Percent}" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock x:Name="EmptyNotice" Text="当前会话暂无任务记录" Classes="muted" FontSize="12.5" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Grid>
+      </Border>
+
+      <Border Grid.Row="1" Classes="inset-group" Padding="16,13" MaxHeight="156">
+        <Grid RowDefinitions="Auto,*">
+          <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+            <TextBlock x:Name="DetailTitle" Text="任务详情" FontSize="13" FontWeight="Medium" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+            <Button x:Name="CancelButton" Grid.Column="1" Content="取消任务" Classes="soft" MinHeight="26" Padding="10,2" FontSize="11.5" Click="CancelSelected" IsVisible="False" AutomationProperties.Name="取消所选任务" />
+          </Grid>
+          <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+            <SelectableTextBlock x:Name="LogText" Text="选择上方任务查看执行日志。" Classes="muted" FontSize="11.5" TextWrapping="Wrap" LineHeight="18" />
+          </ScrollViewer>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <TextBlock Grid.Row="3" Text="" IsVisible="False" />
+  </Grid>
+</UserControl>

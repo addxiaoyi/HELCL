@@ -1,0 +1,343 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:HelL.Desktop.Controls">
+  <Style Selector="controls|ProjectPicture">
+    <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
+  </Style>
+  <Style Selector="Window">
+    <Setter Property="FontSize" Value="13.5" />
+    <Setter Property="FontFamily" Value="-apple-system, SF Pro Display, SF Pro Text, Segoe UI Variable Display, PingFang SC, Microsoft YaHei UI, Noto Sans CJK SC" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+  </Style>
+
+  <!-- VisionOS / macOS 通透毛玻璃按钮 -->
+  <Style Selector="Button">
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="CornerRadius" Value="8.5" />
+    <Setter Property="Padding" Value="13,5" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.Hover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.BadgeBorder}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+  </Style>
+  <Style Selector="Button:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.SubtleLine}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Muted}" />
+    <Setter Property="Opacity" Value="0.55" />
+  </Style>
+  <Style Selector="Button:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.Accent}" />
+    <Setter Property="BorderThickness" Value="1.5" />
+  </Style>
+
+  <!-- 高光瓷白 / 曜石胶囊主按钮 -->
+  <Style Selector="Button.accent">
+    <Setter Property="Background" Value="{DynamicResource HelL.AccentStrong}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.OnAccent}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="CornerRadius" Value="99" />
+    <Setter Property="Padding" Value="20,6" />
+  </Style>
+  <Style Selector="Button.accent /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.AccentStrong}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.OnAccent}" />
+  </Style>
+  <Style Selector="Button.accent TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource HelL.OnAccent}" />
+  </Style>
+  <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.AccentHover}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.OnAccent}" />
+  </Style>
+  <Style Selector="Button.accent:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.AccentPressed}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.OnAccent}" />
+  </Style>
+  <Style Selector="Button.accent:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Muted}" />
+    <Setter Property="Opacity" Value="0.7" />
+  </Style>
+
+  <Style Selector="Button.soft">
+    <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8.5" />
+    <Setter Property="FontWeight" Value="Medium" />
+  </Style>
+  <Style Selector="Button.soft:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.Hover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.BadgeBorder}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+  </Style>
+
+  <!-- 悬浮冰晶指标/快捷玻璃卡按钮 -->
+  <Style Selector="Button.glass-card">
+    <Setter Property="Background" Value="{DynamicResource HelL.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="13" />
+    <Setter Property="Padding" Value="15,13" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="RenderTransform" Value="scale(1)" />
+  </Style>
+  <Style Selector="Button.glass-card:pointerover">
+    <Setter Property="RenderTransform" Value="scale(1.016)" />
+  </Style>
+  <Style Selector="Button.glass-card:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.Hover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.BadgeBorder}" />
+  </Style>
+
+  <Style Selector="Button.ghost">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Muted}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="10,5" />
+  </Style>
+  <Style Selector="Button.ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.Selection}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+  </Style>
+
+  <Style Selector="Button.icon-btn">
+    <Setter Property="Width" Value="30" />
+    <Setter Property="Height" Value="30" />
+    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CornerRadius" Value="7" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Muted}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.icon-btn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.Selection}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+  </Style>
+
+  <Style Selector="Button.caption">
+    <Setter Property="Width" Value="36" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="MinHeight" Value="28" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Muted}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.caption:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.Selection}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+  </Style>
+  <Style Selector="Button.caption.close:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#FF453A" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+  </Style>
+
+  <!-- 全透侧边栏导航项 -->
+  <Style Selector="Button.nav">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Muted}" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="Padding" Value="10,5" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{TemplateBinding CornerRadius}">
+          <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Padding="{TemplateBinding Padding}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="Button.nav:pointerover">
+    <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+  </Style>
+  <Style Selector="Button.nav.current">
+    <Setter Property="Background" Value="{DynamicResource HelL.Selection}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+    <Setter Property="FontWeight" Value="Medium" />
+  </Style>
+
+  <!-- macOS Segmented Control -->
+  <Style Selector="Border.segmented">
+    <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
+    <Setter Property="CornerRadius" Value="9" />
+    <Setter Property="Padding" Value="2.5" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="Button.seg-item, Button.pill-tab">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="6.5" />
+    <Setter Property="MinHeight" Value="26" />
+    <Setter Property="Padding" Value="13,4" />
+    <Setter Property="FontSize" Value="12.5" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Muted}" />
+  </Style>
+  <Style Selector="Button.seg-item:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.pill-tab:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+  </Style>
+  <Style Selector="Button.seg-item.current, Button.pill-tab.current">
+    <Setter Property="Background" Value="{DynamicResource HelL.SurfaceRaised}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+    <Setter Property="FontWeight" Value="Medium" />
+  </Style>
+  <Style Selector="Button.seg-item.current /template/ ContentPresenter#PART_ContentPresenter, Button.pill-tab.current /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.SurfaceRaised}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+  </Style>
+
+  <Style Selector="Button.tag-chip">
+    <Setter Property="Background" Value="{DynamicResource HelL.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="99" />
+    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="Padding" Value="14,4" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.InkSoft}" />
+  </Style>
+  <Style Selector="Button.tag-chip:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.Hover}" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+  </Style>
+
+  <Style Selector="TextBox">
+    <Setter Property="MinHeight" Value="34" />
+    <Setter Property="CornerRadius" Value="8.5" />
+    <Setter Property="Padding" Value="11,6" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+  </Style>
+  <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.BadgeBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="ComboBox">
+    <Setter Property="MinHeight" Value="34" />
+    <Setter Property="CornerRadius" Value="8.5" />
+    <Setter Property="Padding" Value="11,5" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+  </Style>
+
+  <Style Selector="TextBlock.muted, SelectableTextBlock.muted"><Setter Property="Foreground" Value="{DynamicResource HelL.Muted}" /></Style>
+  <Style Selector="TextBlock.section"><Setter Property="FontSize" Value="13.5" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+  <Style Selector="TextBlock.group-header"><Setter Property="FontSize" Value="11.5" /><Setter Property="FontWeight" Value="Medium" /><Setter Property="Foreground" Value="{DynamicResource HelL.Muted}" /></Style>
+  <Style Selector="TextBlock.error"><Setter Property="Foreground" Value="{DynamicResource HelL.Error}" /></Style>
+  <Style Selector="TextBox.invalid"><Setter Property="BorderBrush" Value="{DynamicResource HelL.Error}" /><Setter Property="BorderThickness" Value="1" /></Style>
+
+  <!-- VisionOS / macOS 磨砂玻璃面单（1px 高光斜折射边框 + 柔和阴影） -->
+  <Style Selector="Border.surface, Border.inset-group">
+    <Setter Property="Background" Value="{DynamicResource HelL.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="BoxShadow" Value="0 8 28 0 #1C000000" />
+  </Style>
+  <Style Selector="Border.group-row">
+    <Setter Property="Padding" Value="16,12" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+  <Style Selector="Border.group-row-last">
+    <Setter Property="Padding" Value="16,12" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="Border.tile">
+    <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+  </Style>
+  <Style Selector="Border.badge">
+    <Setter Property="Background" Value="{DynamicResource HelL.Selection}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="99" />
+    <Setter Property="Padding" Value="8,1.5" />
+  </Style>
+
+  <Style Selector="ListBox"><Setter Property="BorderThickness" Value="0" /><Setter Property="Padding" Value="0" /><Setter Property="Background" Value="Transparent" /></Style>
+  <Style Selector="ListBoxItem"><Setter Property="CornerRadius" Value="8" /><Setter Property="Padding" Value="10,7" /><Setter Property="Margin" Value="0,1" /></Style>
+  <Style Selector="ListBox.rows > ListBoxItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Padding" Value="16,11" />
+    <Setter Property="Margin" Value="0" />
+  </Style>
+  <Style Selector="ListBox.rows > ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.Selection}" />
+    <Setter Property="CornerRadius" Value="8" />
+  </Style>
+  <Style Selector="ListBox.rows > ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.Selection}" />
+    <Setter Property="CornerRadius" Value="8" />
+  </Style>
+  <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{DynamicResource HelL.Selection}" /></Style>
+  <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="Background" Value="{DynamicResource HelL.Selection}" /></Style>
+
+  <Style Selector="ProgressBar, ProgressBar:horizontal">
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
+    <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
+    <Setter Property="CornerRadius" Value="2" />
+  </Style>
+  <Style Selector="ScrollBar"><Setter Property="AllowAutoHide" Value="True" /></Style>
+  <Style Selector="ScrollBar:vertical"><Setter Property="Width" Value="6" /></Style>
+  <Style Selector="ScrollBar /template/ Thumb"><Setter Property="Background" Value="{DynamicResource HelL.ScrollThumb}" /><Setter Property="CornerRadius" Value="99" /></Style>
+  <Style Selector="ContextMenu">
+    <Setter Property="Background" Value="{DynamicResource HelL.ComboBoxDropDownBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="5" />
+  </Style>
+  <Style Selector="MenuItem"><Setter Property="CornerRadius" Value="6" /><Setter Property="Padding" Value="10,6" /><Setter Property="FontSize" Value="12.5" /></Style>
+</Styles>

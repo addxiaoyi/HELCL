@@ -1,0 +1,21 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:system="clr-namespace:System;assembly=mscorlib">
+  <!-- Win11 皮肤：只声明和"默认值"不同的字段。缺省值见 GlassSkin 的属性初始化器。 -->
+  <system:Double x:Key="S.Radius">18</system:Double>
+  <system:Double x:Key="S.Tint">62</system:Double>
+  <system:Double x:Key="S.CardAlpha">0.68</system:Double>
+  <system:Double x:Key="S.SideAlpha">0.56</system:Double>
+  <system:Double x:Key="S.ChromeAlpha">0.82</system:Double>
+  <system:Double x:Key="S.PopupAlpha">0.92</system:Double>
+  <system:Double x:Key="S.WallDimLight">0.1</system:Double>
+  <system:Double x:Key="S.WallDimDark">0.16</system:Double>
+  <system:String x:Key="S.Acrylic">1</system:String>
+  <system:String x:Key="S.Caption">bar</system:String>
+  <system:String x:Key="S.Nav">bar</system:String>
+  <system:String x:Key="S.NavIcon">0</system:String>
+  <system:String x:Key="S.Fly">1</system:String>
+  <system:Double x:Key="S.PadX">8</system:Double>
+  <system:Double x:Key="S.Rest">4</system:Double>
+  <system:Double x:Key="S.Lead">14</system:Double>
+  <system:Double x:Key="S.Tab">0</system:Double>
+  <system:Double x:Key="S.FrostRound">30</system:Double>
+</ResourceDictionary>

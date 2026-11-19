@@ -1,0 +1,89 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="HelL.Desktop.Views.ServersView">
+  <Grid Margin="36,10,36,24" RowDefinitions="Auto,*">
+    <Grid ColumnDefinitions="*,Auto,Auto" Margin="2,0,0,14">
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+        <TextBlock Text="多人联机" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
+        <TextBlock x:Name="SubtitleText" IsVisible="False" />
+        <TextBlock x:Name="ServerCountBadge" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
+      </StackPanel>
+      <Button Grid.Column="1" Content="测速" Classes="soft" Click="PingServers" Margin="0,0,8,0" />
+      <Button Grid.Column="2" Content="刷新" Classes="soft" Click="RefreshServers" />
+    </Grid>
+
+    <Grid Grid.Row="1" ColumnDefinitions="1.3*,*" ColumnSpacing="16">
+      <Border Classes="inset-group" ClipToBounds="True">
+        <Grid>
+          <ListBox x:Name="ServerList" Classes="rows" AutomationProperties.Name="已保存服务器列表">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="8">
+                  <StackPanel VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding AddressLabel}" Classes="muted" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                  <TextBlock Grid.Column="1" Text="{Binding PingText}" Classes="muted" FontSize="11.5" VerticalAlignment="Center" Margin="0,0,4,0" />
+                  <Button Grid.Column="2" Content="复制" Classes="ghost" Tag="{Binding FullAddress}" Click="CopyServerAddress" MinHeight="27" Padding="8,3" FontSize="12" VerticalAlignment="Center" />
+                  <Button Grid.Column="3" Content="直连" Classes="soft" Tag="{Binding FullAddress}" Click="ConnectServer" MinHeight="27" Padding="11,3" FontSize="12" VerticalAlignment="Center" />
+                  <Button Grid.Column="4" Classes="icon-btn" ToolTip.Tip="删除" Tag="{Binding Index}" Click="RemoveServer" VerticalAlignment="Center">
+                    <icons:MaterialIcon Kind="TrashCanOutline" Width="15" Height="15" />
+                  </Button>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <StackPanel x:Name="EmptyServers" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <TextBlock Text="暂无收藏服务器" FontSize="15" FontWeight="Medium" HorizontalAlignment="Center" />
+            <TextBlock Text="添加后会同步写入当前实例的 servers.dat" Classes="muted" FontSize="12.5" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="14">
+          <Border Classes="inset-group">
+            <StackPanel>
+              <Border Classes="group-row">
+                <StackPanel Spacing="5">
+                  <TextBlock Text="名称" Classes="group-header" />
+                  <TextBox x:Name="ServerNameInput" PlaceholderText="好友生存服" MaxLength="64" />
+                </StackPanel>
+              </Border>
+              <Border Classes="group-row">
+                <StackPanel Spacing="5">
+                  <TextBlock Text="地址" Classes="group-header" />
+                  <TextBox x:Name="ServerHostInput" PlaceholderText="mc.example.com:25565" MaxLength="128" />
+                </StackPanel>
+              </Border>
+              <Border Classes="group-row-last">
+                <StackPanel Spacing="10">
+                  <StackPanel Spacing="5">
+                    <TextBlock Text="备注" Classes="group-header" />
+                    <TextBox x:Name="ServerNoteInput" PlaceholderText="可选" MaxLength="96" />
+                  </StackPanel>
+                  <Button Content="保存服务器" Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="AddServer" />
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="inset-group" Padding="16,14">
+            <StackPanel Spacing="8">
+              <TextBlock Text="局域网地址" Classes="group-header" />
+              <TextBlock x:Name="LanGuideText" Classes="muted" FontSize="12" TextWrapping="Wrap" LineHeight="18" />
+              <ItemsControl x:Name="LocalIpItems">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Button Content="{Binding}" Classes="tag-chip" Tag="{Binding}" Click="CopyServerAddress" Margin="0,0,6,6" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</UserControl>

@@ -1,0 +1,99 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:local="using:HelL.Desktop.Controls"
+             x:Class="HelL.Desktop.Views.SavesManagerView">
+  <Grid Margin="36,10,36,24" RowDefinitions="Auto,Auto,*">
+    <Grid ColumnDefinitions="*,Auto,Auto" Margin="2,0,0,14">
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+        <TextBlock Text="存档与日志" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
+        <TextBlock x:Name="SubtitleText" IsVisible="False" />
+        <TextBlock x:Name="CountBadge" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
+      </StackPanel>
+      <Button Grid.Column="1" Content="打开存档目录" Classes="soft" Click="OpenSavesFolder" Margin="0,0,8,0" />
+      <Button Grid.Column="2" Content="刷新" Classes="soft" Click="RefreshCurrent" />
+    </Grid>
+
+    <Border Grid.Row="1" Classes="segmented" HorizontalAlignment="Left" Margin="0,0,0,14">
+      <StackPanel x:Name="SectionTabs" Orientation="Horizontal" Spacing="2">
+        <Button Tag="worlds" Content="世界存档" Classes="seg-item current" Click="SwitchTab" />
+        <Button Tag="backups" Content="备份归档" Classes="seg-item" Click="SwitchTab" />
+        <Button Tag="logs" Content="运行日志" Classes="seg-item" Click="SwitchTab" />
+      </StackPanel>
+    </Border>
+
+    <Grid Grid.Row="2">
+      <!-- 世界存档列表 -->
+      <Border x:Name="WorldsPanel" Classes="inset-group" ClipToBounds="True">
+        <Grid>
+          <ListBox x:Name="WorldsList" Classes="rows" AutomationProperties.Name="世界存档列表">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="40,*,Auto,Auto,Auto" ColumnSpacing="12">
+                  <Grid Width="36" Height="36">
+                    <Border CornerRadius="8" Background="{DynamicResource HelL.Field}">
+                      <icons:MaterialIcon Kind="Earth" Width="16" Height="16" Foreground="{DynamicResource HelL.Muted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <local:ProjectPicture Source="{Binding IconPath}" Width="36" Height="36" CornerRadius="8" IsVisible="{Binding IconPath.Length}" />
+                  </Grid>
+                  <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Meta}" Classes="muted" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                  <Button Grid.Column="2" Content="备份" Classes="soft" Tag="{Binding Name}" Click="BackupWorldRow" MinHeight="27" Padding="11,3" FontSize="12" VerticalAlignment="Center" />
+                  <Button Grid.Column="3" Content="打开" Classes="ghost" Tag="{Binding FolderPath}" Click="OpenRowFolder" MinHeight="27" Padding="9,3" FontSize="12" VerticalAlignment="Center" />
+                  <Button Grid.Column="4" Classes="icon-btn" ToolTip.Tip="删除" Tag="{Binding Name}" Click="DeleteWorldRow" VerticalAlignment="Center">
+                    <icons:MaterialIcon Kind="TrashCanOutline" Width="15" Height="15" />
+                  </Button>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <StackPanel x:Name="WorldsEmpty" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <TextBlock Text="暂无世界存档" FontSize="15" FontWeight="Medium" HorizontalAlignment="Center" />
+            <TextBlock Text="单人游戏创建的世界会自动显示在此处" Classes="muted" FontSize="12.5" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- 备份归档列表 -->
+      <Border x:Name="BackupsPanel" Classes="inset-group" ClipToBounds="True" IsVisible="False">
+        <Grid>
+          <ListBox x:Name="BackupsList" Classes="rows" AutomationProperties.Name="存档备份列表">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                  <StackPanel VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Text="{Binding BackupName}" FontSize="13.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                  <Button Grid.Column="1" Content="还原" Classes="soft" Tag="{Binding BackupName}" Click="RestoreBackupRow" MinHeight="27" Padding="11,3" FontSize="12" VerticalAlignment="Center" />
+                  <Button Grid.Column="2" Classes="icon-btn" ToolTip.Tip="删除" Tag="{Binding BackupName}" Click="DeleteBackupRow" VerticalAlignment="Center">
+                    <icons:MaterialIcon Kind="TrashCanOutline" Width="15" Height="15" />
+                  </Button>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <StackPanel x:Name="BackupsEmpty" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <TextBlock Text="暂无备份" FontSize="15" FontWeight="Medium" HorizontalAlignment="Center" />
+            <TextBlock Text="在「世界存档」点击「备份」即可创建快照" Classes="muted" FontSize="12.5" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- 日志查看器 -->
+      <Grid x:Name="LogsPanel" IsVisible="False" RowDefinitions="Auto,*" RowSpacing="10">
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+          <ComboBox x:Name="LogFilePicker" HorizontalAlignment="Stretch" PlaceholderText="暂无日志或崩溃报告" SelectionChanged="ChooseLogFile" />
+          <Button Grid.Column="1" Content="复制" Classes="soft" Click="CopyLogOutput" />
+          <Button x:Name="DiagnoseLogButton" Grid.Column="2" Content="交给助手分析" Classes="accent" Click="SendLogToAi" IsEnabled="False" />
+        </Grid>
+        <Border Grid.Row="1" Classes="inset-group" Padding="16,14">
+          <ScrollViewer HorizontalScrollBarVisibility="Auto">
+            <SelectableTextBlock x:Name="LogViewer" FontFamily="SF Mono, Cascadia Mono, Consolas, monospace" FontSize="12" LineHeight="19" Classes="muted" Text="选择日志文件查看输出。" TextWrapping="Wrap" />
+          </ScrollViewer>
+        </Border>
+      </Grid>
+    </Grid>
+  </Grid>
+</UserControl>

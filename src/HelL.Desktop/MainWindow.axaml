@@ -1,0 +1,492 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:portable="using:HelL.Portable"
+        xmlns:views="using:HelL.Desktop.Views"
+        xmlns:controls="using:HelL.Desktop.Controls"
+        xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        x:Class="HelL.Desktop.MainWindow"
+        Title="HelL" Width="1180" Height="760" MinWidth="800" MinHeight="600"
+        WindowDecorations="BorderOnly"
+        TransparencyLevelHint="AcrylicBlur, Blur, Mica, Transparent"
+        Background="Transparent" UseLayoutRounding="True">
+  <Border x:Name="WindowShell" Background="{DynamicResource HelL.Window}" BorderBrush="{DynamicResource HelL.GlassBorder}" BorderThickness="1">
+    <Grid>
+      <!-- 斜向冰晶漫反射光层 -->
+      <Border Background="{DynamicResource HelL.BackdropMesh}" IsHitTestVisible="False" />
+
+      <Grid ColumnDefinitions="208,*">
+        <!-- 左侧全高半透明磨砂侧边栏 -->
+        <Border Grid.Column="0" Background="{DynamicResource HelL.Chrome}" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="0,0,1,0" Padding="11,10,11,12">
+          <Grid RowDefinitions="Auto,*,Auto,Auto">
+            <!-- 极简几何品牌标识（支持拖拽） -->
+            <Border Background="Transparent" Padding="6,4,6,10" PointerPressed="BeginTitleBarDrag" DoubleTapped="ToggleMaximizeTitleBar">
+              <Grid ColumnDefinitions="Auto,*,Auto" IsHitTestVisible="False">
+                <Border Width="22" Height="22" CornerRadius="6" Background="{DynamicResource HelL.Ink}">
+                  <TextBlock Text="H" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource HelL.OnAccent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Grid.Column="1" Text="HelL" FontSize="14.5" FontWeight="SemiBold" Margin="9,0,0,0" VerticalAlignment="Center" />
+                <Border Grid.Column="2" Classes="badge" Padding="6,1"><TextBlock Text="3.2" FontSize="10" Classes="muted" /></Border>
+              </Grid>
+            </Border>
+
+            <!-- 完整三组全透导航 -->
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+              <StackPanel x:Name="Navigation" Spacing="1.5">
+                <TextBlock Text="工作台" Classes="group-header" Margin="10,2,0,3" />
+                <Button Tag="launch" Click="Navigate" Classes="nav">
+                  <StackPanel Orientation="Horizontal" Spacing="9">
+                    <icons:MaterialIcon Kind="PlayCircleOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <TextBlock Text="启动工作台" FontSize="12.5" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+                <Button Tag="library" Click="Navigate" Classes="nav">
+                  <Grid ColumnDefinitions="Auto,*,Auto">
+                    <icons:MaterialIcon Kind="FolderOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="我的实例" FontSize="12.5" Margin="9,0,0,0" VerticalAlignment="Center" />
+                    <TextBlock x:Name="InstanceCount" Grid.Column="2" Text="0" FontSize="11" Classes="muted" VerticalAlignment="Center" />
+                  </Grid>
+                </Button>
+                <Button Tag="install" Click="Navigate" Classes="nav">
+                  <StackPanel Orientation="Horizontal" Spacing="9">
+                    <icons:MaterialIcon Kind="ArrowDownCircleOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <TextBlock Text="版本与整合包" FontSize="12.5" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+
+                <TextBlock Text="内容生态" Classes="group-header" Margin="10,8,0,3" />
+                <Button Tag="resources" Click="Navigate" Classes="nav">
+                  <StackPanel Orientation="Horizontal" Spacing="9">
+                    <icons:MaterialIcon Kind="CompassOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <TextBlock Text="资源下载中心" FontSize="12.5" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+                <Button Tag="mods" Click="Navigate" Classes="nav">
+                  <StackPanel Orientation="Horizontal" Spacing="9">
+                    <icons:MaterialIcon Kind="PuzzleOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <TextBlock Text="模组与光影" FontSize="12.5" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+                <Button Tag="saves" Click="Navigate" Classes="nav">
+                  <StackPanel Orientation="Horizontal" Spacing="9">
+                    <icons:MaterialIcon Kind="Earth" Width="15" Height="15" VerticalAlignment="Center" />
+                    <TextBlock Text="存档与日志" FontSize="12.5" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+                <Button Tag="servers" Click="Navigate" Classes="nav">
+                  <StackPanel Orientation="Horizontal" Spacing="9">
+                    <icons:MaterialIcon Kind="ServerNetwork" Width="15" Height="15" VerticalAlignment="Center" />
+                    <TextBlock Text="多人联机" FontSize="12.5" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+
+                <TextBlock Text="系统与工具" Classes="group-header" Margin="10,8,0,3" />
+                <Button Tag="ai" Click="Navigate" Classes="nav">
+                  <StackPanel Orientation="Horizontal" Spacing="9">
+                    <icons:MaterialIcon Kind="CreationOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <TextBlock Text="AI 诊断顾问" FontSize="12.5" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+                <Button Tag="java" Click="Navigate" Classes="nav">
+                  <StackPanel Orientation="Horizontal" Spacing="9">
+                    <icons:MaterialIcon Kind="CoffeeOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <TextBlock Text="Java 运行时" FontSize="12.5" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+                <Button Tag="playtime" Click="Navigate" Classes="nav">
+                  <StackPanel Orientation="Horizontal" Spacing="9">
+                    <icons:MaterialIcon Kind="ClockOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <TextBlock Text="游玩统计" FontSize="12.5" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+                <Button Tag="tasks" Click="Navigate" Classes="nav">
+                  <StackPanel Orientation="Horizontal" Spacing="9">
+                    <icons:MaterialIcon Kind="FormatListChecks" Width="15" Height="15" VerticalAlignment="Center" />
+                    <TextBlock Text="任务队列" FontSize="12.5" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+                <Button Tag="settings" Click="Navigate" Classes="nav">
+                  <StackPanel Orientation="Horizontal" Spacing="9">
+                    <icons:MaterialIcon Kind="TuneVariant" Width="15" Height="15" VerticalAlignment="Center" />
+                    <TextBlock Text="外观与通透度" FontSize="12.5" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+              </StackPanel>
+            </ScrollViewer>
+
+            <!-- 底部实例速切区 -->
+            <Border Grid.Row="2" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="0,1,0,0" Padding="0,7,0,5" Margin="0,5,0,0">
+              <Grid MaxHeight="84">
+                <TextBlock x:Name="LibraryEmpty" Text="暂无实例" Classes="muted" FontSize="11.5" Margin="8,3" />
+                <ListBox x:Name="InstanceList" SelectionChanged="SelectInstance" Background="Transparent" AutomationProperties.Name="我的 Minecraft 实例">
+                  <ListBox.ContextMenu>
+                    <ContextMenu>
+                      <MenuItem Header="启动工作台" Click="ContextOpenLaunch" />
+                      <MenuItem Header="模组与光影" Click="ContextOpenMods" />
+                      <MenuItem Header="存档与日志" Click="ContextOpenSaves" />
+                      <Separator />
+                      <MenuItem Header="打开文件夹" Click="ContextOpenFolder" />
+                    </ContextMenu>
+                  </ListBox.ContextMenu>
+                  <ListBox.ItemTemplate>
+                    <DataTemplate DataType="portable:InstanceEntry">
+                      <Grid ColumnDefinitions="6,*" ColumnSpacing="8" Margin="2,0.5">
+                        <Ellipse Width="5" Height="5" Fill="{DynamicResource HelL.InkSoft}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                      </Grid>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+              </Grid>
+            </Border>
+
+            <!-- 单行新建入口 -->
+            <StackPanel Grid.Row="3" Spacing="4">
+              <Grid ColumnDefinitions="*,32" ColumnSpacing="6">
+                <TextBox x:Name="InstanceName" PlaceholderText="新建实例…" MaxLength="48" MinHeight="30" Padding="9,4" FontSize="12" TextChanged="EditInstanceName" KeyDown="SubmitInstanceName" AutomationProperties.Name="新实例名称" />
+                <Button Grid.Column="1" x:Name="CreateButton" Classes="soft" Content="+" Width="32" MinHeight="30" Padding="0" FontSize="14" Click="CreateInstance" HorizontalContentAlignment="Center" AutomationProperties.Name="创建实例" />
+              </Grid>
+              <TextBlock x:Name="InstanceError" Classes="error" FontSize="11" TextWrapping="Wrap" IsVisible="False" Margin="2,0" />
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <!-- 右侧通透主工作区 -->
+        <Grid Grid.Column="1" RowDefinitions="40,*,Auto">
+          <!-- 顶部无分割线拖拽区 + 上下文分段控制器 + 窗口控制 -->
+          <Border Grid.Row="0" Background="Transparent" PointerPressed="BeginTitleBarDrag" DoubleTapped="ToggleMaximizeTitleBar">
+            <Grid ColumnDefinitions="*,Auto,*">
+              <TextBlock x:Name="ChromeTitle" IsVisible="False" />
+              <TextBlock x:Name="TopInstanceLabel" IsVisible="False" />
+
+              <Border x:Name="InstanceSegBar" Grid.Column="1" Classes="segmented" VerticalAlignment="Center" IsVisible="False">
+                <StackPanel x:Name="InstanceSegButtons" Orientation="Horizontal" Spacing="2">
+                  <Button Tag="library" Content="实例库" Classes="seg-item current" Click="Navigate" />
+                  <Button Tag="mods" Content="模组与光影" Classes="seg-item" Click="Navigate" />
+                  <Button Tag="saves" Content="存档与日志" Classes="seg-item" Click="Navigate" />
+                  <Button Tag="servers" Content="多人联机" Classes="seg-item" Click="Navigate" />
+                </StackPanel>
+              </Border>
+
+              <Border x:Name="SettingsSegBar" Grid.Column="1" Classes="segmented" VerticalAlignment="Center" IsVisible="False">
+                <StackPanel x:Name="SettingsSegButtons" Orientation="Horizontal" Spacing="2">
+                  <Button Tag="settings" Content="外观与通透度" Classes="seg-item current" Click="Navigate" />
+                  <Button Tag="java" Content="Java 运行时" Classes="seg-item" Click="Navigate" />
+                  <Button Tag="playtime" Content="游玩统计" Classes="seg-item" Click="Navigate" />
+                  <Button Tag="tasks" Content="任务队列" Classes="seg-item" Click="Navigate" />
+                </StackPanel>
+              </Border>
+
+              <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" HorizontalAlignment="Right" Margin="0,0,8,0" VerticalAlignment="Center">
+                <Button Classes="caption" Click="MinimizeWindow" ToolTip.Tip="最小化" AutomationProperties.Name="最小化">
+                  <icons:MaterialIcon Kind="WindowMinimize" Width="14" Height="14" />
+                </Button>
+                <Button Classes="caption" Click="MaximizeRestoreWindow" ToolTip.Tip="最大化 / 还原" AutomationProperties.Name="最大化">
+                  <icons:MaterialIcon x:Name="MaxIcon" Kind="WindowMaximize" Width="14" Height="14" />
+                </Button>
+                <Button Classes="caption close" Click="CloseWindow" ToolTip.Tip="关闭" AutomationProperties.Name="关闭">
+                  <icons:MaterialIcon Kind="WindowClose" Width="15" Height="15" />
+                </Button>
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <!-- 主画布 -->
+          <Grid x:Name="PageHost" Grid.Row="1">
+            <Grid.Transitions>
+              <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.14" />
+              </Transitions>
+            </Grid.Transitions>
+
+            <!-- [1] 启动工作台：充实立体的 VisionOS 冰晶玻璃仪表盘 -->
+            <ScrollViewer x:Name="LaunchView" HorizontalScrollBarVisibility="Disabled">
+              <StackPanel Margin="32,8,32,24" Spacing="16" MaxWidth="1020">
+                <!-- 空实例引导 -->
+                <Border x:Name="WelcomePanel" Classes="surface" Padding="32,36">
+                  <StackPanel Spacing="14" HorizontalAlignment="Center">
+                    <Border Width="42" Height="42" CornerRadius="11" Background="{DynamicResource HelL.Field}" BorderBrush="{DynamicResource HelL.GlassBorder}" BorderThickness="1" HorizontalAlignment="Center">
+                      <icons:MaterialIcon Kind="CubeOutline" Width="20" Height="20" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="创建第一个 Minecraft 实例" FontSize="19" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                    <TextBlock Text="每个实例拥有独立的游戏核心、模组、光影、存档与启动参数。" Classes="muted" FontSize="13" TextAlignment="Center" MaxWidth="400" TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center" Margin="0,4,0,0">
+                      <Button Content="填写实例名称" Click="FocusInstanceName" Classes="accent" />
+                      <Button Content="探索资源中心" Click="JumpToResources" Classes="soft" />
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+
+                <!-- 选中实例后的完整通透工作台 -->
+                <StackPanel x:Name="Workspace" Spacing="15" IsVisible="False">
+                  <!-- [A] 顶部冰晶主控头卡（支持展示用户自设截图封面 + 实时实例遥测 + 主启动胶囊） -->
+                  <Border Classes="surface" Padding="24,20" ClipToBounds="True">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="20">
+                      <StackPanel Spacing="8" VerticalAlignment="Center">
+                        <controls:ProjectPicture x:Name="HeroCover" Height="136" CornerRadius="10" IsVisible="False" DecodeWidth="1280" Margin="0,0,0,6" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                          <Border Classes="badge">
+                            <TextBlock x:Name="HeroLoaderBadge" Text="实例工作台" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource HelL.InkSoft}" />
+                          </Border>
+                          <Border Classes="badge">
+                            <TextBlock x:Name="HeroGroupBadge" Text="独立环境" FontSize="11" Classes="muted" />
+                          </Border>
+                        </StackPanel>
+                        <TextBlock x:Name="InstanceTitle" Text="实例" FontSize="26" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="InstanceHint" Text="尚未安装游戏版本" Classes="muted" FontSize="12.5" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+
+                      <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center" MinWidth="164">
+                        <Button x:Name="LaunchButton" Content="启动试玩" Click="LaunchDemo" Classes="accent" MinHeight="40" Padding="24,8" FontSize="13.5" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                        <Button Content="安装新版本…" Classes="soft" Click="ToggleInstaller" MinHeight="32" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+
+                  <!-- [B] 四栏实时实例状态冰晶卡（模组数 / 存档数 / 联机服 / 累计时长） -->
+                  <UniformGrid Rows="1" Columns="4">
+                    <Button Classes="glass-card" Tag="mods" Click="Navigate" Margin="0,0,10,0">
+                      <StackPanel Spacing="6">
+                        <Grid ColumnDefinitions="*,Auto">
+                          <TextBlock Text="模组与光影" Classes="group-header" />
+                          <icons:MaterialIcon Grid.Column="1" Kind="PuzzleOutline" Width="15" Height="15" Foreground="{DynamicResource HelL.Muted}" />
+                        </Grid>
+                        <TextBlock x:Name="MetricModsValue" Text="0 项内容" FontSize="17" FontWeight="SemiBold" />
+                        <TextBlock x:Name="MetricModsSub" Text="管理本地包 ›" Classes="muted" FontSize="11.5" />
+                      </StackPanel>
+                    </Button>
+
+                    <Button Classes="glass-card" Tag="saves" Click="Navigate" Margin="0,0,10,0">
+                      <StackPanel Spacing="6">
+                        <Grid ColumnDefinitions="*,Auto">
+                          <TextBlock Text="世界与日志" Classes="group-header" />
+                          <icons:MaterialIcon Grid.Column="1" Kind="Earth" Width="15" Height="15" Foreground="{DynamicResource HelL.Muted}" />
+                        </Grid>
+                        <TextBlock x:Name="MetricSavesValue" Text="0 个世界" FontSize="17" FontWeight="SemiBold" />
+                        <TextBlock x:Name="MetricSavesSub" Text="快照备份与日志 ›" Classes="muted" FontSize="11.5" />
+                      </StackPanel>
+                    </Button>
+
+                    <Button Classes="glass-card" Tag="servers" Click="Navigate" Margin="0,0,10,0">
+                      <StackPanel Spacing="6">
+                        <Grid ColumnDefinitions="*,Auto">
+                          <TextBlock Text="多人联机" Classes="group-header" />
+                          <icons:MaterialIcon Grid.Column="1" Kind="ServerNetwork" Width="15" Height="15" Foreground="{DynamicResource HelL.Muted}" />
+                        </Grid>
+                        <TextBlock x:Name="MetricServersValue" Text="0 个服务器" FontSize="17" FontWeight="SemiBold" />
+                        <TextBlock x:Name="MetricServersSub" Text="直连与局域网 ›" Classes="muted" FontSize="11.5" />
+                      </StackPanel>
+                    </Button>
+
+                    <Button Classes="glass-card" Tag="playtime" Click="Navigate">
+                      <StackPanel Spacing="6">
+                        <Grid ColumnDefinitions="*,Auto">
+                          <TextBlock Text="游玩足迹" Classes="group-header" />
+                          <icons:MaterialIcon Grid.Column="1" Kind="ClockOutline" Width="15" Height="15" Foreground="{DynamicResource HelL.Muted}" />
+                        </Grid>
+                        <TextBlock x:Name="MetricPlaytimeValue" Text="0 分钟" FontSize="17" FontWeight="SemiBold" />
+                        <TextBlock x:Name="MetricPlaytimeSub" Text="查看时长统计 ›" Classes="muted" FontSize="11.5" />
+                      </StackPanel>
+                    </Button>
+                  </UniformGrid>
+
+                  <!-- [C] 双栏主工作区：左侧启动与账户配置单 / 右侧生态直达与环境遥测 -->
+                  <Grid ColumnDefinitions="1.22*,*" ColumnSpacing="14">
+                    <!-- 左栏：macOS Inset Grouped 4 行核心参数单 -->
+                    <Border Classes="inset-group">
+                      <StackPanel>
+                        <Border Classes="group-row">
+                          <Grid ColumnDefinitions="112,*" ColumnSpacing="12">
+                            <StackPanel VerticalAlignment="Center" Spacing="2">
+                              <TextBlock Text="游戏版本" FontWeight="Medium" />
+                              <TextBlock x:Name="LaunchNotice" Text="选择启动版本" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <ComboBox x:Name="InstalledVersions" Grid.Column="1" HorizontalAlignment="Stretch" PlaceholderText="尚未安装游戏版本" SelectionChanged="SelectInstalledVersion" AutomationProperties.Name="已安装游戏版本" />
+                          </Grid>
+                        </Border>
+
+                        <Border Classes="group-row">
+                          <Grid x:Name="AccountPanel" ColumnDefinitions="112,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12">
+                            <TextBlock Text="游戏账户" FontWeight="Medium" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+                              <Border Width="28" Height="28" CornerRadius="99" Background="{DynamicResource HelL.Field}" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="1">
+                                <icons:MaterialIcon Kind="AccountOutline" Width="15" Height="15" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                              </Border>
+                              <StackPanel Spacing="1" VerticalAlignment="Center">
+                                <TextBlock x:Name="AccountName" Text="微软账号" FontSize="13" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                                <TextBlock x:Name="AccountNotice" Text="未登录 · 可用试玩" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis" />
+                              </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                              <CheckBox x:Name="DemoMode" Content="试玩" IsChecked="True" FontSize="12" VerticalAlignment="Center" IsCheckedChanged="SwitchLaunchMode" />
+                              <Button x:Name="LoginButton" Content="登录" Classes="soft" Padding="11,4" Click="LoginMicrosoft" />
+                              <Button x:Name="RefreshAccountButton" Content="刷新" Classes="ghost" Padding="8,4" Click="RefreshAccount" IsVisible="False" />
+                              <Button x:Name="LogoutButton" Content="退出" Classes="ghost" Padding="8,4" Click="LogoutAccount" IsVisible="False" />
+                            </StackPanel>
+                            <CheckBox x:Name="RememberAccount" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Content="在本机凭据库加密保存登录状态" IsChecked="True" FontSize="11.5" Classes="muted" Margin="0,5,0,0" />
+                          </Grid>
+                        </Border>
+
+                        <Border Classes="group-row">
+                          <StackPanel Spacing="5">
+                            <Grid ColumnDefinitions="112,*,Auto" ColumnSpacing="10">
+                              <TextBlock Text="内存与窗口" FontWeight="Medium" VerticalAlignment="Center" />
+                              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <TextBox x:Name="MemoryBox" Width="76" Text="2048" AutomationProperties.Name="最大内存 MB" />
+                                <TextBlock Text="MB" Classes="muted" FontSize="11.5" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                <TextBox x:Name="WindowWidthBox" Width="68" Text="854" AutomationProperties.Name="游戏窗口宽度" />
+                                <TextBlock Text="×" Classes="muted" VerticalAlignment="Center" />
+                                <TextBox x:Name="WindowHeightBox" Width="68" Text="480" AutomationProperties.Name="游戏窗口高度" />
+                              </StackPanel>
+                              <Button Grid.Column="2" Content="保存" Classes="soft" Padding="11,4" Click="SaveLaunchOptions" VerticalAlignment="Center" />
+                            </Grid>
+                            <TextBlock x:Name="LaunchOptionsNotice" Classes="muted" FontSize="11" IsVisible="False" />
+                          </StackPanel>
+                        </Border>
+
+                        <Border Classes="group-row-last">
+                          <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="112,*,Auto,Auto" ColumnSpacing="6">
+                              <TextBlock Text="Java 运行时" FontWeight="Medium" VerticalAlignment="Center" />
+                              <TextBox x:Name="JavaPath" Grid.Column="1" PlaceholderText="自动匹配兼容版本" AutomationProperties.Name="Java 路径" />
+                              <Button Grid.Column="2" Content="检测" Classes="soft" Padding="10,4" Click="DetectJava" />
+                              <Button Grid.Column="3" Content="浏览" Classes="ghost" Padding="8,4" Click="BrowseJava" />
+                            </Grid>
+                            <ListBox x:Name="JavaChoices" IsVisible="False" MaxHeight="90" SelectionChanged="SelectJava" />
+                          </StackPanel>
+                        </Border>
+                      </StackPanel>
+                    </Border>
+
+                    <!-- 右栏：社区资源快捷矩阵 + 环境概览 -->
+                    <StackPanel Grid.Column="1" Spacing="14">
+                      <Border Classes="surface" Padding="18,15">
+                        <StackPanel Spacing="12">
+                          <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="内容生态直达" Classes="section" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Content="全部资源 ›" Classes="ghost" MinHeight="24" Padding="8,2" FontSize="12" Click="JumpToResources" />
+                          </Grid>
+                          <UniformGrid Rows="2" Columns="3">
+                            <Button Classes="soft" Tag="mod" Click="QuickCategoryJump" Margin="0,0,6,6" Padding="8,10" HorizontalAlignment="Stretch">
+                              <StackPanel Spacing="5" HorizontalAlignment="Center">
+                                <icons:MaterialIcon Kind="PuzzleOutline" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
+                                <TextBlock Text="模组" FontSize="12" HorizontalAlignment="Center" />
+                              </StackPanel>
+                            </Button>
+                            <Button Classes="soft" Tag="shader" Click="QuickCategoryJump" Margin="0,0,6,6" Padding="8,10" HorizontalAlignment="Stretch">
+                              <StackPanel Spacing="5" HorizontalAlignment="Center">
+                                <icons:MaterialIcon Kind="WhiteBalanceSunny" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
+                                <TextBlock Text="光影" FontSize="12" HorizontalAlignment="Center" />
+                              </StackPanel>
+                            </Button>
+                            <Button Classes="soft" Tag="modpack" Click="QuickCategoryJump" Margin="0,0,0,6" Padding="8,10" HorizontalAlignment="Stretch">
+                              <StackPanel Spacing="5" HorizontalAlignment="Center">
+                                <icons:MaterialIcon Kind="CubeOutline" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
+                                <TextBlock Text="整合包" FontSize="12" HorizontalAlignment="Center" />
+                              </StackPanel>
+                            </Button>
+                            <Button Classes="soft" Tag="resourcepack" Click="QuickCategoryJump" Margin="0,0,6,0" Padding="8,10" HorizontalAlignment="Stretch">
+                              <StackPanel Spacing="5" HorizontalAlignment="Center">
+                                <icons:MaterialIcon Kind="LayersTripleOutline" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
+                                <TextBlock Text="资源包" FontSize="12" HorizontalAlignment="Center" />
+                              </StackPanel>
+                            </Button>
+                            <Button Classes="soft" Tag="world" Click="QuickCategoryJump" Margin="0,0,6,0" Padding="8,10" HorizontalAlignment="Stretch">
+                              <StackPanel Spacing="5" HorizontalAlignment="Center">
+                                <icons:MaterialIcon Kind="Earth" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
+                                <TextBlock Text="世界地图" FontSize="12" HorizontalAlignment="Center" />
+                              </StackPanel>
+                            </Button>
+                            <Button Classes="soft" Tag="ai" Click="Navigate" Padding="8,10" HorizontalAlignment="Stretch">
+                              <StackPanel Spacing="5" HorizontalAlignment="Center">
+                                <icons:MaterialIcon Kind="CreationOutline" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
+                                <TextBlock Text="AI 诊断" FontSize="12" HorizontalAlignment="Center" />
+                              </StackPanel>
+                            </Button>
+                          </UniformGrid>
+                        </StackPanel>
+                      </Border>
+
+                      <!-- 内存与环境状态透视卡 -->
+                      <Border Classes="surface" Padding="18,14">
+                        <StackPanel Spacing="8">
+                          <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="运行配额概览" Classes="group-header" />
+                            <TextBlock x:Name="HomeMemoryBadge" Grid.Column="1" Text="2048 MB" FontSize="12" FontWeight="Medium" />
+                          </Grid>
+                          <ProgressBar x:Name="HomeMemoryBar" MinWidth="0" Minimum="512" Maximum="16384" Value="2048" Height="3.5" />
+                          <TextBlock x:Name="HomeJavaLabel" Text="Java 运行时：自动按核心版本匹配" Classes="muted" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                      </Border>
+                    </StackPanel>
+                  </Grid>
+
+                  <!-- 按需展开的内联快捷版本安装面板 -->
+                  <Border x:Name="InstallerSheet" Classes="inset-group" Padding="18,16" IsVisible="False">
+                    <StackPanel Spacing="12">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock x:Name="InstallTarget" Text="快速安装版本" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <Button x:Name="RefreshButton" Grid.Column="1" Content="获取版本列表" Classes="soft" Click="RefreshVersions" />
+                      </Grid>
+                      <Grid ColumnDefinitions="*,140,*" ColumnSpacing="8">
+                        <ComboBox x:Name="RemoteVersions" HorizontalAlignment="Stretch" PlaceholderText="选择 Minecraft 版本" SelectionChanged="SelectRemoteVersion" AutomationProperties.Name="可安装 Minecraft 版本" />
+                        <ComboBox x:Name="LoaderPicker" Grid.Column="1" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="LoaderChanged" AutomationProperties.Name="游戏加载器">
+                          <ComboBoxItem Content="原版" Tag="none" /><ComboBoxItem Content="Fabric" Tag="fabric" />
+                          <ComboBoxItem Content="Forge" Tag="forge" /><ComboBoxItem Content="Quilt" Tag="quilt" />
+                        </ComboBox>
+                        <ComboBox x:Name="LoaderVersionPicker" Grid.Column="2" HorizontalAlignment="Stretch" IsEnabled="False" PlaceholderText="加载器构建" SelectionChanged="LoaderVersionChanged" AutomationProperties.Name="加载器版本" />
+                      </Grid>
+                      <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                        <StackPanel Spacing="2" VerticalAlignment="Center">
+                          <TextBlock x:Name="VersionNotice" Text="选择版本后即可安装" Classes="muted" FontSize="11.5" />
+                          <TextBlock x:Name="LoaderNotice" Classes="muted" FontSize="11.5" IsVisible="False" />
+                        </StackPanel>
+                        <Button x:Name="RefreshLoaderButton" Grid.Column="1" Content="查询加载器" Classes="soft" IsEnabled="False" Click="RefreshLoaderVersions" />
+                        <Button x:Name="InstallButton" Grid.Column="2" Content="安装" Classes="accent" IsEnabled="False" Click="InstallVersion" />
+                      </Grid>
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+
+                <!-- 微软设备码授权卡片 -->
+                <Border x:Name="AuthorizationPanel" Classes="inset-group" Padding="24,20" IsVisible="False">
+                  <StackPanel Spacing="8">
+                    <TextBlock Text="输入微软设备验证码" FontWeight="SemiBold" />
+                    <SelectableTextBlock x:Name="DeviceCode" FontSize="24" FontWeight="Bold" AutomationProperties.Name="微软授权代码" />
+                    <SelectableTextBlock x:Name="DeviceAddress" Classes="muted" FontSize="12.5" TextWrapping="Wrap" />
+                    <TextBlock x:Name="DeviceExpiry" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+                    <Button Content="打开授权网页" Classes="accent" Click="OpenAuthorization" HorizontalAlignment="Left" Margin="0,4,0,0" />
+                  </StackPanel>
+                </Border>
+
+                <SelectableTextBlock x:Name="DataDirectory" IsVisible="False" />
+              </StackPanel>
+            </ScrollViewer>
+
+            <views:InstanceLibraryView x:Name="LibraryView" IsVisible="False" />
+            <views:VersionInstallerView x:Name="InstallerView" IsVisible="False" />
+            <views:ModsManagerView x:Name="ModsView" IsVisible="False" />
+            <views:SavesManagerView x:Name="SavesView" IsVisible="False" />
+            <views:ResourceBrowserView x:Name="ResourcesView" IsVisible="False" />
+            <views:ServersView x:Name="ServersView" IsVisible="False" />
+            <views:AiAssistantView x:Name="AiView" IsVisible="False" />
+            <views:JavaEnvironmentView x:Name="JavaView" IsVisible="False" />
+            <views:PlaytimeView x:Name="PlaytimeView" IsVisible="False" />
+            <views:TasksView x:Name="TasksView" IsVisible="False" />
+            <views:SettingsAppearanceView x:Name="SettingsView" IsVisible="False" />
+          </Grid>
+
+          <!-- 底部半透状态条 -->
+          <Border Grid.Row="2" Background="{DynamicResource HelL.Chrome}" BorderBrush="{DynamicResource HelL.SubtleLine}" BorderThickness="0,1,0,0" Padding="24,5,24,6">
+            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+              <Button x:Name="TaskStateBadge" Classes="ghost" Padding="6,1" MinHeight="22" Margin="0,0,8,0" Click="JumpToTasks" VerticalAlignment="Center">
+                <TextBlock x:Name="TaskState" Text="就绪" FontSize="11.5" Classes="muted" />
+              </Button>
+              <TextBlock x:Name="Status" Grid.Column="1" Text="准备就绪" FontSize="12" Classes="muted" TextWrapping="NoWrap" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.Name="任务状态" />
+              <Button x:Name="CancelButton" Grid.Column="2" Content="取消" Classes="ghost" MinHeight="24" Padding="8,2" FontSize="12" Click="CancelTask" IsVisible="False" Margin="10,0,0,0" />
+              <ProgressBar x:Name="Progress" Grid.Row="1" Grid.ColumnSpan="3" Minimum="0" Maximum="100" Height="2" Margin="0,5,0,0" IsVisible="False" />
+            </Grid>
+          </Border>
+        </Grid>
+      </Grid>
+    </Grid>
+  </Border>
+</Window>

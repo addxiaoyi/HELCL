@@ -1,0 +1,116 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:HelL.Desktop.Controls"
+             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="HelL.Desktop.Views.InstanceLibraryView">
+  <UserControl.Resources>
+    <DataTemplate x:Key="RowTemplate">
+      <Grid ColumnDefinitions="36,*,Auto" ColumnSpacing="12">
+        <Grid Width="34" Height="34">
+          <Border CornerRadius="8" Background="{DynamicResource HelL.Field}">
+            <icons:MaterialIcon Kind="CubeOutline" Width="16" Height="16" Foreground="{DynamicResource HelL.Muted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <local:ProjectPicture Source="{Binding Cover}" Width="34" Height="34" CornerRadius="8" IsVisible="{Binding Cover.Length}" />
+        </Grid>
+        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+            <Border Classes="badge" IsVisible="{Binding Pinned}" Padding="6,1"><TextBlock Text="已固定" FontSize="10.5" Classes="muted" /></Border>
+          </StackPanel>
+          <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+          <Button Classes="ghost" Content="启动页" Tag="{Binding Name}" Click="QuickOpenRow" MinHeight="27" Padding="10,3" FontSize="12" />
+          <Button Classes="icon-btn" ToolTip.Tip="模组" Tag="{Binding Name}" Click="QuickModsRow"><icons:MaterialIcon Kind="PuzzleOutline" Width="14" Height="14" /></Button>
+          <Button Classes="icon-btn" ToolTip.Tip="存档" Tag="{Binding Name}" Click="QuickSavesRow"><icons:MaterialIcon Kind="FolderOutline" Width="14" Height="14" /></Button>
+        </StackPanel>
+      </Grid>
+    </DataTemplate>
+    <DataTemplate x:Key="CardTemplate">
+      <Border Classes="inset-group" Padding="12" Margin="6">
+        <StackPanel Spacing="8">
+          <Grid Height="104">
+            <Border CornerRadius="8" Background="{DynamicResource HelL.Field}">
+              <icons:MaterialIcon Kind="CubeOutline" Width="22" Height="22" Foreground="{DynamicResource HelL.Muted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <local:ProjectPicture Source="{Binding Cover}" Height="104" CornerRadius="8" IsVisible="{Binding Cover.Length}" />
+          </Grid>
+          <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <Grid Margin="36,10,36,24" RowDefinitions="Auto,Auto,*">
+    <!-- 简洁工具顶栏（无口号副标题） -->
+    <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="2,0,0,14">
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+        <TextBlock Text="实例" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
+        <TextBlock x:Name="CountLabel" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
+      </StackPanel>
+      <Button x:Name="ViewButton" Grid.Column="1" Classes="soft" Content="封面视图" Click="SwitchView" VerticalAlignment="Center" Margin="0,0,8,0" />
+      <Button Grid.Column="2" Classes="soft" Content="刷新" Click="RefreshLibrary" VerticalAlignment="Center" Margin="0,0,8,0" />
+      <Button Grid.Column="3" Content="安装版本" Classes="accent" Click="JumpToInstaller" VerticalAlignment="Center" />
+    </Grid>
+
+    <!-- 搜索与分组过滤 -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,140,Auto" ColumnSpacing="8" Margin="0,0,0,14">
+      <TextBox x:Name="SearchBox" PlaceholderText="搜索实例…" TextChanged="FilterChanged" AutomationProperties.Name="搜索实例" />
+      <ComboBox x:Name="GroupFilter" Grid.Column="1" HorizontalAlignment="Stretch" SelectionChanged="GroupChanged" AutomationProperties.Name="筛选实例分组" />
+      <CheckBox x:Name="PinnedOnly" Grid.Column="2" Content="已固定" FontSize="12.5" Margin="6,0,0,0" IsCheckedChanged="PinnedChanged" />
+    </Grid>
+
+    <!-- 左单张分组列表 + 右纯净检视栏 -->
+    <Grid x:Name="WorkspaceSplit" Grid.Row="2" ColumnDefinitions="*,276" ColumnSpacing="16">
+      <Border Grid.Column="0" Classes="inset-group" ClipToBounds="True">
+        <Grid>
+          <ListBox x:Name="LibraryList" Classes="rows" SelectionChanged="ChooseInstance" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="实例库" />
+          <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <TextBlock x:Name="EmptyTitle" Text="暂无实例" FontSize="15" FontWeight="Medium" HorizontalAlignment="Center" />
+            <TextBlock Text="可在左下角新建第一个实例" Classes="muted" FontSize="12.5" HorizontalAlignment="Center" />
+          </StackPanel>
+          <TextBlock x:Name="LibraryError" Classes="error" IsVisible="False" TextWrapping="Wrap" MaxWidth="460"
+                     HorizontalAlignment="Center" VerticalAlignment="Center" AutomationProperties.Name="实例库读取错误" />
+        </Grid>
+      </Border>
+
+      <Border x:Name="InspectorCard" Grid.Column="1" Classes="inset-group" Padding="18,16">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <StackPanel x:Name="Editor" Spacing="12" IsEnabled="False">
+            <local:ProjectPicture x:Name="InspectorCover" Height="116" CornerRadius="8" IsVisible="False" />
+
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock x:Name="SelectionTitle" Text="未选择实例" FontSize="15.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+              <Button x:Name="ManageButton" Grid.Column="1" Content="编辑" Classes="ghost" IsVisible="False" Click="ToggleDetails" MinHeight="24" Padding="6,2" />
+            </Grid>
+            <TextBlock x:Name="SelectionMeta" Text="选择左侧实例查看属性" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+
+            <Button Content="打开启动页" Click="OpenInstance" Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+
+            <StackPanel x:Name="ManagementFields" Spacing="10" Margin="0,4,0,0">
+              <StackPanel Spacing="4">
+                <TextBlock Text="名称" Classes="group-header" />
+                <TextBox x:Name="RenameBox" PlaceholderText="实例名称" AutomationProperties.Name="实例名称" />
+              </StackPanel>
+              <StackPanel Spacing="4">
+                <TextBlock Text="分组" Classes="group-header" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                  <TextBox x:Name="GroupBox" PlaceholderText="未分组" MaxLength="32" AutomationProperties.Name="实例分组" />
+                  <Button x:Name="SaveButton" Grid.Column="1" Content="保存" Classes="soft" Click="SaveInstance" />
+                </Grid>
+              </StackPanel>
+              <Grid ColumnDefinitions="*,*" ColumnSpacing="6" Margin="0,2,0,0">
+                <Button x:Name="PinButton" Content="固定实例" Classes="soft" Click="PinInstance" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12" />
+                <Button Grid.Column="1" Content="设置封面" Classes="soft" Click="PickCover" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12" />
+              </Grid>
+              <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
+                <Button Content="清除封面" Classes="ghost" Click="ResetCover" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12" />
+                <Button Grid.Column="1" Content="打开目录" Classes="ghost" Click="OpenFolder" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" FontSize="12" />
+              </Grid>
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>

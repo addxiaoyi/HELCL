@@ -1,0 +1,79 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="HelL.Desktop.Views.JavaEnvironmentView">
+  <Grid Margin="36,10,36,24" RowDefinitions="Auto,*">
+    <Grid ColumnDefinitions="*,Auto,Auto" Margin="2,0,0,14">
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+        <TextBlock Text="Java 环境" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
+        <TextBlock x:Name="RuntimeCountLabel" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
+      </StackPanel>
+      <Button Grid.Column="1" Content="手动浏览…" Classes="soft" Click="BrowseManualJava" Margin="0,0,8,0" />
+      <Button Grid.Column="2" Content="扫描本机" Classes="accent" Click="ScanSystemJava" />
+    </Grid>
+
+    <Grid Grid.Row="1" ColumnDefinitions="1.3*,*" ColumnSpacing="16">
+      <Border Classes="inset-group" ClipToBounds="True">
+        <Grid>
+          <ListBox x:Name="JavaList" Classes="rows" AutomationProperties.Name="已安装 Java 列表">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="12">
+                  <Border Width="38" Height="32" CornerRadius="7" Background="{DynamicResource HelL.Field}">
+                    <TextBlock Text="{Binding MajorBadge}" FontSize="11.5" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  </Border>
+                  <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding ExePath}" Classes="muted" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                  <Button Grid.Column="2" Content="设为默认" Classes="soft" Tag="{Binding ExePath}" Click="BindJavaToInstance" MinHeight="27" Padding="11,3" FontSize="12" VerticalAlignment="Center" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <StackPanel x:Name="EmptyJava" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <TextBlock Text="未检测到本地运行时" FontSize="15" FontWeight="Medium" HorizontalAlignment="Center" />
+            <TextBlock Text="点击右上角扫描，或在右侧下载官方 OpenJDK" Classes="muted" FontSize="12.5" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="14">
+          <Border Classes="inset-group" Padding="16,14">
+            <StackPanel Spacing="8">
+              <TextBlock Text="当前实例策略" Classes="group-header" />
+              <TextBlock x:Name="CurrentBindingLabel" Text="自动按游戏版本匹配兼容 Java" FontSize="12.5" TextWrapping="Wrap" />
+              <Button Content="恢复自动匹配" Classes="ghost" HorizontalAlignment="Left" Padding="8,3" FontSize="12" Click="ResetAutoJava" />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="inset-group">
+            <StackPanel>
+              <Border Classes="group-row">
+                <Grid ColumnDefinitions="*,164">
+                  <TextBlock Text="下载官方运行时" FontWeight="Medium" VerticalAlignment="Center" />
+                  <ComboBox x:Name="VendorCombo" Grid.Column="1" SelectedIndex="0" MinHeight="30" Padding="10,3" FontSize="12">
+                    <ComboBoxItem Content="Adoptium Temurin" Tag="adoptium" />
+                    <ComboBoxItem Content="Microsoft OpenJDK" Tag="microsoft" />
+                    <ComboBoxItem Content="Azul Zulu" Tag="zulu" />
+                  </ComboBox>
+                </Grid>
+              </Border>
+              <Border Classes="group-row">
+                <Grid ColumnDefinitions="*,Auto"><StackPanel Spacing="1"><TextBlock Text="Java 21 LTS" FontSize="13" FontWeight="Medium" /><TextBlock Text="Minecraft 1.20.5+" Classes="muted" FontSize="11.5" /></StackPanel><Button Grid.Column="1" Content="下载" Classes="soft" MinHeight="27" Padding="12,3" FontSize="12" Tag="21" Click="InstallVendorRuntime" VerticalAlignment="Center" /></Grid>
+              </Border>
+              <Border Classes="group-row">
+                <Grid ColumnDefinitions="*,Auto"><StackPanel Spacing="1"><TextBlock Text="Java 17 LTS" FontSize="13" FontWeight="Medium" /><TextBlock Text="Minecraft 1.18 – 1.20.4" Classes="muted" FontSize="11.5" /></StackPanel><Button Grid.Column="1" Content="下载" Classes="soft" MinHeight="27" Padding="12,3" FontSize="12" Tag="17" Click="InstallVendorRuntime" VerticalAlignment="Center" /></Grid>
+              </Border>
+              <Border Classes="group-row">
+                <Grid ColumnDefinitions="*,Auto"><StackPanel Spacing="1"><TextBlock Text="Java 8 LTS" FontSize="13" FontWeight="Medium" /><TextBlock Text="Minecraft 1.16.5 及更早" Classes="muted" FontSize="11.5" /></StackPanel><Button Grid.Column="1" Content="下载" Classes="soft" MinHeight="27" Padding="12,3" FontSize="12" Tag="8" Click="InstallVendorRuntime" VerticalAlignment="Center" /></Grid>
+              </Border>
+              <Border Classes="group-row-last">
+                <Grid ColumnDefinitions="*,Auto"><StackPanel Spacing="1"><TextBlock Text="Java 25" FontSize="13" FontWeight="Medium" /><TextBlock Text="最新预览快照" Classes="muted" FontSize="11.5" /></StackPanel><Button Grid.Column="1" Content="下载" Classes="soft" MinHeight="27" Padding="12,3" FontSize="12" Tag="25" Click="InstallVendorRuntime" VerticalAlignment="Center" /></Grid>
+              </Border>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</UserControl>

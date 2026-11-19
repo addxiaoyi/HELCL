@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="3.2.0.0" name="HelL" />
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+      <supportedOS Id="{1f676c76-80e1-4239-95bb-83d0f6d0da78}" />
+      <supportedOS Id="{4a2f28e3-53b9-4441-ba9c-d69d4a4a6e38}" />
+    </application>
+  </compatibility>
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2, PerMonitor</dpiAwareness>
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
+      <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
+    </windowsSettings>
+  </application>
+  <!--
+    强制管理员运行。启动器要往安装目录写文件、装/删整合包、调用需要提权的桥接进程，
+    所以以 requireAdministrator 声明：Windows 在进程创建前先弹 UAC，用户在 UAC 窗口点
+    "否"时由系统直接拒绝创建进程（进程根本不会起来），语义上就是"不同意就退出"。
+
+    一点必要的取舍：这个声明对进程整体生效，连无界面的自检入口（nav-dump / i18n-check /
+    ime-check / consent-check / smoke）也会一起被要求提权，这会影响主仓的自动化测试
+    （tests/ 下用 subprocess 直接跑 exe，非提权上下文会以 740 / CreateProcess 失败）。
+    因此 App.xaml.cs 里保留了一层运行期自我提权：自检开关会跳过 UAC，进程以自身 manifest
+    的 requireAdministrator 被操作系统接管时依旧弹窗；正常带界面启动走运行期 runas。
+  -->
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+</assembly>

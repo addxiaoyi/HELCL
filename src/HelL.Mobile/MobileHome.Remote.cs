@@ -31,6 +31,7 @@ public sealed partial class MobileHome
     private readonly CheckBox remoteVerified = new() { Content = "已在两台设备上逐字核对双方指纹" };
     private readonly CheckBox remoteAllowCancel = new() { Content = "允许从此手机请求取消电脑任务" };
     private readonly CheckBox remoteRevokeConfirmed = new() { Content = "确认撤销所选电脑的本机信任" };
+    private readonly CheckBox remoteAutoRefresh = new() { Content = "自动刷新任务与游戏状态", IsChecked = true };
     private readonly Button remoteRefresh = new() { Content = "读取电脑任务", HorizontalAlignment = HorizontalAlignment.Stretch };
     private readonly Button remoteCancel = new() { Content = "取消本次连接", HorizontalAlignment = HorizontalAlignment.Stretch };
     private readonly ProgressBar remoteProgress = new() { IsIndeterminate = true, Height = 3, IsVisible = false };
@@ -55,6 +56,8 @@ public sealed partial class MobileHome
             remoteCancel.Click += CancelRemote;
             actions.Children.Add(remoteRefresh);
             actions.Children.Add(remoteCancel);
+            remoteAutoRefresh.IsCheckedChanged += ChangeRemoteAutoRefresh;
+            actions.Children.Add(remoteAutoRefresh);
             actions.Children.Add(remoteUpdateNotice);
             remoteUpdateControls.Children.Add(RemoteButton("恢复安全邀请更新 / 重试", ResumeRemoteUpdates));
             remoteUpdateControls.Children.Add(RemoteButton("暂停邀请自动更新", PauseRemoteUpdates));
@@ -107,13 +110,14 @@ public sealed partial class MobileHome
         catch (Exception error) when (error is not OutOfMemoryException)
         {
             remoteInitializationFailure = error.GetType().Name;
+            if (remote is not null) remote.Changed -= RemoteChanged;
             remote = null;
             RemoteLayout.Children.Clear();
             RemoteLayout.Children.Add(RemoteText("远程配对暂不可用。请检查系统密钥库是否已解锁，再重新打开此页。", "caption"));
         }
     }
 
-    private void RemoteChanged() => Dispatcher.UIThread.Post(() => { if (!disposed) PresentRemote(); });
+    private void RemoteChanged() => Dispatcher.UIThread.Post(() => { if (!disposed && remotePageActive) PresentRemote(); });
     private void PresentRemote()
     {
         if (remote is null || disposed) return;
@@ -126,7 +130,7 @@ public sealed partial class MobileHome
         remoteUpdateControls.IsVisible = remote.Invitation?.Feed is not null;
         remoteRevokeConfirmed.IsVisible = remote.Hosts.Length > 0;
         remoteRefresh.IsEnabled = !remote.Busy && remote.Invitation is not null;
-        remoteSettings.IsEnabled = !remote.Busy;
+        remotePairing.IsEnabled = remoteInvitation.IsEnabled = !remote.Busy;
         remoteHostPin.Text = remote.PendingHost is { } pending
             ? $"电脑：{pending.Name}\n电脑 SHA-256：\n{FormatPin(pending.Fingerprint)}\n\n手机 SHA-256：\n{FormatPin(remote.OwnOffer.Fingerprint)}"
             : "先导入电脑公开信息。仅粘贴邀请不会自动建立信任。";
@@ -149,13 +153,14 @@ public sealed partial class MobileHome
         foreach (HelL.Contracts.HostTask task in remote.Tasks)
         {
             var row = new StackPanel { Spacing = 6 };
-            AddRemoteTaskDetails(row, task);
             row.Children.Add(RemoteText(string.IsNullOrWhiteSpace(task.Title) ? task.Id : task.Title, "section"));
             row.Children.Add(RemoteText(task.State switch { "running" => "运行中", "completed" => "已完成", "failed" => "失败 / 已取消", _ => "状态未知，请刷新" }, "caption"));
+            AddRemoteTaskDetails(row, task);
             if (task.State == "running")
             {
                 Button cancel = RemoteButton("请求取消此任务", CancelRemoteTask);
                 cancel.Tag = task.Id; cancel.IsEnabled = remote.CanCancel && !remote.Busy;
+                cancel.Classes.Add("remote-task-cancel");
                 row.Children.Add(cancel);
             }
             remoteTasks.Children.Add(RemoteGroup(row));
@@ -173,8 +178,17 @@ public sealed partial class MobileHome
             remoteError.IsVisible = true;
         }
     }
-    private async void RefreshRemote(object? sender, RoutedEventArgs e) => await RemoteAction(() => remote!.RefreshAsync());
-    private void CancelRemote(object? sender, RoutedEventArgs e) => remote?.Cancel();
+    private async void RefreshRemote(object? sender, RoutedEventArgs e)
+    {
+        if (!MobileRuntime.RemotePreview) StartRemotePolling(RemoteRefreshInterval);
+        await RemoteAction(() => RefreshRemoteStateAsync(remote!, CancellationToken.None));
+    }
+    private void CancelRemote(object? sender, RoutedEventArgs e)
+    {
+        remoteAutoRefresh.IsChecked = false;
+        PauseRemotePolling();
+        remote?.Cancel();
+    }
     private async void ResumeRemoteUpdates(object? sender, RoutedEventArgs e) => await RemoteAction(() => { remote!.StartUpdates(); return Task.CompletedTask; });
     private void PauseRemoteUpdates(object? sender, RoutedEventArgs e) => remote?.StopUpdates();
     private async void StageRemoteOffer(object? sender, RoutedEventArgs e) => await RemoteAction(() =>
@@ -215,7 +229,12 @@ public sealed partial class MobileHome
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard ?? throw new InvalidOperationException("系统剪贴板暂不可用。");
         await clipboard.SetTextAsync(remote!.OfferJson);
     });
-    private void DetachRemote() { if (remote is null) return; remote.Cancel(); remote.StopUpdates(); remote.Changed -= RemoteChanged; }
+    private void DetachRemote()
+    {
+        SetRemotePageActive(false);
+        if (remote is null) return;
+        remote.Cancel(); remote.StopUpdates(); remote.Changed -= RemoteChanged;
+    }
     private static TextBlock RemoteText(string text, string style) => new() { Text = text, Classes = { style }, TextWrapping = TextWrapping.Wrap };
     private static Border RemoteGroup(Control content) => new() { Classes = { "glass" }, Child = content };
     private static string FormatPin(string pin) => string.Join(" ", pin.Chunk(8).Select(chars => new string(chars)));

@@ -209,7 +209,7 @@ public static class DiagnosticReportBuilder
     {
         if (string.IsNullOrWhiteSpace(value)) return "";
         if (value.Length > 2048) value = value.Substring(0, 2048);
-        if (Regex.IsMatch(value, @"(?i)(?:token|ticket|secret|password|authorization|bearer|api[_-]?key|credential)"))
+        if (Regex.IsMatch(value, @"(?i)(?:token|ticket|secret|password|authorization|bearer|api[_-]?key|credential|验证码|设备码|授权码|登录码|密钥|令牌|密码)"))
             return "Sensitive diagnostic content omitted.";
         string line = value.Split(new[] { '\r', '\n' }, 2, StringSplitOptions.RemoveEmptyEntries)[0];
         line = Regex.Replace(line, @"(?i)\bauthorization\b\s*[:=]\s*(?:Bearer|Basic)\s+[^\s,;]+", "authorization=[redacted]");
@@ -218,7 +218,7 @@ public static class DiagnosticReportBuilder
         line = Regex.Replace(line, @"(?i)https?://[^\s\]}),;]+", "[url]");
         line = Regex.Replace(line, @"\\\\[^\\\s<>\""']+\\[^\s<>\""']+", "[path]");
         line = Regex.Replace(line, @"(?i)\b[A-Z]:\\[^\s<>\""']+", "[path]");
-        line = Regex.Replace(line, @"(?i)(?:/home|/users|/mnt|/private/var|/var/folders|/tmp|/opt|/srv|/workspace)/[^\s<>\""']+", "[path]");
+        line = Regex.Replace(line, @"(?<![A-Za-z0-9])/(?:[^\s<>\""']+)", "[path]");
         line = Regex.Replace(line, @"\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b", "[email]");
         line = Regex.Replace(line, @"\b(?:\d{1,3}\.){3}\d{1,3}(?::\d{1,5})?\b", "[address]");
         line = Regex.Replace(line, @"\s+", " ").Trim();

@@ -72,6 +72,9 @@ public sealed class HostPipeBoundaryTests
     [InlineData("reply-duplicate-ok")]
     [InlineData("reply-null-tasks")]
     [InlineData("reply-contradiction")]
+    [InlineData("reply-oversized-message")]
+    [InlineData("reply-invalid-progress")]
+    [InlineData("reply-duplicate-task-field")]
     public async Task ClientRejectsIncompleteOrContradictoryWireReplies(string fault)
     {
         string name = "hell-host-" + Guid.NewGuid().ToString("N");
@@ -97,6 +100,9 @@ public sealed class HostPipeBoundaryTests
                     "reply-duplicate-ok" => "\"Protocol\":1,\"Ok\":false,\"Ok\":true,\"Tasks\":[]}",
                     "reply-null-tasks" => "\"Protocol\":1,\"Ok\":true,\"Tasks\":null}",
                     "reply-contradiction" => "\"Protocol\":1,\"Ok\":true,\"ErrorCode\":\"denied\",\"Error\":\"denied\",\"Tasks\":[]}",
+                    "reply-oversized-message" => "\"Protocol\":1,\"Ok\":true,\"Tasks\":[{\"Id\":\"task\",\"State\":\"failed\",\"Message\":" + JsonSerializer.Serialize(new string('x', 513)) + "}]}",
+                    "reply-invalid-progress" => "\"Protocol\":1,\"Ok\":true,\"Tasks\":[{\"Id\":\"task\",\"State\":\"running\",\"ProgressPercent\":-1}]}",
+                    "reply-duplicate-task-field" => "\"Protocol\":1,\"Ok\":true,\"Tasks\":[{\"Id\":\"old\",\"Id\":\"new\",\"State\":\"running\"}]}",
                     _ => "\"Protocol\":1,\"Ok\":true,\"Tasks\":[]}"
                 });
                 await HostFrames.WriteAsync(pipe, Encoding.UTF8.GetBytes(reply), deadline.Token);

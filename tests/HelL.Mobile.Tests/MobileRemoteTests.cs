@@ -72,7 +72,7 @@ public sealed class MobileRemoteTests : IDisposable
         Task refresh = remote.RefreshAsync();
         Assert.True(remote.Busy);
         remote.Cancel();
-        completion.SetResult(new HostReply { Ok = true, Device = "电脑", Tasks = [new HostTask { Id = "stale" }] });
+        completion.SetResult(new HostReply { Ok = true, Device = "电脑", Tasks = [new HostTask { Id = "stale", State = "running" }] });
         await refresh;
         Assert.Empty(remote.Tasks);
         Assert.False(remote.Busy);

@@ -2,6 +2,8 @@ name: Relay container acceptance
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: ['codex/remote-features']
   push:
     branches: ['codex/remote-followup-ci-*']
     paths:

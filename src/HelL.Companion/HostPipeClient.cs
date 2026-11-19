@@ -2,6 +2,7 @@ using System.IO.Pipes;
 using System.Security.Principal;
 using System.Text.Json;
 using HelL.Contracts;
+using HelL.Remote;
 
 namespace HelL.Companion;
 
@@ -32,15 +33,9 @@ public static class HostPipeClient
         await HostFrames.WriteAsync(pipe, JsonSerializer.SerializeToUtf8Bytes(request), timeout.Token).ConfigureAwait(false);
         payload = await HostFrames.ReadAsync(pipe, timeout.Token).ConfigureAwait(false)
             ?? throw new EndOfStreamException("The local host did not return a reply.");
-        HostReply reply = ReadMessage<HostReply>(payload, "Protocol", "RequestId", "Ok", "Device", "Tasks");
-        if (reply.Protocol != HostProtocol.Version || reply.RequestId != request.RequestId || reply.Device != welcome.Device)
+        HostReply reply = HostWireMessages.ReadReply(payload, request);
+        if (reply.Device != welcome.Device)
             throw new InvalidDataException("The local host reply does not match the request.");
-        if (reply.Tasks is null || reply.ErrorCode is null || reply.Error is null
-            || (reply.Ok && (reply.ErrorCode.Length != 0 || reply.Error.Length != 0))
-            || (!reply.Ok && (string.IsNullOrWhiteSpace(reply.ErrorCode) || string.IsNullOrWhiteSpace(reply.Error)))
-            || reply.Tasks.Any(task => task is null || string.IsNullOrWhiteSpace(task.Id) || task.Id.Length > 128
-                || task.Title is null || task.State is not ("running" or "completed" or "failed")))
-            throw new InvalidDataException("The local host reply contains invalid state or contradictory outcome fields.");
         return reply;
     }
 

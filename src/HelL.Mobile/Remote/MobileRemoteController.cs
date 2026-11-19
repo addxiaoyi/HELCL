@@ -25,7 +25,8 @@ public sealed partial class MobileRemoteController : IDisposable
     {
         this.pairings = pairings ?? throw new ArgumentNullException(nameof(pairings));
         this.send = send ?? new PairedRemoteClient(pairings).ExecuteAsync;
-        this.watch = watch ?? ((invite, token) => new InvitationFeedClient(updatesHttp).WatchAsync(invite, token));
+        this.watch = watch ?? ((invite, token) => new InvitationFeedClient(updatesHttp).WatchAsync(invite, token,
+            afterRevision: pairings.InvitationRevision(invite.Host.DeviceId)));
         foreach (RemoteHostInvite saved in pairings.Invitations()) invitations[saved.Host.DeviceId] = saved;
         SelectedHostId = pairings.SelectedHostId.Length == 0 ? invitations.Keys.FirstOrDefault() : pairings.SelectedHostId;
         if (SelectedHostId is not null) Invitation = invitations.GetValueOrDefault(SelectedHostId);
@@ -107,6 +108,7 @@ public sealed partial class MobileRemoteController : IDisposable
             Invitation = invitations.TryGetValue(hostId, out RemoteHostInvite? invite) ? invite : null;
             ++revision;
             Cancel();
+            operation = null;
             Tasks = [];
             TasksTruncated = false;
             Detail = null;
@@ -202,6 +204,7 @@ public sealed partial class MobileRemoteController : IDisposable
                 StopUpdates();
                 ++revision;
                 Cancel();
+                operation = null;
                 SelectedHostId = null;
                 Invitation = null;
                 Tasks = [];
@@ -263,6 +266,7 @@ public sealed partial class MobileRemoteController : IDisposable
         SelectedHostId = invite.Host.DeviceId;
         ++revision;
         Cancel();
+        operation = null;
         Invitation = invite;
         Tasks = [];
         TasksTruncated = false;
@@ -323,10 +327,10 @@ public sealed partial class MobileRemoteController : IDisposable
             {
                 pending.Token.ThrowIfCancellationRequested();
                 if (version != revision || disposed) return;
-                pairings.RecordConnection(invite.Host.DeviceId);
                 Tasks = reply.Tasks ?? [];
                 TasksTruncated = reply.TasksTruncated;
                 Notice = Tasks.Length == 0 ? "已连接。电脑当前没有可显示的任务。" : $"已更新 {Tasks.Length} 项任务 · {DateTime.Now:HH:mm:ss}";
+                RecordSuccessfulConnection(invite.Host.DeviceId);
             }
         }
         catch (OperationCanceledException) when (pending.IsCancellationRequested)
@@ -345,8 +349,18 @@ public sealed partial class MobileRemoteController : IDisposable
         {
             HostReply reply = await send(invite, request, pending.Token).WaitAsync(pending.Token).ConfigureAwait(false);
             pending.Token.ThrowIfCancellationRequested();
+            reply.Validate(request);
             if (!reply.Ok || reply.Protocol != HostProtocol.Version || reply.RequestId != request.RequestId) throw new IOException("电脑未确认该请求。");
             return reply;
+        }
+    }
+    private void RecordSuccessfulConnection(string hostId)
+    {
+        try { pairings.RecordConnection(hostId); }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        {
+            System.Diagnostics.Trace.TraceWarning("MobileRemoteController.RecordConnection: " + error.GetType().Name);
+            Notice = "电脑任务已更新，但最近连接时间未能保存。系统密钥库解锁后会再次尝试。";
         }
     }
     public void Cancel() { lock (stateGate) operation?.Cancel(); }

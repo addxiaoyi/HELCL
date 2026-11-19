@@ -54,7 +54,11 @@ public sealed class HostCommandService
 
     private HostReply Snapshot(string request)
     {
-        try { return new HostReply { RequestId = request, Device = device, Ok = true, Tasks = api.remote_task_snapshot(), TasksTruncated = api.remote_tasks_truncated() }; }
+        try
+        {
+            var snapshot = api.remote_task_state();
+            return new HostReply { RequestId = request, Device = device, Ok = true, Tasks = snapshot.Tasks, TasksTruncated = snapshot.Truncated };
+        }
         catch (Exception error) when (error is not OutOfMemoryException)
         {
             System.Diagnostics.Trace.TraceError("HostCommandService.Snapshot: " + error.GetType().Name);

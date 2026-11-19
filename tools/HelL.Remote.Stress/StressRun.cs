@@ -317,7 +317,7 @@ public sealed class StressRun(StressOptions options)
                 Interlocked.Increment(ref actions);
             }
             return new() { RequestId = request.RequestId, Device = device, Ok = true,
-                Tasks = cancelled.Select(row => new HostTask { Id = row.Key, Title = "Isolated fixture task", State = row.Value ? "cancelled" : "running" }).ToArray() };
+                Tasks = cancelled.Select(row => new HostTask { Id = row.Key, Title = "Isolated fixture task", State = row.Value ? "failed" : "running" }).ToArray() };
         }
     }
 }

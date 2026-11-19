@@ -155,6 +155,102 @@ public sealed class InvitationFeedClientTests
         await app.StopAsync();
     }
 
+    [Fact]
+    public async Task TheWatcherRecoversAfterTransientFailuresWithoutReplayingDeliveredRevisions()
+    {
+        RemoteHostInvite seed = Invite("https://relay.example/") with { Feed = InvitationFeedCodec.Create(DateTimeOffset.UtcNow.AddDays(1)) };
+        int calls = 0;
+        var conditions = new List<string>();
+        using var http = new HttpClient(new Handler(request =>
+        {
+            conditions.Add(request.Headers.IfNoneMatch.ToString());
+            return ++calls switch
+            {
+                1 => throw new HttpRequestException("offline"),
+                2 => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable),
+                3 => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(JsonSerializer.Serialize(InvitationFeedCodec.Protect(seed, seed.Feed!, 3))) },
+                4 => new HttpResponseMessage(HttpStatusCode.BadGateway),
+                _ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(JsonSerializer.Serialize(InvitationFeedCodec.Protect(seed, seed.Feed!, 4))) }
+            };
+        }));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var revisions = new List<long>();
+        await foreach (InvitationFeedUpdate update in new InvitationFeedClient(http).WatchAsync(seed, timeout.Token, TimeSpan.FromMilliseconds(100)))
+        {
+            revisions.Add(update.Revision);
+            if (revisions.Count == 2) break;
+        }
+        Assert.Equal([3L, 4L], revisions);
+        Assert.Equal("\"3\"", conditions[3]);
+        Assert.Equal("\"3\"", conditions[4]);
+    }
+
+    [Fact]
+    public async Task TheWatcherHonorsRateLimitDelayAndCancellationDoesNotSendAnotherRead()
+    {
+        RemoteHostInvite seed = Invite("https://relay.example/") with { Feed = InvitationFeedCodec.Create(DateTimeOffset.UtcNow.AddDays(1)) };
+        int calls = 0;
+        using var http = new HttpClient(new Handler(_ =>
+        {
+            Interlocked.Increment(ref calls);
+            var limited = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+            limited.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(2));
+            return limited;
+        }));
+        using var stop = new CancellationTokenSource(TimeSpan.FromMilliseconds(250));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+        {
+            await foreach (InvitationFeedUpdate _ in new InvitationFeedClient(http).WatchAsync(seed, stop.Token, TimeSpan.FromMilliseconds(100))) { }
+        });
+        Assert.Equal(1, calls);
+    }
+
+    [Fact]
+    public async Task AnUnauthorizedWatcherStopsWithoutRetryingOrExposingTheReaderToken()
+    {
+        RemoteHostInvite seed = Invite("https://relay.example/") with { Feed = InvitationFeedCodec.Create(DateTimeOffset.UtcNow.AddDays(1)) };
+        int calls = 0;
+        using var http = new HttpClient(new Handler(_ => { calls++; return new HttpResponseMessage(HttpStatusCode.Unauthorized); }));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        HttpRequestException denied = await Assert.ThrowsAsync<HttpRequestException>(async () =>
+        {
+            await foreach (InvitationFeedUpdate _ in new InvitationFeedClient(http).WatchAsync(seed, timeout.Token, TimeSpan.FromMilliseconds(100))) { }
+        });
+        Assert.Equal(HttpStatusCode.Unauthorized, denied.StatusCode);
+        Assert.DoesNotContain(seed.Feed!.ReaderToken, denied.Message);
+        Assert.Equal(1, calls);
+    }
+
+    [Theory]
+    [InlineData("json")]
+    [InlineData("ciphertext")]
+    [InlineData("authentication-tag")]
+    public async Task InvalidSuccessfulResponsesStopTheWatcherWithoutRetrying(string fault)
+    {
+        RemoteHostInvite seed = Invite("https://relay.example/") with { Feed = InvitationFeedCodec.Create(DateTimeOffset.UtcNow.AddDays(1)) };
+        InvitationFeedEnvelope envelope = InvitationFeedCodec.Protect(seed, seed.Feed!, 1);
+        string body = fault switch
+        {
+            "json" => "{",
+            "ciphertext" => JsonSerializer.Serialize(envelope with { Ciphertext = "not-base64" }),
+            _ => JsonSerializer.Serialize(envelope with { Tag = Convert.ToBase64String(new byte[16]) })
+        };
+        int reads = 0;
+        using var http = new HttpClient(new Handler(_ =>
+        {
+            reads++;
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body) };
+        }));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        InvalidDataException rejected = await Assert.ThrowsAsync<InvalidDataException>(async () =>
+        {
+            await foreach (InvitationFeedUpdate _ in new InvitationFeedClient(http).WatchAsync(seed, timeout.Token, TimeSpan.FromMilliseconds(100))) { }
+        });
+        Assert.Equal(1, reads);
+        Assert.DoesNotContain(seed.ClientTicket, rejected.Message);
+        Assert.DoesNotContain(seed.Feed!.EncryptionKey, rejected.Message);
+    }
+
     private static WebApplication App(string token) => RelayApp.Build([], builder =>
     {
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>

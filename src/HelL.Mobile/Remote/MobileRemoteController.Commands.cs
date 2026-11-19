@@ -49,6 +49,7 @@ public sealed partial class MobileRemoteController
         pending.CancelAfter(TimeSpan.FromSeconds(35));
         lock (stateGate)
         {
+            ThrowIfDisposed();
             if (operation is not null) throw new InvalidOperationException("请等待当前请求完成，或先取消请求。");
             invite = Invitation ?? throw new InvalidOperationException("请先导入所选电脑的邀请。");
             ValidateInvitation(invite);
@@ -63,8 +64,7 @@ public sealed partial class MobileRemoteController
         {
             HostReply reply = await send(invite, request, pending.Token).WaitAsync(pending.Token).ConfigureAwait(false);
             pending.Token.ThrowIfCancellationRequested();
-            if (reply.Protocol != HostProtocol.Version || reply.RequestId != request.RequestId)
-                throw new IOException("The host did not confirm this request.");
+            reply.Validate(request);
             lock (stateGate)
             {
                 if (version != revision || disposed) return;
@@ -85,20 +85,10 @@ public sealed partial class MobileRemoteController
                 }
                 if (request.Command == HostCommand.TaskDetails)
                 {
-                    if (reply.Detail is null || reply.Detail.TaskId != request.TaskId) throw new InvalidDataException("The task details do not match this request.");
-                    if (reply.Detail.RecentLogs is null || reply.Detail.RecentLogs.Length > 20
-                        || reply.Detail.RecentLogs.Any(line => line is null || line.Length > 512)
-                        || reply.Detail.Message is null || reply.Detail.Message.Length > 1024)
-                        throw new InvalidDataException("The task details exceed the agreed response limits.");
                     Detail = reply.Detail;
                 }
                 else
                 {
-                    if (reply.Game is null) throw new InvalidDataException("The host did not return game status.");
-                    if (reply.Game.Message is null || reply.Game.Message.Length > 1024 || reply.Game.SessionId is null
-                        || reply.Game.State is not ("stopped" or "running" or "stopping")
-                        || (reply.Game.Running && !Guid.TryParseExact(reply.Game.SessionId, "N", out _)))
-                        throw new InvalidDataException("The host game status is invalid.");
                     Game = reply.Game;
                 }
                 Notice = request.Command == HostCommand.StopGame ? "已请求游戏正常退出。游戏可能要求电脑上的玩家保存或确认。" : "已更新电脑详情。";

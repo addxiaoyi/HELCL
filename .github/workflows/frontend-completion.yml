@@ -105,8 +105,6 @@ jobs:
   android:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
-    env:
-      ANDROID_AVD_HOME: ${{ runner.temp }}/hell-frontend-avds
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -133,6 +131,8 @@ jobs:
         timeout-minutes: 6
         shell: bash
         run: |
+          export ANDROID_AVD_HOME="$RUNNER_TEMP/hell-frontend-avds"
+          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
           mkdir -p "$ANDROID_AVD_HOME"
           echo no | avdmanager create avd --force --name hell_frontend --path "$ANDROID_AVD_HOME/hell_frontend.avd" --package 'system-images;android-35;google_apis;x86_64'
           test -f "$ANDROID_AVD_HOME/hell_frontend.avd/config.ini"

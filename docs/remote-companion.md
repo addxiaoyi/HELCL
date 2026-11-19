@@ -132,11 +132,14 @@ if the game stays open. Cancelling a launch task through the remote cancellation
 command cannot bypass this control. The WPF helper still hosts one selected phone
 at a time; multi-computer selection on the phone does not change that limit.
 
-Native macOS TLS server hosting is not supported by this path: the runtime's
-SecureTransport backend rejects its required TLS 1.3. macOS validation covers
-credentials, pairing, invitation feeds and Mobile logic rather than native tunnel
-connectivity. The required TLS version is not downgraded. The .NET 10 optional
-Network.framework client support does not enable server hosting.
+Device tunnels require TLS 1.2 or newer. macOS uses TLS 1.2 because its
+SecureTransport backend cannot host TLS 1.3 through SslStream; other platforms
+offer TLS 1.2 and TLS 1.3 so both peer roles can interoperate. Both sides still
+require an unexpired device certificate with the paired SHA-256 fingerprint.
+The acceptance matrix runs real pinned mutual TLS handshakes and remote commands
+on macOS Intel, Linux and Windows; physical cross-machine behavior remains a
+separate deployment check. Earlier TLS 1.3-only validation notes describe their
+historical source commits.
 
 For a .NET 10 caller, use `CompanionRelayHost.Connect` directly and then
 `PairedRemoteHost.StartAsync`. Its publishing callback receives the initial and

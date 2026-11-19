@@ -22,6 +22,51 @@ namespace HelL.Remote.Tests;
 
 public sealed class TunnelTests
 {
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task DeviceTunnelNegotiatesPinnedMutualTls12ForEitherPeerRole(bool tunnelIsServer)
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        using var client = new TcpClient();
+        Task<TcpClient> accepting = listener.AcceptTcpClientAsync(timeout.Token).AsTask();
+        await client.ConnectAsync((IPEndPoint)listener.LocalEndpoint, timeout.Token);
+        using TcpClient host = await accepting;
+        using X509Certificate2 hostIdentity = DeviceTunnel.CreateIdentity("host");
+        using X509Certificate2 clientIdentity = DeviceTunnel.CreateIdentity("client");
+        string peerPin = DeviceTunnel.Fingerprint(tunnelIsServer ? hostIdentity : clientIdentity);
+        await using var peer = new SslStream(tunnelIsServer ? client.GetStream() : host.GetStream(), false,
+            (_, certificate, _, _) => certificate is not null && certificate.GetCertHashString(HashAlgorithmName.SHA256) == peerPin);
+        Task<SslStream> tunnel = tunnelIsServer
+            ? DeviceTunnel.AcceptAsync(host.GetStream(), hostIdentity, DeviceTunnel.Fingerprint(clientIdentity), timeout.Token)
+            : DeviceTunnel.ConnectAsync(client.GetStream(), clientIdentity, DeviceTunnel.Fingerprint(hostIdentity), timeout.Token);
+        Task handshake = tunnelIsServer
+            ? peer.AuthenticateAsClientAsync(new SslClientAuthenticationOptions
+            {
+                TargetHost = "hell-paired-device", EnabledSslProtocols = SslProtocols.Tls12,
+                ClientCertificates = new X509CertificateCollection { clientIdentity },
+                CertificateRevocationCheckMode = X509RevocationMode.NoCheck
+            }, timeout.Token)
+            : peer.AuthenticateAsServerAsync(new SslServerAuthenticationOptions
+            {
+                ServerCertificate = hostIdentity, ClientCertificateRequired = true,
+                EnabledSslProtocols = SslProtocols.Tls12, CertificateRevocationCheckMode = X509RevocationMode.NoCheck
+            }, timeout.Token);
+        await Task.WhenAll(tunnel, handshake);
+        await using SslStream connected = await tunnel;
+        Assert.Equal(SslProtocols.Tls12, connected.SslProtocol);
+        Assert.Equal(SslProtocols.Tls12, peer.SslProtocol);
+        Assert.True(connected.IsMutuallyAuthenticated && peer.IsMutuallyAuthenticated);
+        Assert.Equal(DeviceTunnel.Fingerprint(tunnelIsServer ? clientIdentity : hostIdentity),
+            connected.RemoteCertificate!.GetCertHashString(HashAlgorithmName.SHA256));
+        await connected.WriteAsync("pinned command"u8.ToArray(), timeout.Token);
+        byte[] received = new byte[14];
+        await peer.ReadExactlyAsync(received, timeout.Token);
+        Assert.Equal("pinned command", Encoding.UTF8.GetString(received));
+    }
+
     [Fact]
     public async Task RelayRequiresAuthorizationAndTransportsMutuallyAuthenticatedTls()
     {

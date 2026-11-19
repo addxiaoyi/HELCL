@@ -60,9 +60,17 @@ internal static class FrontendRemediationCheck
         window.Navigate("account", true); await Program.WaitForPage(window, "account");
         var account = (AccountPage)window.GetPage("account")!;
         Task form = (Task)Call(account, "AuthlibLoginAsync")!;
-        await Task.Delay(100);
+        Button? login = null;
+        var deadline = System.Diagnostics.Stopwatch.StartNew();
+        while (deadline.Elapsed < TimeSpan.FromSeconds(10))
+        {
+            if (Dlg.Host is not null) login = Find<Button>(Dlg.Host).SingleOrDefault(button => button.Content?.ToString() == "登录");
+            if (login is not null) break;
+            if (form.IsCompleted) { await form; throw new IOException("The account editor closed before presenting its login action."); }
+            await Task.Delay(25);
+        }
+        if (login is null) throw new TimeoutException("The account editor did not open after loading skin-site presets.");
         var layer = Dlg.Host!;
-        var login = Find<Button>(layer).Single(button => button.Content?.ToString() == "登录");
         login.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await Task.Delay(80);
         Check(Dlg.AnyOpen && !form.IsCompleted, "invalid account form remains open for correction");

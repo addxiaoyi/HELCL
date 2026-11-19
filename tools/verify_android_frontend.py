@@ -119,10 +119,11 @@ def verify(apk: Path, output: Path) -> None:
                                   and not value.get("keyboardOpen") else None), "The Android keyboard did not close.")
         if closed.get("page") != "manage":
             raise RuntimeError("The first system back navigated away instead of only closing the keyboard.")
-        before_back = int(closed.get("backEvents", 0))
+        before_back = int(closed.get("backEvents", 0)) + int(closed.get("backKeyEvents", 0))
         adb("shell", "input", "keyevent", "4")
         returned = wait_for(lambda: (value if (value := read_json(evidence + "/mobile-platform-events.json"))
-                                    and value.get("backEvents", 0) > before_back and value.get("page") != "manage" else None),
+                                    and value.get("backEvents", 0) + value.get("backKeyEvents", 0) > before_back
+                                    and value.get("page") != "manage" else None),
                             "The application did not handle Android back after the keyboard closed.")
         screenshot(output / "03-back.png")
         if not all(returned.get(key) for key in ("backHook", "insetsHook", "inputPaneHook")):

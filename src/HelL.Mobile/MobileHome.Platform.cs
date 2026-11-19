@@ -12,6 +12,7 @@ public sealed partial class MobileHome
     private IInsetsManager? insets;
     private IInputPane? inputPane;
     private int nativeBackEvents;
+    private int nativeBackKeyEvents;
     private int nativeKeyboardEvents;
     private int nativeSafeAreaEvents;
 
@@ -68,7 +69,7 @@ public sealed partial class MobileHome
             Directory.CreateDirectory(MobileRuntime.ReportRoot);
             File.WriteAllText(Path.Combine(MobileRuntime.ReportRoot, "mobile-platform-events.json"), System.Text.Json.JsonSerializer.Serialize(new
             {
-                schema = 1, platform = "android", backEvents = nativeBackEvents, keyboardEvents = nativeKeyboardEvents,
+                schema = 1, platform = "android", backEvents = nativeBackEvents, backKeyEvents = nativeBackKeyEvents, keyboardEvents = nativeKeyboardEvents,
                 safeAreaEvents = nativeSafeAreaEvents, safeArea = new { left = Padding.Left, top = Padding.Top, right = Padding.Right, bottom = Padding.Bottom },
                 systemTextScale = MobileRuntime.SystemTextScale, page = currentPage,
                 instanceNameTap = NativeAuditTap(InstanceName),

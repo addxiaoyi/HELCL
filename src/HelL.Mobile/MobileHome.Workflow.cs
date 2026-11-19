@@ -150,7 +150,13 @@ public sealed partial class MobileHome
 
     private void WorkflowKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape && RequestBack()) e.Handled = true;
+        if (e.Key != Key.Escape || !RequestBack()) return;
+        e.Handled = true;
+        if (OperatingSystem.IsAndroid())
+        {
+            nativeBackKeyEvents++;
+            RecordPlatformAudit();
+        }
     }
 
     private static void ValidateInstanceName(string name, TextBox field, TextBlock notice)

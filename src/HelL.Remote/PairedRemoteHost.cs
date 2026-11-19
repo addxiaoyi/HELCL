@@ -224,7 +224,10 @@ public sealed class PairedRemoteHost : IAsyncDisposable
         pairings.Refresh();
         PairedDevice? current = pairings.Find(session.Device.DeviceId);
         if (current is null || current.Fingerprint != session.Device.Fingerprint || !current.Permissions.Contains(HostPermission.Read)
-            || (request.Command == HostCommand.CancelTask && !current.Permissions.Contains(HostPermission.CancelTasks)))
+            || (request.Command == HostCommand.CancelTask && !current.Permissions.Contains(HostPermission.CancelTasks))
+            || (request.Command == HostCommand.TaskDetails && !current.Permissions.Contains(HostPermission.Read))
+            || (request.Command == HostCommand.GameStatus && !current.Permissions.Contains(HostPermission.Read))
+            || (request.Command == HostCommand.StopGame && !current.Permissions.Contains(HostPermission.ControlGame)))
             return Task.FromResult(new HostReply { RequestId = request.RequestId, Device = pairings.Offer.Name,
                 ErrorCode = "permission_denied", Error = "This paired device does not have permission for that host command." });
         return execute(request, cancellation);

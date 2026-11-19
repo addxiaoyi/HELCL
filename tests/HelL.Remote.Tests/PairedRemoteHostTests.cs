@@ -48,6 +48,26 @@ public sealed class PairedRemoteHostTests
     }
 
     [Fact]
+    public async Task ReadOnlyGameAndTaskQueriesCannotAuthorizeAGameStop()
+    {
+        await using var fixture = await Setup.OpenAsync();
+        RemoteHostInvite invite = await fixture.Host.StartAsync(fixture.Phone.Offer.DeviceId, (_, _) => Task.CompletedTask, fixture.Timeout.Token);
+        HostReply details = await fixture.Client.ExecuteAsync(invite, new HostRequest
+        { RequestId = Guid.NewGuid().ToString("N"), Command = HostCommand.TaskDetails, TaskId = "task-fixture" }, fixture.Timeout.Token);
+        HostReply status = await fixture.Client.ExecuteAsync(invite, new HostRequest
+        { RequestId = Guid.NewGuid().ToString("N"), Command = HostCommand.GameStatus }, fixture.Timeout.Token);
+        Assert.True(details.Ok);
+        Assert.True(status.Ok);
+        HostReply denied = await fixture.Client.ExecuteAsync(invite, new HostRequest
+        {
+            RequestId = Guid.NewGuid().ToString("N"), Command = HostCommand.StopGame,
+            SessionId = Guid.NewGuid().ToString("N")
+        }, fixture.Timeout.Token);
+        Assert.Equal("permission_denied", denied.ErrorCode);
+        Assert.Equal(2, fixture.Executed);
+    }
+
+    [Fact]
     public async Task AutomaticRenewalPublishesAnInviteAndExternalRevocationClosesTheHost()
     {
         await using var fixture = await Setup.OpenAsync(TimeSpan.FromMilliseconds(100));

@@ -31,8 +31,12 @@ Both the launcher and the paired device must remain online.
   Framework launcher. Bootstrap credentials travel over private standard input,
   not process arguments. Stopping the helper closes its local pipe too.
 
-The protocol remains limited to `Snapshot` and `CancelTask`. Pairing does not
-grant arbitrary RPC access, game control, screen capture or file-system access.
+The protocol exposes `Snapshot`, `TaskDetails`, `GameStatus`, `CancelTask`, and
+`StopGame`. Read-only access covers task progress, a bounded redacted task log,
+and game state. Cancellation requires `CancelTasks`. Requesting the current game
+window to close requires the separate `ControlGame` permission on both the paired
+device and local pipe. Pairing never grants arbitrary RPC, process termination,
+screen capture, or file-system access.
 
 ## Build and pair devices
 
@@ -51,7 +55,7 @@ fingerprints on both devices before running `trust`.
 ```text
 HelL.Companion.Host identity <data-root> <device-name>
 HelL.Companion.Host list <data-root> <device-name>
-HelL.Companion.Host trust <data-root> <device-name> <public-offer-file> <confirmed-fingerprint> [--allow-cancel]
+HelL.Companion.Host trust <data-root> <device-name> <public-offer-file> <confirmed-fingerprint> [--allow-cancel] [--allow-game-stop]
 HelL.Companion.Host revoke <data-root> <device-name> <paired-device-id>
 ```
 
@@ -99,13 +103,40 @@ trust. Permissions default to read-only; cancellation also requires the computer
 to grant that phone permission. Import the private client invitation after trust
 has been confirmed. Private input is concealed and cleared after import.
 
-The page shows loading, empty, task, failure and cancelled states. It supports
-snapshot refresh, explicitly permitted task cancellation, local trust revocation,
-and pausing/resuming automatic invitation updates. Only public identity/trust is
-persisted through the mobile system key store; the private invitation stays in
-the process session. After an app process restart, import a private invitation
-again. Within a session, older update revisions and late replies from a previous
-host/subscription cannot overwrite the current state.
+The page shows loading, empty, task, failure and cancelled states. Invitations,
+feed capabilities, selected computer, last successful snapshot time, and accepted
+feed revisions are now persisted inside the existing AES-GCM pairing envelope;
+the encryption key remains in the system key store. They are never written as
+plaintext files or logs. Old pairing files without these fields still load.
+
+Opening the page restores the selected computer and reads its task snapshot when
+the invitation is still valid. An expired room ticket never reaches the transport;
+an unexpired verified feed can supply a replacement before reconnecting. Only the
+selected computer's feed is polled. Switching computers cancels the old operation,
+clears its task/game/details display, and starts the selected computer's recovery.
+Revoking local trust removes that computer's saved invitation, activity and feed
+revision. Computer-side revocation is still needed to end its grant to the phone.
+Persistence failure preserves the previous saved state and is reported.
+
+Task snapshots prioritize running tasks and show up to 40 records, with an
+explicit truncation notice. Details retain up to 20 redacted log lines of at most
+512 characters each. Authentication output, URLs, absolute paths and email
+addresses are removed. These are bounded diagnostics, not a full log export.
+
+Game status is read-only. A close request needs explicit confirmation, a fresh
+session ID and independent `ControlGame` grants; it uses the game's normal window
+close action. It never kills a process, and games without a closeable window
+return a clear refusal. A successful receipt means a close was requested, not
+proof that the game saved or exited. A new confirmation can retry after 10 seconds
+if the game stays open. Cancelling a launch task through the remote cancellation
+command cannot bypass this control. The WPF helper still hosts one selected phone
+at a time; multi-computer selection on the phone does not change that limit.
+
+Native macOS TLS server hosting is not supported by this path: the runtime's
+SecureTransport backend rejects its required TLS 1.3. macOS validation covers
+credentials, pairing, invitation feeds and Mobile logic rather than native tunnel
+connectivity. The required TLS version is not downgraded. The .NET 10 optional
+Network.framework client support does not enable server hosting.
 
 For a .NET 10 caller, use `CompanionRelayHost.Connect` directly and then
 `PairedRemoteHost.StartAsync`. Its publishing callback receives the initial and

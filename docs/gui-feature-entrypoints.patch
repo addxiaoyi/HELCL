@@ -1,0 +1,19 @@
+--- a/src/HelL/Pages/SettingsPage.cs
++++ b/src/HelL/Pages/SettingsPage.cs
+@@ -744,0 +745 @@
++		((SPanel)border8).Children.Add(Ui.Field("诊断包", Ui.Btn("预览并导出诊断包", BtnKind.Chip, (_, _) => DiagnosticPanel.Show()).Left(), "选择字段并检查预览后手动保存；不包含账号、密钥或原始日志，不会自动上传。"));
+--- a/src/HelL.Desktop/Views/SettingsAppearanceView.axaml.cs
++++ b/src/HelL.Desktop/Views/SettingsAppearanceView.axaml.cs
+@@ -18,0 +19,6 @@
++        if (Content is ScrollViewer { Content: StackPanel content })
++        {
++            var diagnostics = new Button { Content = "预览并导出诊断包", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch };
++            diagnostics.Click += OpenDiagnostics;
++            content.Children.Add(diagnostics);
++        }
+@@ -19,0 +26,5 @@
++    }
++
++    private async void OpenDiagnostics(object? sender, RoutedEventArgs e)
++    {
++        if (host is not null) await new DiagnosticWindow(host.DiagnosticIssues).ShowDialog(host);

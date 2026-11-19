@@ -1,0 +1,76 @@
+name: Remote features checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ['codex/backend-followup-ci-20261119-01']
+
+permissions:
+  contents: read
+
+jobs:
+  features:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '10.0.x'
+      - name: Test backend, pairing recovery, and mobile controls
+        shell: pwsh
+        run: |
+          dotnet test tests/HelL.Portable.Tests -c Release --logger 'trx;LogFileName=portable.trx' --results-directory artifacts/features
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($IsMacOS) {
+            Write-Host 'macOS: pairing, invitation feed, framing and protocol acceptance. Native TLS 1.3 server transport is unsupported and is not counted as verified.'
+            $remoteFilter = 'FullyQualifiedName~HostFrameTests|FullyQualifiedName~ProtocolTests|FullyQualifiedName~RemotePairingTests|FullyQualifiedName~RemoteInvitationPersistenceTests|FullyQualifiedName~RemoteRecoveryTests|FullyQualifiedName~InvitationFeedClientTests|FullyQualifiedName~InvitationFeedServerTests|FullyQualifiedName~RelayRoomsTests|FullyQualifiedName~RelayBudgetTests|FullyQualifiedName~WebSocketStreamTests'
+            dotnet test tests/HelL.Remote.Tests -c Release --filter $remoteFilter --logger 'trx;LogFileName=remote-pairing-feed-only.trx' --results-directory artifacts/features
+          } else {
+            dotnet test tests/HelL.Remote.Tests -c Release --logger 'trx;LogFileName=remote.trx' --results-directory artifacts/features
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet test tests/HelL.Mobile.Tests -c Release --logger 'trx;LogFileName=mobile.trx' --results-directory artifacts/features
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build tools/HelL.Companion.Host -c Release --nologo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: remote-features-${{ matrix.os }}-${{ github.run_id }}
+          path: artifacts/features
+          if-no-files-found: warn
+
+  mobile-preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '10.0.x'
+      - name: Prepare preview runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y xvfb libx11-6 libice6 libsm6 libfontconfig1 libgl1
+          dotnet build tools/HelL.Mobile.Preview -c Release --nologo
+      - name: Verify remote controls and diagnostic preview at three sizes
+        run: |
+          for size in '320 720' '390 844' '844 390'; do
+            read -r width height <<< "$size"
+            xvfb-run -a dotnet tools/HelL.Mobile.Preview/bin/Release/net10.0/HelL.Mobile.Preview.dll "$GITHUB_WORKSPACE/artifacts/preview-${width}x${height}" "$width" "$height" --remote
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: remote-features-preview-${{ github.run_id }}
+          path: artifacts/preview-*
+          if-no-files-found: warn

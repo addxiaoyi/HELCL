@@ -37,7 +37,7 @@ public sealed partial class MobileHome
 
     private void InitializeRemote()
     {
-        if (remote is not null) { PresentRemote(); return; }
+        if (remote is not null) { PresentRemote(); RestoreRemoteConnection(); return; }
         try
         {
             remote = session.Remote;
@@ -61,6 +61,8 @@ public sealed partial class MobileHome
             actions.Children.Add(remoteUpdateControls);
             actions.Children.Add(RemoteText("仅显示任务快照。取消请求需要两端明确授权，任务会继续运行直至电脑确认取消。", "caption"));
             actions.Children.Add(remoteTasks);
+            actions.Children.Add(remoteGame);
+            actions.Children.Add(remoteTaskDetail);
             remoteActions.Child = actions;
             RemoteLayout.Children.Add(remoteActions);
             RemoteLayout.Children.Add(remoteSettings);
@@ -83,6 +85,7 @@ public sealed partial class MobileHome
             pairing.Children.Add(remoteHostPin);
             pairing.Children.Add(remoteVerified);
             pairing.Children.Add(remoteAllowCancel);
+            pairing.Children.Add(remoteAllowControlGame);
             pairing.Children.Add(RemoteText("默认只读。手机上的权限开关不会替代电脑端的授权；修改权限需重新核对指纹。", "caption"));
             pairing.Children.Add(RemoteButton("确认配对 / 保存权限", ConfirmRemotePairing));
             remotePairing.Content = pairing;
@@ -99,6 +102,7 @@ public sealed partial class MobileHome
             foreach (Control control in new Control[] { remoteVerified, remoteAllowCancel, remoteRevokeConfirmed, remoteRefresh, remoteCancel })
                 AutomationProperties.SetName(control, control is CheckBox check ? check.Content?.ToString() : ((Button)control).Content?.ToString());
             PresentRemote();
+            RestoreRemoteConnection();
         }
         catch (Exception error) when (error is not OutOfMemoryException)
         {
@@ -113,7 +117,7 @@ public sealed partial class MobileHome
     private void PresentRemote()
     {
         if (remote is null || disposed) return;
-        remoteNotice.Text = remote.Notice;
+        remoteNotice.Text = remote.Notice + (remote.TasksTruncated ? "\n任务较多，仅显示前 40 项，运行中的任务优先。" : "");
         remoteUpdateNotice.Text = remote.UpdateNotice;
         remoteError.Text = remote.Error;
         remoteError.IsVisible = remote.Error.Length != 0;
@@ -132,6 +136,7 @@ public sealed partial class MobileHome
         {
             var row = new StackPanel { Spacing = 5 };
             row.Children.Add(RemoteText(host.Name, "section"));
+            AddRemoteHostActions(row, host);
             row.Children.Add(RemoteText(host.Permissions.Contains(HelL.Contracts.HostPermission.CancelTasks) ? "允许读取及请求取消任务" : "只读 · 无法从手机取消任务", "caption"));
             row.Children.Add(Pin(host.Fingerprint));
             Button edit = RemoteButton("重新核对 / 修改权限", EditRemoteHost); edit.Tag = host;
@@ -144,6 +149,7 @@ public sealed partial class MobileHome
         foreach (HelL.Contracts.HostTask task in remote.Tasks)
         {
             var row = new StackPanel { Spacing = 6 };
+            AddRemoteTaskDetails(row, task);
             row.Children.Add(RemoteText(string.IsNullOrWhiteSpace(task.Title) ? task.Id : task.Title, "section"));
             row.Children.Add(RemoteText(task.State switch { "running" => "运行中", "completed" => "已完成", "failed" => "失败 / 已取消", _ => "状态未知，请刷新" }, "caption"));
             if (task.State == "running")
@@ -154,6 +160,7 @@ public sealed partial class MobileHome
             }
             remoteTasks.Children.Add(RemoteGroup(row));
         }
+        PresentRemoteDetails();
     }
 
     private async Task RemoteAction(Func<Task> action)
@@ -174,7 +181,7 @@ public sealed partial class MobileHome
     { remoteVerified.IsChecked = false; remote!.StageOffer(remoteOfferInput.Text ?? ""); return Task.CompletedTask; });
     private async void ConfirmRemotePairing(object? sender, RoutedEventArgs e) => await RemoteAction(() =>
     {
-        remote!.ConfirmPairing(remoteVerified.IsChecked == true, remoteAllowCancel.IsChecked == true);
+        remote!.ConfirmPairing(remoteVerified.IsChecked == true, remoteAllowCancel.IsChecked == true, remoteAllowControlGame.IsChecked == true);
         remoteVerified.IsChecked = false; remoteOfferInput.Clear();
         remotePairing.IsExpanded = false; remoteInvitation.IsExpanded = true;
         return Task.CompletedTask;
@@ -194,6 +201,7 @@ public sealed partial class MobileHome
         {
             remoteVerified.IsChecked = false;
             remoteAllowCancel.IsChecked = host.Permissions.Contains(HelL.Contracts.HostPermission.CancelTasks);
+            remoteAllowControlGame.IsChecked = host.Permissions.Contains(HelL.Contracts.HostPermission.ControlGame);
             remote!.StageOffer(System.Text.Json.JsonSerializer.Serialize(new RemotePairingOffer(host.DeviceId, host.Name, host.Fingerprint)));
             remotePairing.IsExpanded = true;
             remotePairing.BringIntoView();

@@ -15,6 +15,8 @@ public interface IRemoteSecretStore
 
 public sealed record RemotePairingOffer(string DeviceId, string Name, string Fingerprint);
 public sealed record PairedDevice(string DeviceId, string Name, string Fingerprint, HostPermission[] Permissions);
+public sealed record PairedDeviceActivity(string DeviceId, long LastConnected);
+public sealed record PairedInvitationRevision(string DeviceId, string Channel, long Revision);
 
 public sealed class RemotePairingStore
 {
@@ -27,7 +29,13 @@ public sealed class RemotePairingStore
     private readonly IRemoteSecretStore secrets;
     private State state;
     private string keyId = "";
-    private sealed record State(string DeviceId, string Name, string Identity, PairedDevice[] Devices);
+    private sealed record State(string DeviceId, string Name, string Identity, PairedDevice[] Devices)
+    {
+        public RemoteHostInvite[] Invitations { get; init; } = [];
+        public PairedDeviceActivity[] Activity { get; init; } = [];
+        public PairedInvitationRevision[] InvitationRevisions { get; init; } = [];
+        public string SelectedHostId { get; init; } = "";
+    }
     private sealed record Envelope(int Schema, string KeyId, string Nonce, string Ciphertext, string Tag);
 
     public event Action<string>? Changed;
@@ -87,6 +95,79 @@ public sealed class RemotePairingStore
         }
     }
 
+    public RemoteHostInvite[] Invitations()
+    {
+        lock (gate) return state.Invitations.Select(invite => invite with { }).ToArray();
+    }
+    public string SelectedHostId { get { lock (gate) return state.SelectedHostId; } }
+    public long InvitationRevision(string deviceId)
+    {
+        ValidateId(deviceId);
+        lock (gate) return state.InvitationRevisions.SingleOrDefault(item => item.DeviceId == deviceId)?.Revision ?? 0;
+    }
+    public void SelectHost(string deviceId)
+    {
+        ValidateId(deviceId);
+        lock (gate)
+        {
+            if (!state.Devices.Any(device => device.DeviceId == deviceId)) throw new UnauthorizedAccessException("The selected host is not paired.");
+            Commit(state with { SelectedHostId = deviceId });
+        }
+    }
+
+    public long? LastConnected(string deviceId)
+    {
+        ValidateId(deviceId);
+        lock (gate) return state.Activity.SingleOrDefault(item => item.DeviceId == deviceId)?.LastConnected;
+    }
+
+    public void RecordConnection(string deviceId)
+    {
+        ValidateId(deviceId);
+        lock (gate)
+        {
+            if (!state.Devices.Any(device => device.DeviceId == deviceId))
+                throw new UnauthorizedAccessException("Only a paired device can have connection activity recorded.");
+            PairedDeviceActivity[] next = state.Activity.Where(item => item.DeviceId != deviceId)
+                .Append(new PairedDeviceActivity(deviceId, DateTimeOffset.UtcNow.ToUnixTimeSeconds())).ToArray();
+            Commit(state with { Activity = next });
+        }
+    }
+
+    public void SaveInvitation(RemoteHostInvite invitation, long revision = 0)
+    {
+        ValidateStoredInvitation(invitation);
+        if (revision < 0) throw new ArgumentOutOfRangeException(nameof(revision));
+        lock (gate)
+        {
+            PairedDevice? host = state.Devices.SingleOrDefault(device => device.DeviceId == invitation.Host.DeviceId);
+            if (host is null || host.Fingerprint != invitation.Host.Fingerprint.ToUpperInvariant()
+                || invitation.ClientDeviceId != state.DeviceId)
+                throw new UnauthorizedAccessException("The invitation does not belong to a currently paired host.");
+            RemoteHostInvite[] next = state.Invitations.Where(saved => saved.Host.DeviceId != host.DeviceId)
+                .Append(invitation with { }).ToArray();
+            if (next.Length > MaxDevices) throw new InvalidOperationException("Too many saved host invitations.");
+            PairedInvitationRevision? previous = state.InvitationRevisions.SingleOrDefault(item => item.DeviceId == host.DeviceId);
+            string channel = invitation.Feed?.Channel ?? "";
+            if (previous?.Channel == channel && revision > 0 && revision <= previous.Revision)
+                throw new InvalidDataException("The saved invitation revision cannot move backwards.");
+            long nextRevision = revision == 0 && previous?.Channel == channel ? previous.Revision : revision;
+            PairedInvitationRevision[] revisions = state.InvitationRevisions.Where(item => item.DeviceId != host.DeviceId)
+                .Append(new PairedInvitationRevision(host.DeviceId, channel, nextRevision)).ToArray();
+            Commit(state with { Invitations = next, InvitationRevisions = revisions, SelectedHostId = host.DeviceId });
+        }
+    }
+
+    public void RemoveInvitation(string deviceId)
+    {
+        ValidateId(deviceId);
+        lock (gate) Commit(state with
+        {
+            Invitations = state.Invitations.Where(invite => invite.Host.DeviceId != deviceId).ToArray(),
+            InvitationRevisions = state.InvitationRevisions.Where(item => item.DeviceId != deviceId).ToArray()
+        });
+    }
+
     public void Trust(RemotePairingOffer offer, IReadOnlyCollection<HostPermission> permissions)
     {
         ArgumentNullException.ThrowIfNull(offer);
@@ -114,7 +195,14 @@ public sealed class RemotePairingStore
     public void Revoke(string deviceId)
     {
         ValidateId(deviceId);
-        lock (gate) Commit(state with { Devices = state.Devices.Where(device => device.DeviceId != deviceId).ToArray() });
+        lock (gate) Commit(state with
+        {
+            Devices = state.Devices.Where(device => device.DeviceId != deviceId).ToArray(),
+            Invitations = state.Invitations.Where(invite => invite.Host.DeviceId != deviceId).ToArray(),
+            Activity = state.Activity.Where(item => item.DeviceId != deviceId).ToArray(),
+            InvitationRevisions = state.InvitationRevisions.Where(item => item.DeviceId != deviceId).ToArray(),
+            SelectedHostId = state.SelectedHostId == deviceId ? "" : state.SelectedHostId
+        });
         Changed?.Invoke(deviceId);
     }
 
@@ -143,7 +231,11 @@ public sealed class RemotePairingStore
             State loaded = JsonSerializer.Deserialize<State>(plain) ?? throw Corrupt();
             ValidateId(loaded.DeviceId);
             ValidateName(loaded.Name);
-            if (loaded.Devices is null || loaded.Devices.Length > MaxDevices || loaded.Devices.Any(device => device is null)) throw Corrupt();
+            loaded = loaded with { Invitations = loaded.Invitations ?? [], Activity = loaded.Activity ?? [], InvitationRevisions = loaded.InvitationRevisions ?? [] };
+            if (loaded.Devices is null || loaded.Devices.Length > MaxDevices || loaded.Devices.Any(device => device is null)
+                || loaded.Invitations.Length > MaxDevices || loaded.Activity.Length > MaxDevices || loaded.InvitationRevisions.Length > MaxDevices
+                || loaded.Invitations.Any(invite => invite?.Host is null) || loaded.Activity.Any(item => item is null)
+                || loaded.InvitationRevisions.Any(item => item is null) || loaded.SelectedHostId is null) throw Corrupt();
             using X509Certificate2 identity = Open(loaded.Identity);
             if (!identity.HasPrivateKey || loaded.Devices.Select(device => device.DeviceId).Distinct().Count() != loaded.Devices.Length) throw Corrupt();
             foreach (PairedDevice device in loaded.Devices)
@@ -152,6 +244,19 @@ public sealed class RemotePairingStore
                 if (device.DeviceId == loaded.DeviceId || device.Permissions is null || !device.Permissions.Contains(HostPermission.Read)
                     || device.Permissions.Any(permission => !Enum.IsDefined(permission))) throw Corrupt();
             }
+            if (loaded.Activity.Select(item => item.DeviceId).Distinct().Count() != loaded.Activity.Length
+                || loaded.Activity.Any(item => !loaded.Devices.Any(device => device.DeviceId == item.DeviceId) || item.LastConnected < 0)) throw Corrupt();
+            if (loaded.Invitations.Select(invite => invite.Host.DeviceId).Distinct().Count() != loaded.Invitations.Length) throw Corrupt();
+            foreach (RemoteHostInvite invite in loaded.Invitations)
+            {
+                ValidateStoredInvitation(invite);
+                if (invite.ClientDeviceId != loaded.DeviceId || !loaded.Devices.Any(device => device.DeviceId == invite.Host.DeviceId
+                    && device.Fingerprint == invite.Host.Fingerprint.ToUpperInvariant())) throw Corrupt();
+            }
+            if (loaded.SelectedHostId.Length != 0 && !loaded.Devices.Any(device => device.DeviceId == loaded.SelectedHostId)) throw Corrupt();
+            if (loaded.InvitationRevisions.Select(item => item.DeviceId).Distinct().Count() != loaded.InvitationRevisions.Length
+                || loaded.InvitationRevisions.Any(item => item.Revision < 0 || !loaded.Invitations.Any(invite => invite.Host.DeviceId == item.DeviceId
+                    && (invite.Feed?.Channel ?? "") == item.Channel))) throw Corrupt();
             keyId = envelope.KeyId;
             return loaded;
         }
@@ -187,8 +292,8 @@ public sealed class RemotePairingStore
             if (plain.Length > MaxFileBytes / 2) throw new InvalidOperationException("The pairing state is too large to save.");
             using (var aes = new AesGcm(key, 16)) aes.Encrypt(nonce, plain, cipher, tag, Context);
             string keyText = Convert.ToBase64String(key);
-            secrets.Write(nextId, keyText);
             keyWritten = true;
+            secrets.Write(nextId, keyText);
             if (secrets.Read(nextId) != keyText) throw new IOException("The system key store did not retain this device key.");
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             using var lease = new FileStream(path + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
@@ -238,6 +343,25 @@ public sealed class RemotePairingStore
     }
 
     private static PairedDevice Copy(PairedDevice device) => device with { Permissions = (HostPermission[])device.Permissions.Clone() };
+    private static void ValidateStoredInvitation(RemoteHostInvite invite)
+    {
+        if (invite?.Host is null) throw Corrupt();
+        ValidateOffer(invite.Host);
+        ValidateId(invite.ClientDeviceId);
+        if (invite.Room is null || invite.Room.Length != 48 || invite.Room.Any(ch => !Uri.IsHexDigit(ch))
+            || string.IsNullOrWhiteSpace(invite.ClientTicket) || invite.ClientTicket.Length > 1024 || invite.ClientTicket.Any(char.IsControl)
+            || invite.Expires <= 0 || invite.Expires > DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeSeconds()) throw Corrupt();
+        _ = InvitationFeedCodec.Relay(invite.Relay);
+        if (invite.Feed is { } feed)
+        {
+            if (feed.Channel is null || feed.Channel.Length != 48 || feed.Channel.Any(ch => !Uri.IsHexDigit(ch))
+                || feed.ReaderToken is null || feed.ReaderToken.Length != 64 || feed.ReaderToken.Any(ch => !Uri.IsHexDigit(ch))
+                || feed.Expires <= 0 || feed.Expires > DateTimeOffset.UtcNow.AddDays(30).ToUnixTimeSeconds()) throw Corrupt();
+            byte[] key = Convert.FromBase64String(feed.EncryptionKey);
+            try { if (key.Length != 32) throw Corrupt(); }
+            finally { CryptographicOperations.ZeroMemory(key); }
+        }
+    }
     private static InvalidDataException Corrupt() => new("The saved device pairing is invalid or damaged. Restore its backup or pair this device again.");
     private static void ValidateId(string id)
     {

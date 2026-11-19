@@ -147,8 +147,13 @@ public sealed class HostPipeBoundaryTests
     public async Task DisposingTheHostReclaimsABlockedSnapshotWrite()
     {
         using var fixture = new BackendFixture();
-        using var finish = new ManualResetEventSlim();
-        fixture.Api.StartTask(new string('x', 256 * 1024), context => { finish.Wait(context.Token); return "complete"; });
+        // Fill the bounded snapshot with escaped text so its reply still exceeds the pipe's write buffer.
+        for (int index = 0; index < 40; index++)
+        {
+            string id = "snapshot-" + index;
+            fixture.Api.Emit("task_added", PyDict.Of("task_id", id, "title", new string('\u4e2d', 128)));
+            fixture.Api.Emit("progress", PyDict.Of("task_id", id, "current", 1L, "total", 2L, "message", new string('\u4e2d', 160)));
+        }
         using var host = HostPipeServer.Start(fixture.Api, "pipe-owner", [HostPermission.Read]);
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(4));
         try
@@ -159,11 +164,11 @@ public sealed class HostPipeBoundaryTests
             await HostFrames.WriteAsync(peer, JsonSerializer.SerializeToUtf8Bytes(Snapshot()), deadline.Token);
             var prefix = new byte[4];
             await peer.ReadExactlyAsync(prefix, deadline.Token);
-            Assert.True(BitConverter.ToUInt32(prefix) > 256 * 1024);
+            Assert.True(BitConverter.ToUInt32(prefix) > 64 * 1024);
             host.Dispose();
             await host.Completion.WaitAsync(TimeSpan.FromSeconds(2));
         }
-        finally { finish.Set(); host.Dispose(); await host.Completion.WaitAsync(TimeSpan.FromSeconds(2)); }
+        finally { host.Dispose(); await host.Completion.WaitAsync(TimeSpan.FromSeconds(2)); }
     }
 
     private static HostRequest Snapshot() => new() { RequestId = Guid.NewGuid().ToString("N"), Command = HostCommand.Snapshot };

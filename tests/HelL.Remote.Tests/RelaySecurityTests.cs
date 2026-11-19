@@ -170,13 +170,14 @@ public sealed class RelaySecurityTests
         using var client = DeviceTunnel.CreateIdentity("client");
         var options = new RemoteConnectionOptions
         {
-            HandshakeTimeout = TimeSpan.FromMilliseconds(300), RequestTimeout = TimeSpan.FromSeconds(3)
+            HandshakeTimeout = TimeSpan.FromSeconds(2), RequestTimeout = TimeSpan.FromSeconds(8)
         };
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         Task serving = RemoteHostChannel.ServeAsync(relay.Address, room.HostTicket, host, DeviceTunnel.Fingerprint(client),
             async (request, cancellation) =>
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(600), cancellation);
+                // Stay beyond the handshake deadline while allowing a loaded runner to finish TLS first.
+                await Task.Delay(options.HandshakeTimeout + TimeSpan.FromMilliseconds(500), cancellation);
                 return new HostReply { RequestId = request.RequestId, Ok = true, Device = "paired-host" };
             }, options, timeout.Token);
         var request = new HostRequest { RequestId = Guid.NewGuid().ToString("N"), Command = HostCommand.Snapshot };

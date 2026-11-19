@@ -15,8 +15,8 @@ permissions:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
-        fail-fast: false
         os: [windows-latest, ubuntu-24.04, macos-15-intel]
     runs-on: ${{ matrix.os }}
     steps:

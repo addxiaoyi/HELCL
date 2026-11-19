@@ -20,5 +20,6 @@ The compact backend PR base does not contain the WPF and Avalonia Desktop GUI fo
 The WPF diagnostic panel and Avalonia Desktop diagnostic window are new independent files. Full application builds use a disposable copy of the original GUI foundation with these changes overlaid. Build evidence does not claim that the compact backend base contains the rest of that GUI foundation.
 
 When that foundation is present, apply the minimal settings wiring with
-`git apply --unidiff-zero docs/gui-feature-entrypoints.patch`. The original
+`git apply --ignore-space-change --unidiff-zero docs/gui-feature-entrypoints.patch`
+to tolerate the existing mixed Windows/Unix line endings. The original
 workspace already has these entries; do not apply the patch twice.

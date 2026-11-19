@@ -45,11 +45,16 @@ Local results are under `D:/qwq/qdq/TestResults/remote-features/`:
   replies, revocation, persistence failure and safe refusal messages.
 - Existing suite: **816/816**.
 - Full original-workspace WPF solution Release: **0 warnings / 0 errors**.
+- Full Avalonia Desktop Release and Android ARM64 APK publish succeeded with
+  the existing 16 Core warnings. Both APK copies match SHA-256
+  `3f572b681bdc0996fb29f09136b39ccfd439cc8c21999ffcc774f16ef917929b`.
 - Bounded loopback lifecycle: three cycles/two clients, seed 20261119, three Relay
   restarts and zero errors; owned processes, temporary state and secrets cleaned.
 - Mobile preview reports and screenshots cover task details, game status/close
   confirmation, multiple hosts, narrow/wide screens and diagnostic selection.
   These use desktop-hosted fixture transport, not a physical Android phone.
+  All three sizes (320×720, 390×844 and 844×390) passed, producing 42 screenshots;
+  each diagnostic preview matched the selected fields in its exported package.
 
 The initial blocked-write pipe fixture assumed unbounded titles. It was adapted
 to fill the new bounded snapshot with escaped text, retaining the blocked-write

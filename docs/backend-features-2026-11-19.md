@@ -57,6 +57,11 @@ and disposal assertions. A transient stress initialization failure with the
 default Windows temp directory was resolved by using this run's owned temp root;
 the successful receipt is `stress-3x2-final.json`.
 
+The first macOS CI run exposed an existing fixture name exceeding the platform's
+104-byte Unix socket path limit. The pipe fixture now uses its full random UUID
+without the redundant prefix; its read/write cancellation and partial-frame
+assertions remain unchanged.
+
 ## Source and acceptance boundaries
 
 The compact PR base lacks the broader WPF/Avalonia GUI foundation. New diagnostic

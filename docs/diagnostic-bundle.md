@@ -18,3 +18,7 @@ The compact backend PR base does not contain the WPF and Avalonia Desktop GUI fo
 - `src/HelL.Desktop/Views/SettingsAppearanceView.axaml.cs`: original SHA-256 `917E1D259A877FBEABC821921A50340F43C11F311E53221C3158347539784D0A`; a button and modal-window handler added during initialization.
 
 The WPF diagnostic panel and Avalonia Desktop diagnostic window are new independent files. Full application builds use a disposable copy of the original GUI foundation with these changes overlaid. Build evidence does not claim that the compact backend base contains the rest of that GUI foundation.
+
+When that foundation is present, apply the minimal settings wiring with
+`git apply --unidiff-zero docs/gui-feature-entrypoints.patch`. The original
+workspace already has these entries; do not apply the patch twice.

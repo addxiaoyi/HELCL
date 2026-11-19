@@ -45,7 +45,8 @@ public sealed class HostFramePipeTests
         }
         public static async Task<Pipes> Connect()
         {
-            var pair = new Pipes("hell-frame-test-" + Guid.NewGuid().ToString("N"));
+            // macOS includes its long per-user temp path in the 104-byte socket limit.
+            var pair = new Pipes(Guid.NewGuid().ToString("N"));
             using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(2));
             try
             {

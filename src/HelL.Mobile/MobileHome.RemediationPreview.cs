@@ -70,10 +70,12 @@ public sealed partial class MobileHome
     private async Task CheckMobileSafetyGuardsAsync()
     {
         WeakReference discarded = CreateDiscardedTypographyControl();
-        for (int attempt = 0; attempt < 3 && discarded.IsAlive; attempt++)
+        // Reading IsAlive before collection can keep its transient target alive on Mono.
+        for (int attempt = 0; attempt < 8; attempt++)
         {
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => { }, Avalonia.Threading.DispatcherPriority.Background);
             GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
-            await Task.Delay(20);
+            await Task.Delay(40);
         }
         bool retainedControl = discarded.IsAlive;
 

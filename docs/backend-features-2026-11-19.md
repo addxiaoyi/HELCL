@@ -67,6 +67,13 @@ The first macOS CI run exposed an existing fixture name exceeding the platform's
 without the redundant prefix; its read/write cancellation and partial-frame
 assertions remain unchanged.
 
+Windows CI also exposed an existing TLS test whose 300 ms handshake allowance
+expired on a busy runner. The fixture now allows two seconds for the real TLS
+handshake and deliberately runs the authenticated command for 2.5 seconds, still
+proving the handshake timer cannot cancel it. Production timeouts are unchanged.
+The older Portable workflow's misplaced `matrix.fail-fast` was corrected to
+`strategy.fail-fast` so GitHub can parse it instead of producing zero-job failures.
+
 ## Source and acceptance boundaries
 
 The compact PR base lacks the broader WPF/Avalonia GUI foundation. New diagnostic

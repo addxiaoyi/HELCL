@@ -23,6 +23,19 @@ jobs:
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
         with:
           dotnet-version: '10.0.x'
+      - name: Resolve the macOS temporary directory before creating fixtures
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          import tempfile
+          # /var is a system symlink; security fixtures need its real local parent.
+          temporary = os.path.realpath(tempfile.gettempdir())
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as environment:
+              environment.write('TMPDIR=' + temporary + '\n')
+          print('Resolved temporary directory:', temporary)
+          PY
       - name: Test backend and frontend service behavior
         shell: pwsh
         run: |

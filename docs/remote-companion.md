@@ -132,6 +132,12 @@ if the game stays open. Cancelling a launch task through the remote cancellation
 command cannot bypass this control. The WPF helper still hosts one selected phone
 at a time; multi-computer selection on the phone does not change that limit.
 
+Native macOS TLS server hosting is not supported by this path: the runtime's
+SecureTransport backend rejects its required TLS 1.3. macOS validation covers
+credentials, pairing, invitation feeds and Mobile logic rather than native tunnel
+connectivity. The required TLS version is not downgraded. The .NET 10 optional
+Network.framework client support does not enable server hosting.
+
 For a .NET 10 caller, use `CompanionRelayHost.Connect` directly and then
 `PairedRemoteHost.StartAsync`. Its publishing callback receives the initial and
 renewed invitations. `RenewAsync` revokes the old room and replaces its tickets;

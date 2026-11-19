@@ -74,6 +74,15 @@ proving the handshake timer cannot cancel it. Production timeouts are unchanged.
 The older Portable workflow's misplaced `matrix.fail-fast` was corrected to
 `strategy.fail-fast` so GitHub can parse it instead of producing zero-job failures.
 
+The macOS runtime's TLS server uses SecureTransport, which rejects explicit
+TLS 1.3. This increment retains the TLS 1.3 requirement and does not silently
+weaken encryption. macOS CI therefore executes Portable/Mobile plus an explicit
+Remote pairing/feed/protocol whitelist, while Windows/Linux execute the entire
+Remote transport suite. The macOS job labels this limitation in its output;
+it does not prove macOS hosting or native tunnel connectivity. The WPF companion
+pipe was already Windows-only. Runtime guidance:
+https://devblogs.microsoft.com/dotnet/dotnet-10-networking-improvements/
+
 ## Source and acceptance boundaries
 
 The compact PR base lacks the broader WPF/Avalonia GUI foundation. New diagnostic

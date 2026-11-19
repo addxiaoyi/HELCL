@@ -28,7 +28,13 @@ jobs:
         run: |
           dotnet test tests/HelL.Portable.Tests -c Release --logger 'trx;LogFileName=portable.trx' --results-directory artifacts/features
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet test tests/HelL.Remote.Tests -c Release --logger 'trx;LogFileName=remote.trx' --results-directory artifacts/features
+          if ($IsMacOS) {
+            Write-Host 'macOS: pairing, invitation feed, framing and protocol acceptance. Native TLS 1.3 server transport is unsupported and is not counted as verified.'
+            $remoteFilter = 'FullyQualifiedName~HostFrameTests|FullyQualifiedName~ProtocolTests|FullyQualifiedName~RemotePairingTests|FullyQualifiedName~RemoteInvitationPersistenceTests|FullyQualifiedName~RemoteRecoveryTests|FullyQualifiedName~InvitationFeedClientTests|FullyQualifiedName~InvitationFeedServerTests|FullyQualifiedName~RelayRoomsTests|FullyQualifiedName~RelayBudgetTests|FullyQualifiedName~WebSocketStreamTests'
+            dotnet test tests/HelL.Remote.Tests -c Release --filter $remoteFilter --logger 'trx;LogFileName=remote-pairing-feed-only.trx' --results-directory artifacts/features
+          } else {
+            dotnet test tests/HelL.Remote.Tests -c Release --logger 'trx;LogFileName=remote.trx' --results-directory artifacts/features
+          }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet test tests/HelL.Mobile.Tests -c Release --logger 'trx;LogFileName=mobile.trx' --results-directory artifacts/features
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

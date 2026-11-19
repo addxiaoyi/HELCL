@@ -15,14 +15,14 @@ internal static class Program
         {
             if (args is ["--help"])
             {
-                Console.WriteLine("Commands: identity|list <root> <name>; trust <root> <name> <offer-file> <confirmed-fingerprint> [--allow-cancel]; revoke <root> <name> <device-id>; serve <root> <name> <device-id> <relay-url>.");
+                Console.WriteLine("Commands: identity|list <root> <name>; trust <root> <name> <offer-file> <confirmed-fingerprint> [--allow-cancel] [--allow-game-stop]; revoke <root> <name> <device-id>; serve <root> <name> <device-id> <relay-url>.");
                 Console.WriteLine("Serve receives launcher pipe credentials and the relay operator token only through its private standard-input stream.");
                 return 0;
             }
             if (args.Length < 3) throw new ArgumentException("Use identity|list|trust|revoke|serve <data-root> <device-name> [arguments].");
             string command = args[0];
             bool validCommand = (command is "identity" or "list" && args.Length == 3)
-                || (command == "trust" && args.Length is 5 or 6)
+                || (command == "trust" && args.Length is 5 or 6 or 7)
                 || (command == "revoke" && args.Length == 4) || (command == "serve" && args.Length == 5);
             if (!validCommand) throw new ArgumentException("The companion command or its arguments are invalid.");
             var store = new RemotePairingStore(args[1], args[2], new NativeSecrets());
@@ -34,14 +34,20 @@ internal static class Program
                 case "list" when args.Length == 3:
                     Console.WriteLine(JsonSerializer.Serialize(store.Devices()));
                     break;
-                case "trust" when args.Length is 5 or 6:
-                    if (args.Length == 6 && args[5] != "--allow-cancel") throw new ArgumentException("Unknown pairing permission.");
+                case "trust" when args.Length is 5 or 6 or 7:
+                    string[] flags = args.Skip(5).ToArray();
+                    if (flags.Distinct(StringComparer.Ordinal).Count() != flags.Length
+                        || flags.Any(flag => flag is not ("--allow-cancel" or "--allow-game-stop")))
+                        throw new ArgumentException("Unknown or duplicate pairing permission.");
                     if (new FileInfo(args[3]).Length > 4096) throw new InvalidDataException("The pairing offer is too large.");
                     RemotePairingOffer offer = JsonSerializer.Deserialize<RemotePairingOffer>(await File.ReadAllTextAsync(args[3]))
                         ?? throw new InvalidDataException("The pairing offer is empty.");
                     if (!string.Equals(offer.Fingerprint, args[4], StringComparison.OrdinalIgnoreCase))
                         throw new UnauthorizedAccessException("The confirmed device fingerprint does not match this offer.");
-                    store.Trust(offer, args.Length == 6 ? [HostPermission.Read, HostPermission.CancelTasks] : [HostPermission.Read]);
+                    var permissions = new List<HostPermission> { HostPermission.Read };
+                    if (flags.Contains("--allow-cancel", StringComparer.Ordinal)) permissions.Add(HostPermission.CancelTasks);
+                    if (flags.Contains("--allow-game-stop", StringComparer.Ordinal)) permissions.Add(HostPermission.ControlGame);
+                    store.Trust(offer, permissions);
                     Console.WriteLine(JsonSerializer.Serialize(new { ok = true, device = offer.DeviceId }));
                     break;
                 case "revoke" when args.Length == 4:

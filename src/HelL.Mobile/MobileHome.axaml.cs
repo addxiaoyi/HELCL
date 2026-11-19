@@ -38,6 +38,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
         session = MobileSession.Open(root);
         launcher = session.Launcher;
         InitializeAppearance();
+        InitializeDiagnostics();
         DataPath.Text = root;
         ready = true;
         Reload();
@@ -213,6 +214,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
         MorePage.IsVisible = page == "more";
         AiPage.IsVisible = page == "ai";
         RemotePage.IsVisible = page == "remote";
+        if (diagnosticPage is not null) diagnosticPage.IsVisible = page == "diagnostics";
         if (page == "remote") InitializeRemote();
         if (page == "ai") InitializeAi();
         string tab = page is "create" or "manage" ? "library" : page is "about" or "account" or "remote" ? "more" : page;
@@ -270,7 +272,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
             await action(cancellation.Token);
         }
         catch (Exception) when (cancellation.IsCancellationRequested) { Status.Text = "操作已取消，可以重新开始。"; }
-        catch (Exception error) { Status.Text = "未完成：" + error.Message; }
+        catch (Exception error) { RememberDiagnosticIssue(error); Status.Text = "未完成：" + error.Message; }
         finally
         {
             if (acquired) session.Operations.Release();

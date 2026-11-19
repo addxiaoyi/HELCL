@@ -4,7 +4,7 @@ using HelL.Remote;
 
 namespace HelL.Mobile.Remote;
 
-public sealed class MobileRemoteController : IDisposable
+public sealed partial class MobileRemoteController : IDisposable
 {
     private readonly RemotePairingStore pairings;
     private readonly Func<RemoteHostInvite, HostRequest, CancellationToken, Task<HostReply>> send;
@@ -14,6 +14,7 @@ public sealed class MobileRemoteController : IDisposable
     private Task updateTask = Task.CompletedTask;
     private int updateRevision;
     private readonly Dictionary<string, (string channel, long revision)> received = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, RemoteHostInvite> invitations = new(StringComparer.Ordinal);
     private CancellationTokenSource? operation;
     private readonly object stateGate = new();
     private bool disposed;
@@ -25,13 +26,31 @@ public sealed class MobileRemoteController : IDisposable
         this.pairings = pairings ?? throw new ArgumentNullException(nameof(pairings));
         this.send = send ?? new PairedRemoteClient(pairings).ExecuteAsync;
         this.watch = watch ?? ((invite, token) => new InvitationFeedClient(updatesHttp).WatchAsync(invite, token));
+        foreach (RemoteHostInvite saved in pairings.Invitations()) invitations[saved.Host.DeviceId] = saved;
+        SelectedHostId = pairings.SelectedHostId.Length == 0 ? invitations.Keys.FirstOrDefault() : pairings.SelectedHostId;
+        if (SelectedHostId is not null) Invitation = invitations.GetValueOrDefault(SelectedHostId);
+        foreach (RemoteHostInvite saved in invitations.Values)
+            if (saved.Feed is { } feed) received[saved.Host.DeviceId] = (feed.Channel, pairings.InvitationRevision(saved.Host.DeviceId));
+        if (Invitation?.Feed?.Expires > DateTimeOffset.UtcNow.ToUnixTimeSeconds()) StartUpdates();
     }
     public string OfferJson => JsonSerializer.Serialize(pairings.Offer);
     public RemotePairingOffer OwnOffer => pairings.Offer;
     public RemotePairingOffer? PendingHost { get; private set; }
     public RemoteHostInvite? Invitation { get; private set; }
+    public string? SelectedHostId { get; private set; }
     public HostTask[] Tasks { get; private set; } = [];
     public PairedDevice[] Hosts => pairings.Devices();
+    public long? LastConnected(string deviceId) => pairings.LastConnected(deviceId);
+    public string HostState(string deviceId)
+    {
+        lock (stateGate)
+        {
+            if (!invitations.TryGetValue(deviceId, out RemoteHostInvite? invite)) return "未导入邀请";
+            if (invite.Expires <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                return invite.Feed?.Expires > DateTimeOffset.UtcNow.ToUnixTimeSeconds() ? "邀请过期，等待安全续期" : "邀请与续期能力均已过期";
+            return SelectedHostId == deviceId && updateCancellation is not null ? "续期监听中" : "邀请已保存";
+        }
+    }
     public bool Busy { get { lock (stateGate) return operation is not null; } }
     public string Error { get; private set; } = "";
     public string Notice { get; private set; } = "尚未连接电脑。先核对双方指纹并建立信任。";
@@ -39,6 +58,7 @@ public sealed class MobileRemoteController : IDisposable
         && pairings.Find(invite.Host.DeviceId)?.Permissions.Contains(HostPermission.CancelTasks) == true;
     public event Action? Changed;
     public bool Watching { get { lock (stateGate) return updateCancellation is not null; } }
+    public bool IsWatching(string hostId) { lock (stateGate) return SelectedHostId == hostId && updateCancellation is not null; }
     public Task UpdatesCompletion => updateTask;
     public string UpdateNotice { get; private set; } = "邀请更新尚未启用。";
     public void StartUpdates()
@@ -54,10 +74,13 @@ public sealed class MobileRemoteController : IDisposable
             current = Invitation ?? throw new InvalidOperationException("请先导入电脑的连接邀请。");
             if (current.Feed is null) throw new InvalidOperationException("该邀请不包含安全更新通道，请从电脑获取新邀请。");
             InvitationFeedCodec.Validate(current.Feed);
+            PairedDevice? currentHost = pairings.Find(current.Host.DeviceId);
+            if (currentHost is null || !string.Equals(currentHost.Fingerprint, current.Host.Fingerprint, StringComparison.OrdinalIgnoreCase))
+                throw new UnauthorizedAccessException("The selected host's trust changed. Pair it again before subscribing.");
             updateCancellation = pending = new CancellationTokenSource();
             version = ++updateRevision;
         }
-        UpdateNotice = "安全邀请更新已开启；连接凭据仅保留在本次应用会话。";
+        UpdateNotice = "安全邀请更新已开启；连接凭据保存在系统密钥库保护的加密配对存储中。";
         Changed?.Invoke();
         updateTask = WatchUpdatesAsync(current, pending, version);
     }
@@ -70,6 +93,28 @@ public sealed class MobileRemoteController : IDisposable
             updateCancellation = null;
         }
         UpdateNotice = "邀请自动更新已暂停；可恢复更新或手动导入最新邀请。";
+        Changed?.Invoke();
+    }
+    public void SelectHost(string hostId)
+    {
+        ThrowIfDisposed();
+        lock (stateGate)
+        {
+            if (pairings.Find(hostId) is null) throw new UnauthorizedAccessException("这台电脑尚未配对。");
+            pairings.SelectHost(hostId);
+            StopUpdates();
+            SelectedHostId = hostId;
+            Invitation = invitations.TryGetValue(hostId, out RemoteHostInvite? invite) ? invite : null;
+            ++revision;
+            Cancel();
+            Tasks = [];
+            TasksTruncated = false;
+            Detail = null;
+            Game = null;
+            Error = "";
+            Notice = Invitation is null ? "请为这台电脑导入私有邀请。" : "已选择这台电脑；读取任务以更新当前状态。";
+        }
+        if (Invitation?.Feed?.Expires > DateTimeOffset.UtcNow.ToUnixTimeSeconds()) StartUpdates();
         Changed?.Invoke();
     }
     private async Task WatchUpdatesAsync(RemoteHostInvite initial, CancellationTokenSource pending, int version)
@@ -90,14 +135,18 @@ public sealed class MobileRemoteController : IDisposable
                         throw new InvalidDataException("The invitation update changed its paired host binding.");
                     lock (stateGate)
                     {
-                        if (disposed || version != updateRevision || Invitation?.Host.DeviceId != initial.Host.DeviceId || Invitation.Feed != initial.Feed) return;
+                        if (disposed || version != updateRevision || SelectedHostId != initial.Host.DeviceId
+                            || !invitations.TryGetValue(initial.Host.DeviceId, out RemoteHostInvite? current) || current.Feed != initial.Feed) return;
                         if (update.Revision <= latest) continue;
-                        UpdateInvitation(next);
+                        pairings.SaveInvitation(next, update.Revision);
+                        invitations[initial.Host.DeviceId] = next;
+                        ApplyInvitation(next, persist: false);
                         latest = update.Revision;
                         received[initial.Host.DeviceId] = (initial.Feed!.Channel, latest);
                         UpdateNotice = "已安全接收电脑续期邀请；读取任务会使用最新连接。";
                     }
                     Changed?.Invoke();
+                    if (autoReconnect && !Busy) await RefreshAsync(pending.Token).ConfigureAwait(false);
                 }
                 if (version == updateRevision && !disposed) UpdateNotice = "邀请更新通道已结束，请恢复更新或导入新邀请后重试。";
             }
@@ -127,11 +176,14 @@ public sealed class MobileRemoteController : IDisposable
         Notice = "请在电脑上核对手机指纹，同时核对下方电脑指纹；确认前不会保存信任。";
         Changed?.Invoke();
     }
-    public void ConfirmPairing(bool verified, bool allowCancel)
+    public void ConfirmPairing(bool verified, bool allowCancel, bool allowControlGame = false)
     {
         ThrowIfDisposed();
         if (!verified || PendingHost is null) throw new InvalidOperationException("请先在两台设备上逐字核对双方 SHA-256 指纹，再确认配对。");
-        pairings.Trust(PendingHost, allowCancel ? [HostPermission.Read, HostPermission.CancelTasks] : [HostPermission.Read]);
+        var permissions = new List<HostPermission> { HostPermission.Read };
+        if (allowCancel) permissions.Add(HostPermission.CancelTasks);
+        if (allowControlGame) permissions.Add(HostPermission.ControlGame);
+        pairings.Trust(PendingHost, permissions);
         PendingHost = null;
         Error = "";
         Notice = "已保存电脑信任。请在电脑端信任这台手机，并单独授权允许的操作。";
@@ -144,13 +196,18 @@ public sealed class MobileRemoteController : IDisposable
         {
             pairings.Revoke(id);
             received.Remove(id);
-            if (Invitation?.Host.DeviceId == id)
+            invitations.Remove(id);
+            if (SelectedHostId == id)
             {
                 StopUpdates();
                 ++revision;
                 Cancel();
+                SelectedHostId = null;
                 Invitation = null;
                 Tasks = [];
+                TasksTruncated = false;
+                Detail = null;
+                Game = null;
             }
         }
         if (PendingHost?.DeviceId == id) PendingHost = null;
@@ -171,23 +228,46 @@ public sealed class MobileRemoteController : IDisposable
         RemoteHostInvite invite;
         try { invite = document.RootElement.Deserialize<RemoteHostInvite>() ?? throw InvalidInput(); }
         catch (JsonException) { throw InvalidInput(); }
-        lock (stateGate) { ValidateInvitation(invite); StopUpdates(); ApplyInvitation(invite); }
+        lock (stateGate)
+        {
+            ValidateInvitation(invite);
+            pairings.SaveInvitation(invite);
+            invitations[invite.Host.DeviceId] = invite;
+            StopUpdates();
+            SelectedHostId = invite.Host.DeviceId;
+            ApplyInvitation(invite, persist: false);
+        }
         if (invite.Feed is not null) StartUpdates();
         else { UpdateNotice = "此邀请不包含自动更新。电脑续期后，请手动导入最新邀请。"; Changed?.Invoke(); }
     }
     public void UpdateInvitation(RemoteHostInvite invite)
     {
         ThrowIfDisposed();
-        lock (stateGate) ApplyInvitation(invite);
+        bool restart;
+        lock (stateGate)
+        {
+            ValidateInvitation(invite);
+            pairings.SaveInvitation(invite);
+            restart = Invitation?.Host.DeviceId != invite.Host.DeviceId || Invitation?.Feed != invite.Feed;
+            if (restart) StopUpdates();
+            ApplyInvitation(invite, persist: false);
+        }
+        if (restart && invite.Feed is not null) StartUpdates();
     }
-    private void ApplyInvitation(RemoteHostInvite invite)
+    private void ApplyInvitation(RemoteHostInvite invite, bool persist = true)
     {
         ThrowIfDisposed();
         ValidateInvitation(invite);
+        if (persist) pairings.SaveInvitation(invite);
+        invitations[invite.Host.DeviceId] = invite;
+        SelectedHostId = invite.Host.DeviceId;
         ++revision;
         Cancel();
         Invitation = invite;
         Tasks = [];
+        TasksTruncated = false;
+        Detail = null;
+        Game = null;
         Error = "";
         Notice = "邀请已更新。读取快照以检查电脑当前任务。";
         Changed?.Invoke();
@@ -229,6 +309,7 @@ public sealed class MobileRemoteController : IDisposable
             if (operation is not null) throw new InvalidOperationException("正在读取电脑状态，请先等待或取消当前连接。");
             invite = Invitation ?? throw new InvalidOperationException("请先导入已配对电脑发给本机的邀请。");
             version = revision;
+            ValidateInvitation(invite);
             operation = pending;
         }
         Error = "";
@@ -242,7 +323,9 @@ public sealed class MobileRemoteController : IDisposable
             {
                 pending.Token.ThrowIfCancellationRequested();
                 if (version != revision || disposed) return;
+                pairings.RecordConnection(invite.Host.DeviceId);
                 Tasks = reply.Tasks ?? [];
+                TasksTruncated = reply.TasksTruncated;
                 Notice = Tasks.Length == 0 ? "已连接。电脑当前没有可显示的任务。" : $"已更新 {Tasks.Length} 项任务 · {DateTime.Now:HH:mm:ss}";
             }
         }

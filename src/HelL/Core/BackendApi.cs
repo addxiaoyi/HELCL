@@ -53,6 +53,12 @@ public partial class BackendApi
 
 	internal readonly object _game_lock = new object();
 
+	internal string _game_session_id = "";
+
+	internal bool _game_stop_requested;
+
+	internal long _game_stop_requested_at;
+
 	internal volatile string _launch_task_id;
 
 	internal readonly PyDict _crashes = new PyDict();
@@ -1583,6 +1589,7 @@ public partial class BackendApi
 
 	public void Emit(string @event, PyDict data)
 	{
+		TrackRemoteTask(@event, data);
 		switch (@event)
 		{
 		case "ui_changed":
@@ -2853,6 +2860,9 @@ public partial class BackendApi
 		lock (_game_lock)
 		{
 			_game_proc = gameProcess.proc;
+			_game_session_id = Guid.NewGuid().ToString("N");
+			_game_stop_requested = false;
+			_game_stop_requested_at = 0;
 		}
 		Emit("game_started", new PyDict());
 		gameProcess.StartReaders();
@@ -2892,6 +2902,9 @@ public partial class BackendApi
 				if (_game_proc == gameProcess.proc)
 				{
 					_game_proc = null;
+					_game_session_id = "";
+					_game_stop_requested = false;
+					_game_stop_requested_at = 0;
 				}
 			}
 			Emit("game_exited", PyDict.Of("code", obj5));

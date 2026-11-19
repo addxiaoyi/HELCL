@@ -187,7 +187,7 @@
 
               <TextBlock x:Name="ResourceTarget" Classes="caption" TextWrapping="Wrap"/>
               <StackPanel x:Name="SearchFilters" IsVisible="False" Spacing="8">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8"><TextBox x:Name="Query" PlaceholderText="搜索资源名称…" KeyDown="SearchKey" AutomationProperties.Name="搜索资源"/><Button Grid.Column="1" Classes="primary" Content="搜索" Click="SearchResources"/></Grid>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8"><TextBox x:Name="Query" PlaceholderText="搜索资源名称…" KeyDown="SearchKey" TextChanged="ResourceQueryChanged" AutomationProperties.Name="搜索资源"/><Button Grid.Column="1" Classes="primary" Content="搜索" Click="SearchResources"/></Grid>
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="8"><ComboBox x:Name="Kind" SelectedIndex="0" SelectionChanged="FiltersChanged" AutomationProperties.Name="资源类型"><ComboBoxItem Content="模组" Tag="mod"/><ComboBoxItem Content="整合包" Tag="modpack"/><ComboBoxItem Content="光影" Tag="shader"/><ComboBoxItem Content="资源包" Tag="resourcepack"/><ComboBoxItem Content="世界" Tag="world"/><ComboBoxItem Content="数据包" Tag="datapack"/></ComboBox><ComboBox x:Name="Provider" Grid.Column="1" SelectedIndex="0" SelectionChanged="FiltersChanged" AutomationProperties.Name="资源来源"><ComboBoxItem Content="Modrinth" Tag="modrinth"/><ComboBoxItem Content="CurseForge" Tag="curseforge"/></ComboBox></Grid>
               </StackPanel>
 

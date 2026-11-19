@@ -65,7 +65,7 @@ internal static class LibraryWorkspacePreview
         await AppServices.Client.CallAsync("rename_instance", new { name = renamed, new_name = First });
         await instances.RefreshAsync();
         var pinnedOnly = Field<CheckBox>(instances, "_pinnedOnly"); pinnedOnly.IsChecked = true; pinnedOnly.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Check(Field<Panel>(instances, "_list").Children.Count == 1, "pinned filter shows exactly the fixed instance");
+        Check(Field<List<InstanceInfo>>(instances, "_filtered").Single().Name == First, "pinned filter shows exactly the fixed instance");
         Check(Field<TextBlock>(instances, "_count").Text == "1 / 4 个", "pinned filter reports visible count and total");
         pinnedOnly.IsChecked = false; pinnedOnly.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Invoke(instances, "Select", LongName);

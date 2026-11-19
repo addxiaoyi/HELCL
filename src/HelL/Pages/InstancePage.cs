@@ -72,6 +72,8 @@ public sealed partial class InstancePage : PageBase
 
 	private List<InstanceInfo> _rows = new List<InstanceInfo>();
 
+    private List<InstanceInfo> _filtered = new();
+
 	private string _defaultInstance = "";
 
 	public override string Title => I18n.L("我的实例");
@@ -127,8 +129,8 @@ public sealed partial class InstancePage : PageBase
         };
 		_sort.SelectedIndex = Math.Max(0, Math.Min(2, Win?.Prefs.LibrarySort ?? 0));
         _pinnedOnly.IsChecked = Win?.Prefs.LibraryPinnedOnly == true;
-        _sort.SelectionChanged += (_, _) => { if (Win != null) { Win.Prefs.LibrarySort = _sort.SelectedIndex; Win.SaveUiPrefs(); } _visibleLimit = LibraryPageSize; Render(); };
-        _pinnedOnly.Click += (_, _) => { if (Win != null) { Win.Prefs.LibraryPinnedOnly = _pinnedOnly.IsChecked == true; Win.SaveUiPrefs(); } _visibleLimit = LibraryPageSize; Render(); };
+        _sort.SelectionChanged += (_, _) => { if (Win != null) { Win.Prefs.LibrarySort = _sort.SelectedIndex; Win.SaveUiPrefs(); } Render(); };
+        _pinnedOnly.Click += (_, _) => { if (Win != null) { Win.Prefs.LibraryPinnedOnly = _pinnedOnly.IsChecked == true; Win.SaveUiPrefs(); } Render(); };
 		_debounce.Tick += delegate
 		{
 			_debounce.Stop();
@@ -136,7 +138,6 @@ public sealed partial class InstancePage : PageBase
 		};
 		_search.TextChanged += delegate
 		{
-            _visibleLimit = LibraryPageSize;
 			_debounce.Stop();
 			_debounce.Start();
 		};
@@ -161,7 +162,7 @@ public sealed partial class InstancePage : PageBase
             case Key.Right:
                 MoveSelection(1); e.Handled = true; break;
 			case Key.Return:
-				if (_selected != null && _cards.ContainsKey(_selected))
+				if (_selected != null && _filtered.Any(row => row.Name == _selected))
 				{
 					string inst = _selected;
 					PageBase.Run(() => LaunchWithAsync(inst));
@@ -207,10 +208,7 @@ public sealed partial class InstancePage : PageBase
 	private void Render()
 	{
 		string q = _search.Text?.Trim() ?? "";
-        List<InstanceInfo> matches = FilterLibrary(q);
-        List<InstanceInfo> list = matches.Take(_visibleLimit).ToList();
-        _loadMore.Visibility = matches.Count > list.Count ? Visibility.Visible : Visibility.Collapsed;
-        _loadMore.Content = "继续显示（" + list.Count + " / " + matches.Count + "）";
+        List<InstanceInfo> list = _filtered = FilterLibrary(q);
 		_count.Text = ((q.Length == 0 && _pinnedOnly.IsChecked != true && SelectedGroup == null) ? I18n.L("共 {0} 个", _rows.Count) : I18n.L("{0} / {1} 个", list.Count, _rows.Count));
 		_empty.Show(list.Count == 0);
 		bool failed = _loadError != null && _rows.Count == 0;
@@ -218,50 +216,35 @@ public sealed partial class InstancePage : PageBase
 		_emptySub.Text = failed ? (_loadError ?? "") : _rows.Count > 0 ? "试试其他名称、切换分组，或关闭「只看固定」。" : I18n.L("点右上角「新建实例」建一个");
 		_retry.Visibility = failed ? Visibility.Visible : Visibility.Collapsed;
 		_create.Visibility = (!failed && _rows.Count == 0) ? Visibility.Visible : Visibility.Collapsed;
-		HashSet<string> wanted = list.Select((InstanceInfo r) => r.Name).ToHashSet<string>(StringComparer.Ordinal);
-		foreach (string item in _cards.Keys.Where((string k) => !wanted.Contains(k)).ToList())
-		{
-			_list.Children.Remove(_cards[item].Root);
-			_cards.Remove(item);
-		}
-		List<UIElement> list2 = new List<UIElement>();
-		_order.Clear();
-		for (int num = 0; num < list.Count; num++)
-		{
-			InstanceInfo instanceInfo = list[num];
-			if (!_cards.TryGetValue(instanceInfo.Name, out Row value))
-			{
-				value = BuildRow(instanceInfo);
-				_cards[instanceInfo.Name] = value;
-                _ = RefreshPicture(value);
-				_list.Children.Add(value.Root);
-				list2.Add(value.Root);
-			}
-			Sync(value, instanceInfo);
-			value.Pin.Content = Ui.Glyph(_pins.Contains(instanceInfo.Name) ? "\ue840" : "\ue718", 13, _pins.Contains(instanceInfo.Name) ? "B.Accent" : "B.InkMuted");
-			System.Windows.Automation.AutomationProperties.SetName(value.Pin, (_pins.Contains(instanceInfo.Name) ? "取消固定 " : "固定 ") + instanceInfo.Name);
-			_order.Add(value);
-			int num2 = _list.Children.IndexOf(value.Root);
-			if (num2 != num)
-			{
-				_list.Children.RemoveAt(num2);
-				_list.Children.Insert(num, value.Root);
-			}
-			value.Root.Margin = new Thickness(0);
-		}
+        if (_selected == null || !list.Any(row => row.Name == _selected)) _selected = list.FirstOrDefault()?.Name;
+        _list.Bind(list, RealizeCard);
 		_list.Visibility = ((list.Count == 0) ? Visibility.Collapsed : Visibility.Visible);
         SyncBatch();
-		if (_selected == null || !wanted.Contains(_selected)) _selected = list.FirstOrDefault()?.Name;
 		RefreshInspector();
-		foreach (Row item2 in _order)
-		{
-			Paint(item2);
-		}
-		if (list2.Count > 0)
-		{
-			Motion.StaggerItems(list2, 24.0, 200.0, 8.0);
-		}
 	}
+
+    private FrameworkElement RealizeCard(InstanceInfo instance)
+    {
+        Row row = BuildRow(instance);
+        Sync(row, instance);
+        bool pinned = _pins.Contains(instance.Name);
+        row.Pin.Content = Ui.Glyph(pinned ? "\ue840" : "\ue718", 13, pinned ? "B.Accent" : "B.InkMuted");
+        System.Windows.Automation.AutomationProperties.SetName(row.Pin, (pinned ? "取消固定 " : "固定 ") + instance.Name);
+        row.Root.Loaded += (_, _) =>
+        {
+            _cards[instance.Name] = row;
+            if (!_order.Contains(row)) _order.Add(row);
+            Paint(row);
+            SyncBatch();
+            _ = RefreshPicture(row);
+        };
+        row.Root.Unloaded += (_, _) =>
+        {
+            if (_cards.TryGetValue(instance.Name, out Row current) && ReferenceEquals(current, row)) _cards.Remove(instance.Name);
+            _order.Remove(row);
+        };
+        return row.Root;
+    }
 
 	private void Sync(Row card, InstanceInfo info)
 	{
@@ -442,12 +425,11 @@ public sealed partial class InstancePage : PageBase
 
 	private void MoveSelection(int delta)
 	{
-		if (_order.Count != 0)
-		{
-			int num = ((_selected == null) ? (-1) : _order.FindIndex((Row r) => r.Key == _selected));
-			int index = ((num >= 0) ? Math.Max(0, Math.Min(_order.Count - 1, num + delta)) : ((delta <= 0) ? (_order.Count - 1) : 0));
-			Select(_order[index].Key);
-		}
+        if (_filtered.Count == 0) return;
+        int selected = _selected == null ? -1 : _filtered.FindIndex(row => row.Name == _selected);
+        int index = selected >= 0 ? Math.Max(0, Math.Min(_filtered.Count - 1, selected + delta)) : delta <= 0 ? _filtered.Count - 1 : 0;
+        _list.ScrollToIndex(index);
+        Select(_filtered[index].Name);
 	}
 
 	private async Task LaunchWithAsync(string instance)

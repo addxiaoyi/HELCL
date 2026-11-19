@@ -104,7 +104,7 @@
       <Setter Property="Foreground" Value="{DynamicResource HelL.OnAccent}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="CornerRadius" Value="99"/>
-      <Setter Property="MinHeight" Value="42"/>
+      <Setter Property="MinHeight" Value="44"/>
     </Style>
     <Style Selector="Button.primary TextBlock"><Setter Property="Foreground" Value="{DynamicResource HelL.OnAccent}"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
     <Style Selector="Button.primary icons|MaterialIcon"><Setter Property="Foreground" Value="{DynamicResource HelL.OnAccent}"/></Style>

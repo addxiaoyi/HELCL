@@ -99,9 +99,13 @@ internal static class FrontendRemediationCheck
         var instances = Enumerable.Range(0, 125).Select(index => new InstanceInfo { Name = "controlled-library-" + index }).ToList();
         library.GetType().GetField("_rows", Hidden)!.SetValue(library, instances);
         Call(library, "Render");
-        Check(((System.Collections.IDictionary)Field(library, "_cards")).Count == 60, "large library initially builds only a bounded page of cards");
-        var loadMore = (Button)Field(library, "_loadMore"); loadMore.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Check(((System.Collections.IDictionary)Field(library, "_cards")).Count == 120 && loadMore.IsVisible, "large library progressively exposes further results");
+        window.UpdateLayout(); await Task.Delay(100);
+        Check(((System.Collections.IDictionary)Field(library, "_cards")).Count is > 0 and < 60, "large library realizes only a bounded viewport of cards");
+        object surface = Field(library, "_list");
+        surface.GetType().GetMethod("ScrollToIndex")!.Invoke(surface, new object[] { 124 });
+        window.UpdateLayout(); await Task.Delay(100);
+        var realized = (System.Collections.IDictionary)Field(library, "_cards");
+        Check(realized.Count < 60 && realized.Contains("controlled-library-99"), "large library reaches its final sorted result without retaining prior cards");
 
         window.Navigate("ai", true); await Program.WaitForPage(window, "ai");
         var ai = (AiPage)window.GetPage("ai")!;

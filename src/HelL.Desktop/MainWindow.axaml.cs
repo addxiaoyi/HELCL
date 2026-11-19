@@ -463,6 +463,7 @@ public sealed partial class MainWindow : Window
             task = null;
             activeTask = null;
             SetBusy(false);
+            ResourcesView.ResumeDocuments();
             ShowPage(currentPage);
             if (TaskState.Text == "进行中") TaskState.Text = "已完成";
             if (closing) Close();

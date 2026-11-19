@@ -1,6 +1,6 @@
 # 前端 100 项完善交付（2026-11-19）
 
-100 个审查编号均已落实实现或对应替代方案。实现完成与特定设备上的验收分开记录；并不声称每个 Android 屏幕、读屏软件或物理触控环境都已认证。
+清单按实现、可重复验收和待真机条件分别记录。首次交付后的复核发现并修补了虚拟化、原子设置保存及跨页面异步状态等残留问题；100 个编号不等于 100 次独立真机认证。
 
 本轮保留既有 WPF / Avalonia Desktop / Mobile 风格与业务能力，新增安全确认、失败恢复、分页、上下文和数据保存。完整 GUI 基础与修补分层保存在 [Draft PR #5](https://github.com/addxiaoyi/HELCL/pull/5) 与 [Draft PR #6](https://github.com/addxiaoyi/HELCL/pull/6)，没有合并、发布或部署。
 
@@ -11,7 +11,7 @@
 - [桌面 68–99 项](frontend-desktop-remediation.md)
 - 第100项：主要导航概念统一为启动、实例、资源、AI助手和设置；手机明确区分资源准备与未提供的本机游戏运行能力。
 
-替代方案：实例卡片采用每批60项渐进加载，避免一次创建全库；不假称为真实卡片虚拟化。手机配对增加受控JSON文件导入，不引入扫描器依赖，指纹确认保持必需。
+复核补充：[WPF](frontend-wpf-recheck.md)、[手机](frontend-mobile-recheck.md)、[桌面](frontend-desktop-recheck.md)。实例库已由渐进加载改为真正的回收虚拟化；设置已改为单次 RPC 原子持久化。手机配对仍采用受控 JSON 文件导入，保留指纹确认。
 
 ## 逐项状态
 
@@ -51,7 +51,7 @@
 
 18. **已实现｜排序和只看固定筛选的偏好不随其它库偏好保存。** Implemented: sort and pinned-only preference persist alongside group/view preferences, with old preference files remaining compatible.
 
-19. **已实现替代方案｜实例卡片全部创建，缺少可见区域虚拟化。** Implemented with bounded progressive rendering: initially 60 instance cards, explicit loading of further pages. This avoids constructing every card on initial load; it is deliberately described as paging, not claimed to be recycling virtualization.
+19. **已实现｜实例卡片全部创建，缺少可见区域虚拟化。** Implemented: responsive rows use a real recycling virtualizing ListBox. Direct access to record 2000, repeated scrolling, compact view and keyboard traversal keep realized cards bounded by the viewport; all filtered records remain selectable.
 
 20. **已实现｜打开启动页会隐含将实例设为全局默认。** Implemented: opening the launch page selects its target without modifying the global default instance.
 
@@ -69,13 +69,13 @@
 
 27. **已实现｜加载器折叠项与禁用选项的兼容原因不够直观。** Implemented: loader options start expanded and disabled options explain their compatibility/loading/active-task reason.
 
-28. **已实现｜保存设置可能先改目录、后续保存失败而部分生效。** Implemented as transparent staged behavior: all numeric input validates before any directory mutation; if directory change succeeds but main settings save fails, the error explicitly identifies partial application. This is not an atomic transaction claim.
+28. **已实现｜保存设置可能先改目录、后续保存失败而部分生效。** Implemented: directory, general settings, language, multi-instance and WPF appearance use one validated save_settings RPC and one atomic configuration replacement. File promotion failure preserves both the prior memory snapshot and disk bytes. Input is locked during the request; failure retains the draft. Lost acknowledgement is reported as unknown rather than claiming rollback.
 
 29. **已实现｜非法分辨率或限速数字会静默回退默认值。** Implemented: resolution and download-rate values reject invalid/out-of-range input at the field; correction clears its error decoration.
 
 30. **已实现｜AI 上下文非法或越界值会静默回退或截断。** Implemented: context-window input requires a value in the documented range, without silent clamping/defaulting.
 
-31. **已实现｜设置混合即时、保存后和重启后生效规则。** Implemented: the visible footer distinguishes immediate preview/save/restart behavior and counts pending changes; leaving with pending edits warns that the draft remains unsaved.
+31. **已实现｜设置混合即时、保存后和重启后生效规则。** Implemented: effect timing and pending changes are visible. Background refresh preserves dirty drafts; directory browsing only fills the draft. Explicit theme loading confirms draft replacement, selection alone is not dirty, and successful loads refresh the form. Appearance writes use the bridge rather than a GUI configuration snapshot.
 
 32. **已实现｜大量设置项缺少文字搜索和定位。** Implemented: settings search returns category-linked text matches that switch the category and scroll to the matching field.
 
@@ -95,11 +95,11 @@
 
 40. **已实现｜新搜索先清空旧列表，失败后无法继续查看旧结果。** New searches retain the last successful list; failure/cancellation shows a retry message without erasing it. Filter changes mark results stale and prevent wrong-target selection.
 
-41. **已实现｜资源搜索最多三十条，没有下一页入口。** “加载更多兼容资源” uses upstream offset/pageSize; offsets advance by requested page size and distinct source/project IDs append. Nonempty results allow trying another batch; only an empty upstream page marks the end, avoiding alias/dedup truncation.
+41. **已实现｜资源搜索最多三十条，没有下一页入口。** Implemented: load-more requests use real offset/pageSize. Shared Modrinth rows carry project_id as canonical id; mobile deduplication also supports legacy blank-ID rows using slug. Nonempty pages allow continuing; only empty upstream pages end pagination.
 
 42. **已实现｜资源详情返回后不恢复列表滚动位置。** Resource-list offset is saved before entering details and restored on return.
 
-43. **已实现｜资源文件默认选第一项，推荐依据不清楚。** File summary identifies the recommendation basis, title, date, compatibility and filename before download.
+43. **已实现｜资源文件默认选第一项，推荐依据不清楚。** Implemented: download summary shows recommendation basis, file name/date/compatibility. Release responses bind project, instance, version, loader and all search filters; changed context cannot reactivate old files.
 
 44. **已实现｜资源下载只在全局状态文本中展示进度。** Resource progress includes project/file and completed/total where available; local task centre retains terminal result.
 
@@ -107,7 +107,7 @@
 
 46. **已实现｜实例表单校验错误只出现在全局状态条。** Name/version errors appear next to their form and focus the invalid input. Names reject path/control characters.
 
-47. **已实现｜离开实例编辑页没有未保存提醒。** Instance edits have a saved-state comparison and target-specific discard dialog; cancel retains the draft.
+47. **已实现｜离开实例编辑页没有未保存提醒。** Implemented: leaving an edited instance requires a target-specific discard decision. Cancel keeps both the draft and the navigation-history entry. Cover import and ZIP export also capture instance and navigation revisions across picker awaits.
 
 48. **已实现｜创建与编辑版本主要依靠手工输入。** Create/edit version fields retain manual input plus a bounded, cancellable official release picker; modern `26.x` IDs are accepted.
 
@@ -137,7 +137,7 @@
 
 61. **已实现｜固定高度 JSON 框叠在整页滚动中。** JSON is a collapsible technical section, with larger flexible bounds; field selection stays primary.
 
-62. **已实现；原生/辅助技术验收单列｜图标与内联按钮的可视尺寸偏小，触控命中区待测。** Main icon, tab, inline, ComboBox and text-entry controls use 44 logical-pixel targets; explicit 32-pixel row buttons were enlarged.
+62. **已实现；原生/辅助技术验收单列｜图标与内联按钮的可视尺寸偏小，触控命中区待测。** Implemented: relevant primary, tablet-navigation and icon controls have at least 44 logical-pixel touch targets. Desktop-hosted geometry checks do not certify physical-device touch or TalkBack.
 
 63. **已实现；原生/辅助技术验收单列｜资源获取按钮的辅助名称不含项目名。** Resource-row action accessible name includes its bound project title.
 
@@ -161,11 +161,11 @@
 
 73. **已实现｜全部启停模组忽略当前搜索范围。** Batch mod enable/disable evaluates the current filter at execution time. Hidden resources remain untouched; buttons say current filter.
 
-74. **已实现｜分析实例日志会直接发送，缺少上传前内容预览。** Log analysis loads a redacted preview first. Sending that preview requires a second confirmation displaying the receiving host/mode and exact content.
+74. **已实现｜分析实例日志会直接发送，缺少上传前内容预览。** Implemented: cloud log analysis requires an asynchronous bounded preview and explicit upload confirmation. Filtering covers common secret lines, URLs, local paths including spaces, email, IPv4/IPv6 and punctuation boundaries. Ambiguous unquoted paths conservatively hide the remaining line. Filtering is not a guarantee that arbitrary identifiers are removed; preview consent remains required.
 
-75. **已实现｜日志分析在 UI 线程读取整个文件后取尾部。** Log reading runs off the UI thread and reads at most 64 KiB from the file tail, rather than reading the entire file.
+75. **已实现｜日志分析在 UI 线程读取整个文件后取尾部。** Implemented: bounded tail reads and redaction run outside the UI thread. Both success and failure responses bind instance, file and request revision, preventing old-instance errors from replacing current content.
 
-76. **已实现｜AI 请求前清空草稿，失败后不恢复输入。** Failed AI prompts remain in the composer and expose a retry button.
+76. **已实现｜AI 请求前清空草稿，失败后不恢复输入。** Implemented: failed AI sends restore the prompt when the input is empty. Successful sends clear the previous retry prompt; retry preserves any newer user draft.
 
 77. **已实现｜AI 流式更新强制滚到底。** Streaming follows only if the reader was near the bottom. A jump-to-latest control appears when reading older content.
 
@@ -199,7 +199,7 @@
 
 92. **已实现｜固定宽度来源和排序挤压关键词输入框。** Source/sort controls move to a second row in narrow layouts; the query uses the available first-row width.
 
-93. **已实现｜资源详情缺 WPF 已有的图库和完整介绍入口。** Resource details load real upstream gallery, full body and selected-file changelog using the shared typed Details API. Failure presents a retry action; upstream absence is stated explicitly.
+93. **已实现｜资源详情缺 WPF 已有的图库和完整介绍入口。** Implemented: real upstream gallery, full body and selected-file changelog. Requests bind project, filters, release id and an independent revision, including A-B-A changes; pending work loads the latest selection after the current task. Failed/canceled documents support retry without an infinite loading state.
 
 94. **已实现｜资源列表有数量截断，却没有继续加载入口。** Real offset/page-size requests back previous/next paging. No fictional total is shown; next remains available for every nonempty batch because alias deduplication can shorten a page before upstream exhaustion.
 
@@ -215,7 +215,7 @@
 
 100. **已实现｜三端导航名称、设置分组与主要动作不一致。** Primary navigation concepts align across the clients: launch, instances, resources, AI assistant and settings. Mobile labels distinguish resource preparation from unavailable local game execution.
 
-## 本地验收
+## 首次交付验收（4aec474）
 
 - WPF 818/818；Portable 348/348；Mobile 57/57；桌面专项9项通过、1项Unix权限检查在Windows跳过。
 - 共享HTTP分页/详情与回收/冲突/篡改边界8项通过；WPF真实UI行为17项通过。

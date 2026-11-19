@@ -12,9 +12,6 @@ namespace HelL.Pages;
 
 public sealed partial class InstancePage
 {
-    private const int LibraryPageSize = 60;
-    private int _visibleLimit = LibraryPageSize;
-    private readonly Button _loadMore = Ui.Btn("继续显示", BtnKind.Ghost);
     private readonly HashSet<string> _pins = new(StringComparer.Ordinal);
     private readonly Dictionary<string, long> _lastPlayed = new(StringComparer.Ordinal);
     private readonly ComboBox _sort = Ui.Combo(new[] { "最近游玩", "名称 A–Z", "版本数量" }, "最近游玩", 140);
@@ -42,8 +39,9 @@ public sealed partial class InstancePage
     {
         var root = Ui.G("Auto,Auto,Auto,*"); root.Margin = new Thickness(UiMetrics.PageInset, 20, UiMetrics.PageInset, 20);
         root.Add(heading, 0); root.Add(filters.M(0, 18, 0, 12), 1);
-        _loadMore.Click += (_, _) => { _visibleLimit += LibraryPageSize; Render(); };
-        _libraryFrame.Add(Ui.Scroll(Ui.V(0, _list, _loadMore, _empty)), 0);
+        var results = new Grid();
+        results.Children.Add(_list); results.Children.Add(_empty);
+        _libraryFrame.Add(results, 0);
         _inspector.Padding = new Thickness(20, 0, 0, 0); _inspector.Margin = new Thickness(20, 0, 0, 0); _inspector.BorderThickness = new Thickness(1, 0, 0, 0);
         _inspector.SetResourceReference(Border.BorderBrushProperty, "B.LineSoft"); _libraryFrame.Add(Ui.Scroll(_inspector), 0, 1);
         _libraryFrame.SizeChanged += (_, _) => ArrangeInspector();

@@ -23,7 +23,10 @@ public partial class ResourceBrowserView : UserControl
     private string projectTarget = "";
     private bool resultsCurrent;
     private string BindingKey => instance + "\n" + Version + "\n" + Kind + "\n" + Source + "\n" + Order + "\n" + (QueryBox.Text ?? "");
-    private string documentRelease = "";
+    private string? documentSelection;
+    private int documentGeneration;
+    private bool documentsPending;
+    private bool documentsQueued;
     private IReadOnlyList<CatalogProject> lastResults = [];
     internal Func<CancellationToken, Task<IReadOnlyList<CatalogProject>>>? SearchFixture { get; set; }
     internal Func<CancellationToken, Task<IReadOnlyList<CatalogRelease>>>? ReleasesFixture { get; set; }
@@ -130,6 +133,7 @@ public partial class ResourceBrowserView : UserControl
     private void InvalidateResults(string notice)
     {
         generation++; resultsCurrent = false;
+        ResetDocuments();
         project = null;
         pageIndex = 0;
         if (!hasSearched) Results.ItemsSource = Array.Empty<CatalogProject>();
@@ -204,8 +208,7 @@ public partial class ResourceBrowserView : UserControl
     {
         project = selected;
         projectGeneration = generation; projectTarget = BindingKey;
-        ProjectDocuments.Children.Clear();
-        documentRelease = "";
+        ResetDocuments();
         original = false;
         DetailPicture.Source = selected.Icon;
         ProjectTitle.Text = selected.Title;
@@ -249,7 +252,7 @@ public partial class ResourceBrowserView : UserControl
                 ReleasePicker.ItemsSource = releases;
                 if (releases.Count > 0) ReleasePicker.SelectedIndex = 0;
                 else ReleaseNotice.Text = "没有与当前目标兼容的文件，请更换目标版本后重新搜索。";
-                await LoadDocuments(selected, releases.FirstOrDefault(), token);
+                await LoadDocuments(selected, ReleasePicker.SelectedItem as CatalogRelease, token);
             }
             catch
             {
@@ -264,12 +267,17 @@ public partial class ResourceBrowserView : UserControl
     {
         int revision = projectGeneration;
         string binding = projectTarget;
+        int request = ++documentGeneration;
+        string releaseId = release?.Id ?? "";
+        bool IsCurrent() => project == selected && revision == generation && BindingKey == binding
+            && request == documentGeneration && ((ReleasePicker.SelectedItem as CatalogRelease)?.Id ?? "") == releaseId;
+        if (!IsCurrent()) return;
+        documentsPending = false;
         try
         {
             var details = DetailsFixture is { } fixture ? await fixture(cancellation)
                 : await Task.Run(() => catalog.Details(selected, release, cancellation), cancellation);
-            if (project != selected || revision != generation || BindingKey != binding) return;
-            documentRelease = release?.Id ?? "";
+            if (!IsCurrent()) return;
             ProjectDocuments.Children.Clear();
             if (details.Gallery.Length > 0)
             {
@@ -282,20 +290,63 @@ public partial class ResourceBrowserView : UserControl
             ProjectDocuments.Children.Add(new Expander { Header = "所选文件更新日志", Content = new ScrollViewer { MaxHeight = 300,
                 Content = new HelL.Desktop.Controls.MessageDocument { Text = details.Changelog.Length == 0 ? "上游未提供此文件的更新日志。" : details.Changelog } } });
         }
-        catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { throw; }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+            if (IsCurrent()) ShowRetry("详情读取已取消，重新读取");
+            throw;
+        }
         catch (Exception error)
         {
-            if (project != selected || revision != generation || BindingKey != binding) return;
-            ProjectDocuments.Children.Clear();
-            var retry = new Button { Content = "详情读取失败，重新读取", Classes = { "soft" } };
-            retry.Click += async (_, _) => { if (host != null) await host.RunTask(token => LoadDocuments(selected, ReleasePicker.SelectedItem as CatalogRelease, token), "LoadReleases"); };
-            ProjectDocuments.Children.Add(retry);
+            if (!IsCurrent()) return;
+            ShowRetry("详情读取失败，重新读取");
             System.Diagnostics.Trace.TraceWarning("Catalog details: " + error.GetType().Name);
+        }
+
+        void ShowRetry(string label)
+        {
+            ProjectDocuments.Children.Clear();
+            var retry = new Button { Content = label, Classes = { "soft" } };
+            retry.Click += (_, _) => { documentsPending = true; ResumeDocuments(); };
+            ProjectDocuments.Children.Add(retry);
         }
     }
 
-    private async void ReleaseChanged(object? sender, SelectionChangedEventArgs e)
+    private void ResetDocuments()
     {
+        documentGeneration++;
+        documentSelection = null;
+        documentsPending = false;
+        ProjectDocuments.Children.Clear();
+    }
+
+    internal void ResumeDocuments()
+    {
+        if (documentsQueued || !CanLoadDocuments()) return;
+        documentsQueued = true;
+        Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+        {
+            documentsQueued = false;
+            if (!CanLoadDocuments()) return;
+            var selected = project!;
+            var release = ReleasePicker.SelectedItem as CatalogRelease;
+            await host!.RunTask(token => LoadDocuments(selected, release, token), "LoadReleases");
+        });
+    }
+
+    private bool CanLoadDocuments() => documentsPending && host is { IsWorking: false } && project != null
+        && projectGeneration == generation && projectTarget == BindingKey && DetailPanel.IsVisible;
+
+    private void ReleaseChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        string selectedId = (ReleasePicker.SelectedItem as CatalogRelease)?.Id ?? "";
+        if (documentSelection != selectedId)
+        {
+            documentSelection = selectedId;
+            documentGeneration++;
+            documentsPending = project != null && ReleasePicker.SelectedItem is CatalogRelease;
+            ProjectDocuments.Children.Clear();
+            if (documentsPending) ProjectDocuments.Children.Add(new TextBlock { Text = "正在读取所选文件的详情…" });
+        }
         if (ReleasePicker.SelectedItem is not CatalogRelease release || project == null) { DownloadButton.IsEnabled = false; return; }
         ReleaseNotice.Text = release.Compatibility + "\n" + release.Filename;
         InstallNotice.Text = project.Kind switch
@@ -315,8 +366,7 @@ public partial class ResourceBrowserView : UserControl
             DownloadButton.IsEnabled = false;
             InstallNotice.Text = "请选择目标存档；若列表为空，请先在此实例中创建或导入世界。";
         }
-        if (host is { IsWorking: false } && documentRelease != release.Id)
-            await host.RunTask(token => LoadDocuments(project, release, token), "LoadReleases");
+        ResumeDocuments();
     }
 
     private async void DownloadResource(object? sender, RoutedEventArgs e)

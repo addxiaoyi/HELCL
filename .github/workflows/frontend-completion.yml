@@ -3,7 +3,7 @@ name: Frontend completion acceptance
 on:
   workflow_dispatch:
   pull_request:
-    branches: ['codex/remote-close-loop', 'codex/frontend-foundation']
+    branches: ['codex/remote-close-loop', 'codex/frontend-foundation', 'codex/frontend-completion']
 
 permissions:
   contents: read
@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-2025]
+        os: [ubuntu-24.04, windows-2025, macos-15]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     steps:
@@ -63,6 +63,8 @@ jobs:
           dotnet build tools/HelL.UiPreview -c Release
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & tools/HelL.UiPreview/bin/Release/net48/HelL.UiPreview.exe --frontend-remediation "$env:GITHUB_WORKSPACE/artifacts/wpf/frontend"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & tools/HelL.UiPreview/bin/Release/net48/HelL.UiPreview.exe --frontend-recheck "$env:GITHUB_WORKSPACE/artifacts/wpf/recheck"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()

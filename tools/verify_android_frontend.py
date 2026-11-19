@@ -110,6 +110,9 @@ def verify(apk: Path, output: Path) -> None:
         remediation = read_json(evidence + "/mobile-frontend-remediation.json")
         if not remediation or not remediation.get("ok"):
             raise RuntimeError("Android frontend remediation assertions did not pass.")
+        recheck = read_json(evidence + "/mobile-recheck-preview.json")
+        if not isinstance(recheck, dict) or recheck.get("ok") is not True:
+            raise RuntimeError("Android frontend recheck assertions did not pass.")
         screenshot(output / "01-home.png")
         tap_match(("管理当前实例", "管理实例"))
         time.sleep(0.5)
@@ -147,12 +150,32 @@ def verify(apk: Path, output: Path) -> None:
         wait_for(native_home_visible, "The recreated Activity did not render its home content at the larger system font.")
         time.sleep(0.5)
         screenshot(output / "04-system-font-150.png")
+
+        process_before_200 = adb("shell", "pidof", PACKAGE)
+        if not process_before_200:
+            raise RuntimeError("The verified Android process is no longer running.")
+        # The 150% restart removes its credential fixture; retain the isolated process for Activity-only recreation.
+        adb("shell", "am", "start", "-W", "-n", ACTIVITY, "--activity-clear-top",
+            "--ez", "hell_ui_smoke", "false", "--ez", "hell_verify_restart", "false")
+        adb("shell", "settings", "put", "system", "font_scale", "2.0")
+        adb("shell", "am", "start", "-W", "-n", ACTIVITY, "--activity-clear-top",
+            "--ez", "hell_ui_smoke", "false", "--ez", "hell_verify_restart", "false")
+        enlarged_200 = wait_for(lambda: (value if (value := read_json(evidence + "/mobile-platform-events.json"))
+                                         and value.get("systemTextScale", 0) >= 1.99 else None),
+                                "The 200% system font setting was not applied after Activity recreation.")
+        wait_for(native_home_visible, "The recreated Activity did not render its home content at 200% system font.")
+        if adb("shell", "pidof", PACKAGE) != process_before_200:
+            raise RuntimeError("The 200% Activity check unexpectedly replaced its isolated Android process.")
+        time.sleep(0.5)
+        screenshot(output / "05-system-font-200.png")
         adb("pull", evidence, str(output / "ui"))
         acceptance = {"ok": True, "scope": "Disposable Android emulator; not a physical device or TalkBack certification.",
                       "session": session, "abi": adb("shell", "getprop", "ro.product.cpu.abi"),
                       "keyboardOpenClose": keyboard["keyboardEvents"] < closed["keyboardEvents"],
                       "keyboardBackOrdering": True, "applicationBack": True, "measuredInputTarget": field, "platform": returned,
                       "fontScaleObserved": enlarged["systemTextScale"], "fontHomeRendered": True,
+                      "frontendRecheck": True, "fontScale200Observed": enlarged_200["systemTextScale"],
+                      "fontHome200Rendered": True, "font200ActivityRecreated": True, "font200ProcessRetained": True,
                       "physicalDeviceVerified": False, "talkBackVerified": False}
         (output / "acceptance.json").write_text(json.dumps(acceptance, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(acceptance))

@@ -1709,7 +1709,7 @@ public static class Mods
 		List<object> list = new List<object>();
 		foreach (object item2 in Iter(Py.Or(Gt(obj2, "hits"), new List<object>())))
 		{
-			list.Add(PyDict.Of("source", "modrinth", "slug", Gt(item2, "slug"), "title", Py.Or(Gt(item2, "title"), Gt(item2, "slug")), "description", Catalog.ModDescCn(Gt(item2, "slug"), Gt(item2, "title"), SliceObj(Py.Or(Gt(item2, "description"), ""), 160)), "author", Py.Or(Gt(item2, "author"), "?"), "downloads", Py.Or(Gt(item2, "downloads"), 0L), "tags", Tags(item2), "published", Gt(item2, "date_created"), "updated", Gt(item2, "date_modified"), "icon_url", Py.Or(Gt(item2, "icon_url"), ""), "featured_gallery", Gt(item2, "featured_gallery"), "gallery", Gt(item2, "gallery"), "original_description", Gt(item2, "description")));
+			list.Add(PyDict.Of("source", "modrinth", "id", Py.Or(Gt(item2, "project_id"), Gt(item2, "id"), Gt(item2, "slug")), "slug", Gt(item2, "slug"), "title", Py.Or(Gt(item2, "title"), Gt(item2, "slug")), "description", Catalog.ModDescCn(Gt(item2, "slug"), Gt(item2, "title"), SliceObj(Py.Or(Gt(item2, "description"), ""), 160)), "author", Py.Or(Gt(item2, "author"), "?"), "downloads", Py.Or(Gt(item2, "downloads"), 0L), "tags", Tags(item2), "published", Gt(item2, "date_created"), "updated", Gt(item2, "date_modified"), "icon_url", Py.Or(Gt(item2, "icon_url"), ""), "featured_gallery", Gt(item2, "featured_gallery"), "gallery", Gt(item2, "gallery"), "original_description", Gt(item2, "description")));
 		}
 		return list;
 	}

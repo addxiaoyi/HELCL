@@ -105,7 +105,7 @@ internal static class WorkspaceViewsCheck
         await MaterialControlsPreview.Until(() => Find<LocalPicture>(page).Count(picture => picture.Ready) >= 3, "instance covers decode the recorded Minecraft screenshot");
         Invoke(page, "Select", names[1]);
         var search = Field<TextBox>(page, "_search"); search.Text = "封面验证";
-        await MaterialControlsPreview.Until(() => Field<Panel>(page, "_list").Children.Count == 4, "library search filters the same instance set");
+        await MaterialControlsPreview.Until(() => Field<List<InstanceInfo>>(page, "_filtered").Count == 4, "library search filters the same instance set");
         var sort = Field<ComboBox>(page, "_sort"); sort.SelectedIndex = 1;
         Click(page, "紧凑列表"); await MaterialControlsPreview.Layout(window);
         Check(Field<string>(page, "_selected") == names[1] && search.Text == "封面验证" && sort.SelectedIndex == 1, "switching to list preserves selection, search and sort");
@@ -122,22 +122,25 @@ internal static class WorkspaceViewsCheck
             Click(page, covers ? "封面视图" : "紧凑列表"); await MaterialControlsPreview.Layout(window);
             Check(Field<string>(page, "_selected") == names[1], "view and size changes retain the selected instance");
             var list = Field<Panel>(page, "_list");
-            Check(list.Children.Count == 4, "both views keep all filtered instances");
-            foreach (FrameworkElement tile in list.Children)
+            Check(Field<List<InstanceInfo>>(page, "_filtered").Count == 4, "both views keep all filtered instances");
+            var cards = FrontendRecheckCheck.Cards(page);
+            Check(cards.Count > 0 && cards.Count <= 4, "both views realize a bounded subset of cards");
+            foreach (FrameworkElement tile in cards)
             {
                 Point point = tile.TranslatePoint(new Point(), list);
                 Check(point.X >= 0 && point.X + tile.ActualWidth <= list.ActualWidth + 1, "instance presentation fits the available width");
                 Check(!Find<Button>(tile).Any(button => button.ActualWidth > tile.ActualWidth), "instance actions remain inside the tile");
             }
-            Check(covers ? list.Children[0].RenderSize.Height > 180 : list.Children[0].RenderSize.Height < 110, "cover and compact views have distinct useful densities");
-            await MaterialControlsPreview.Until(() => Find<LocalPicture>(list).Count(picture => picture.Ready) == 3, "cover switching retains three real pictures and one missing-picture state");
+            Check(covers ? cards[0].RenderSize.Height > 180 : cards[0].RenderSize.Height < 110, "cover and compact views have distinct useful densities");
+            int pictured = cards.Count(card => Find<TextBlock>(card).Any(text => text.Text != names[2] && names.Contains(text.Text)));
+            await MaterialControlsPreview.Until(() => Find<LocalPicture>(list).Count(picture => picture.Ready) == pictured, "visible covers retain their real pictures and missing-picture state");
             Program.SaveSnapshot(window, Path.Combine(folder, $"instances-{covers}-{dark}-{width}.png"));
         }
         Click(page, "固定 " + names[1]);
         await MaterialControlsPreview.Until(() => Field<HashSet<string>>(page, "_pins").Contains(names[1]), "pinning works in the compact view");
         var pinned = Field<CheckBox>(page, "_pinnedOnly"); pinned.IsChecked = true; pinned.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Click(page, "封面视图");
-        Check(Field<Panel>(page, "_list").Children.Count == 1 && Field<string>(page, "_selected") == names[1], "cover view preserves pinned-only filtering");
+        Check(Field<List<InstanceInfo>>(page, "_filtered").Count == 1 && Field<string>(page, "_selected") == names[1], "cover view preserves pinned-only filtering");
         search.Text = "没有这个实例"; await MaterialControlsPreview.Until(() => Field<Panel>(page, "_list").Visibility == Visibility.Collapsed, "both views retain the empty state");
     }
 

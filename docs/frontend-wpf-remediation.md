@@ -23,7 +23,7 @@ No commit, push or original-workspace write was performed by this subtask.
 16. Implemented for all actual removable catalog files (mod/resourcepack/shader/datapack): move to the instance recycle store and offer undo; root's receipt/hash/no-overwrite checks protect restoration. The world catalog has no installed/delete method, so it is not a permanently deleting path; modpack label removal retains its separate semantics and keeps game data.
 17. Implemented: recent metadata request scales to the full instance list (shared backend cap raised to 10,000 by root).
 18. Implemented: sort and pinned-only preference persist alongside group/view preferences, with old preference files remaining compatible.
-19. Implemented with bounded progressive rendering: initially 60 instance cards, explicit loading of further pages. This avoids constructing every card on initial load; it is deliberately described as paging, not claimed to be recycling virtualization.
+19. Implemented: responsive rows use a real recycling virtualizing ListBox. Direct access to record 2000, repeated scrolling, compact view and keyboard traversal keep realized cards bounded by the viewport; all filtered records remain selectable.
 20. Implemented: opening the launch page selects its target without modifying the global default instance.
 21. Implemented: batch pin/unpin shows the exact target names/count and the number hidden from the current page before committing.
 22. Implemented: default keyboard focus visual restored; existing arrow/Enter navigation remains intact. Screen-reader certification is not claimed.
@@ -32,10 +32,10 @@ No commit, push or original-workspace write was performed by this subtask.
 25. Implemented: version-list height follows available viewport height within bounded limits.
 26. Implemented: explicit pre-install confirmation shows `InstallationPlan` destination, known client/library download estimate, available disk space and existing-file policy. Missing estimates are labeled unknown and require an explicit continue; known insufficient space refuses submission. Assets/Java/loader exclusions remain explicit.
 27. Implemented: loader options start expanded and disabled options explain their compatibility/loading/active-task reason.
-28. Implemented as transparent staged behavior: all numeric input validates before any directory mutation; if directory change succeeds but main settings save fails, the error explicitly identifies partial application. This is not an atomic transaction claim.
+28. Implemented: directory, general settings, language, multi-instance and WPF appearance use one validated save_settings RPC and one atomic configuration replacement. File promotion failure preserves both the prior memory snapshot and disk bytes. Input is locked during the request; failure retains the draft. Lost acknowledgement is reported as unknown rather than claiming rollback.
 29. Implemented: resolution and download-rate values reject invalid/out-of-range input at the field; correction clears its error decoration.
 30. Implemented: context-window input requires a value in the documented range, without silent clamping/defaulting.
-31. Implemented: the visible footer distinguishes immediate preview/save/restart behavior and counts pending changes; leaving with pending edits warns that the draft remains unsaved.
+31. Implemented: effect timing and pending changes are visible. Background refresh preserves dirty drafts; directory browsing only fills the draft. Explicit theme loading confirms draft replacement, selection alone is not dirty, and successful loads refresh the form. Appearance writes use the bridge rather than a GUI configuration snapshot.
 32. Implemented: settings search returns category-linked text matches that switch the category and scroll to the matching field.
 33. Implemented: conversation search matches titles and message content.
 34. Implemented: chat deletion requires a specific confirmation and acknowledged RPC; delete errors are not silently converted to old state.
@@ -48,8 +48,12 @@ No commit, push or original-workspace write was performed by this subtask.
 - `dotnet test tests/HelL.Tests/HelL.Tests.csproj -c Release`: existing **816/816** passed; receipt `TestResults/wpf-remediation/wpf-full.trx`.
 - New device-code TTL/legacy event tests: **2/2** passed; receipt `device-code-expiry.trx`. They verify the real `expires_in` event and preserve existing two-argument callers.
 - `HelL.UiPreview.exe --desktop-gallery <folder>`: **20 settings panes / 44 field bounds checks** passed, including light/dark and 900/1180 widths.
-- `HelL.UiPreview.exe --frontend-remediation <folder>`: **17 behavioral checks** cover real password masking/reveal, invalid settings refusing a commit, visible pending state/search, invalid account form retention, real TTL expiry, failed mod-toggle rollback, 125-row library rendering 60 then 120 cards, message-body search, 2,000-chat virtual containers, destructive confirmation and responsive list height.
+- `HelL.UiPreview.exe --frontend-remediation <folder>`: **17 behavioral checks** cover real password masking/reveal, invalid settings refusing a commit, visible pending state/search, invalid account form retention, real TTL expiry, failed mod-toggle rollback, 125-row library with bounded virtual realization and direct final-row access, message-body search, 2,000-chat virtual containers, destructive confirmation and responsive list height.
 - The behavior run exposed and corrected an actual account hero/list parenting error before acceptance. Controlled fixture issues (detached renew-button `IsVisible`, inherited `Render` reflection overload) were corrected without reducing the intended assertions.
 - Existing `--workspace-views` navigation assertions passed after reacquiring the current nav control following asynchronous nav rebuild; its later artwork stage is blocked by its required historical screenshot fixture, absent from the isolated source checkout. The screenshot assertion was not removed or weakened.
 
 The original screenshot review was a candidate audit. This subtask does not claim each UI condition has been independently exercised on every Windows version, high-DPI configuration or assistive technology. Whole-project combined tests and parent-branch integration remain the parent agent's final gate.
+
+## Recheck superseding the initial alternatives
+
+Audit #19 now uses true recycling virtualization; #28 is one atomic bridge commit; #31 preserves drafts and distinguishes explicit theme loading. See [the recheck](frontend-wpf-recheck.md) for the new regression flow. Historical test totals above describe the initial delivery.

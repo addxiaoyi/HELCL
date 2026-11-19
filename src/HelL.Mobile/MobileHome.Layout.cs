@@ -33,7 +33,7 @@ public sealed partial class MobileHome
         NavigationRail.Padding = fullSidebar ? new Thickness(10, 12) : new Thickness(6, 10);
         foreach (Button button in RailNavigation.Children.OfType<Button>())
         {
-            button.MinHeight = 38;
+            button.MinHeight = 44;
             button.Padding = fullSidebar ? new Thickness(11, 6) : new Thickness(9, 7);
             foreach (TextBlock label in button.GetLogicalDescendants().OfType<TextBlock>())
                 label.IsVisible = fullSidebar;
@@ -212,6 +212,7 @@ public sealed partial class MobileHome
     {
         if (sender is not Button { Tag: string order }) return;
         resourceOrder = order;
+        InvalidateResourceSelection();
         foreach (Button button in ResourceSortTabs.Children.OfType<Button>()) button.Classes.Set("current", (string?)button.Tag == order);
         Projects.ItemsSource = PortableCatalog.OrderProjects(searchResults, order);
         if (!MobileRuntime.Smoke) SearchResources(sender, e);
@@ -220,6 +221,7 @@ public sealed partial class MobileHome
     private async void OpenProjectRow(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button { DataContext: CatalogProject entry }) return;
+        if (!CanOpenProject(entry)) return;
         Projects.SelectedItem = entry;
         PresentProject(entry);
         await LoadReleases();

@@ -42,6 +42,7 @@ public sealed class CatalogPagingFlowTests : IDisposable
         var second = catalog.Search("mod", "fixture", provider, null, default, "downloads", offset: 2, pageSize: 2);
         Assert.Equal(2, first.Count);
         Assert.Equal(2, second.Count);
+        Assert.All(first.Concat(second), project => Assert.False(string.IsNullOrWhiteSpace(project.Id)));
         Assert.Empty(first.Select(project => project.Id.Length > 0 ? project.Id : project.Slug)
             .Intersect(second.Select(project => project.Id.Length > 0 ? project.Id : project.Slug)));
         Assert.Contains(requests, uri => Query(uri, parameter) == "2");

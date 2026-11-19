@@ -57,6 +57,7 @@ internal static class Program
         string? dpiGallery = Option("--dpi-gallery");
         string? desktopGallery = Option("--desktop-gallery");
         string? frontendRemediation = Option("--frontend-remediation");
+        string? frontendRecheck = Option("--frontend-recheck");
         string? aiGallery = Option("--ai-gallery");
         string? aiLiveCheck = Option("--ai-live-check");
         string? aiSelfTest = Option("--ai-ui-selftest");
@@ -176,6 +177,7 @@ internal static class Program
                 if (await Task.WhenAny(window.BridgeSettled, Task.Delay(20000)) != window.BridgeSettled)
                     throw new TimeoutException("The isolated launcher did not connect within 20 seconds.");
                 if (frontendRemediation != null) { await FrontendRemediationCheck.Run(window, frontendRemediation); app.Shutdown(0); return; }
+                if (frontendRecheck != null) { await FrontendRecheckCheck.Run(window, frontendRecheck); app.Shutdown(0); return; }
                 if (nativeChecks)
                 {
                     await NativeShellChecks.Run(window);

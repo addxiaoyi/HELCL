@@ -29,6 +29,55 @@ public sealed class FrontendRecoveryTests : IDisposable
     public void SensitiveLogValuesAreNotSentInPreview(string line)
         => Assert.DoesNotContain("private-value", LogPreview.Redact(line));
 
+    [Theory]
+    [InlineData(@"Opened \\private-server\players\private-value.log")]
+    [InlineData("Opened /root/private-value/world.log")]
+    [InlineData("Opened /srv/private-value/world.log")]
+    [InlineData("Contact private-value@example.test")]
+    [InlineData("Connected to 192.0.2.123", "192.0.2.123")]
+    [InlineData("Connected to 2001:db8:0:1::1234", "2001:db8:0:1::1234")]
+    [InlineData("Connected to [fe80::1234%eth0]:25565", "fe80::1234%eth0")]
+    public void PrivateLocationsAndNetworkIdentifiersAreMasked(string line, string sensitive = "private-value")
+        => Assert.DoesNotContain(sensitive, LogPreview.Redact(line));
+
+    [Theory]
+    [InlineData("Connected to 192.0.2.123.", "192.0.2.123")]
+    [InlineData("Connected to 2001:db8::1234.", "2001:db8::1234")]
+    [InlineData("Connected to ::ffff:192.0.2.123.", "::ffff:192.0.2.123")]
+    public void AddressMaskingPreservesSentencePunctuation(string line, string address)
+    {
+        string preview = LogPreview.Redact(line);
+        Assert.DoesNotContain(address, preview);
+        Assert.Equal("Connected to [网络地址].", preview);
+    }
+
+    [Theory]
+    [InlineData(@"Opened C:\Users\Jane Doe\private\latest.log")]
+    [InlineData(@"Opened \\private-server\Jane Doe\private\latest.log")]
+    [InlineData("Opened /home/Jane Doe/private/latest.log")]
+    [InlineData("Opened /Jane Doe/private/latest.log")]
+    public void PathsWithSpacesCannotLeaveANameOrPathSuffix(string line)
+    {
+        string preview = LogPreview.Redact(line);
+        Assert.Equal("Opened [本机路径]", preview);
+        Assert.DoesNotContain("Doe", preview);
+        Assert.DoesNotContain("private", preview);
+    }
+
+    [Theory]
+    [InlineData("Open \"C:\\Users\\Jane Doe\\private\\latest.log\": file missing")]
+    [InlineData("Open '\\\\private-server\\Jane Doe\\private\\latest.log': file missing")]
+    [InlineData("Open \"/home/Jane Doe/private/latest.log\": file missing")]
+    public void QuotedPathsKeepTheFollowingDiagnostic(string line)
+        => Assert.Equal("Open [本机路径]: file missing", LogPreview.Redact(line));
+
+    [Fact]
+    public void LogMaskingKeepsOrdinaryMessagesAndVersionNumbersReadable()
+    {
+        const string text = "Minecraft 1.21.1 loaded 42 mods at 12:34:56. Memory: 4096 MiB.\nUse /help or Ctrl+C; examples 999.2.3.4 and not:a:network.";
+        Assert.Equal(text, LogPreview.Redact(text));
+    }
+
     [Fact]
     public void TerminalHistorySurvivesRestartAndNeverRestoresRunningTasks()
     {

@@ -22,6 +22,8 @@ public sealed partial class MobileHome : UserControl, IDisposable
     private bool original;
     private bool ready;
     private bool disposed;
+    private int instanceRevision;
+    private sealed record InstanceFileContext(string Name, string Folder, int InstanceRevision, int NavigationRevision);
     private string SelectedKind => (Kind.SelectedItem as ComboBoxItem)?.Tag as string ?? "resourcepack";
     private string SelectedProvider => (Provider.SelectedItem as ComboBoxItem)?.Tag as string ?? "modrinth";
 
@@ -78,6 +80,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
 
     private void PresentInstance(LibraryInstance entry)
     {
+        ++instanceRevision;
         try
         {
             selected = entry.Name;
@@ -151,19 +154,25 @@ public sealed partial class MobileHome : UserControl, IDisposable
         return Task.CompletedTask;
     });
 
-    private async void ChooseCover(object? sender, RoutedEventArgs e) => await Run(async token =>
+    private async void ChooseCover(object? sender, RoutedEventArgs e) => await ChooseCoverAsync();
+    private Task ChooseCoverAsync(Func<Task<IStorageFile?>>? picker = null) => Run(async token =>
     {
         RequireSelection();
+        var context = CaptureInstanceFileContext();
         var top = TopLevel.GetTopLevel(this) ?? throw new IOException("窗口尚未就绪。");
-        var files = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "选择实例封面", AllowMultiple = false,
-            FileTypeFilter = [new FilePickerFileType("图片") { MimeTypes = ["image/png", "image/jpeg"], Patterns = ["*.png", "*.jpg", "*.jpeg"] }] });
+        var files = picker is null ? await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "选择实例封面", AllowMultiple = false,
+            FileTypeFilter = [new FilePickerFileType("图片") { MimeTypes = ["image/png", "image/jpeg"], Patterns = ["*.png", "*.jpg", "*.jpeg"] }] })
+            : new[] { await picker() }.OfType<IStorageFile>().ToArray();
         if (files.Count == 0) return;
+        using var file = files[0];
+        if (!CanApplyInstanceFile(context, token)) return;
         string temporary = Path.Combine(root, ".cover-import-" + Guid.NewGuid().ToString("N") + ".png");
         try
         {
-            await using (var source = await files[0].OpenReadAsync())
+            await using (var source = await file.OpenReadAsync())
             await using (var output = File.Create(temporary))
             {
+                if (!CanApplyInstanceFile(context, token)) return;
                 byte[] buffer = new byte[32768];
                 int count;
                 while ((count = await source.ReadAsync(buffer, token)) > 0)
@@ -172,35 +181,64 @@ public sealed partial class MobileHome : UserControl, IDisposable
                     await output.WriteAsync(buffer.AsMemory(0, count), token);
                 }
             }
-            await Task.Run(() => launcher.SetInstanceCover(selected, temporary), token);
-            Reload(selected); Status.Text = "实例封面已保存。";
+            if (!CanApplyInstanceFile(context, token)) return;
+            await Task.Run(() => launcher.SetInstanceCover(context.Name, temporary), token);
+            if (!CanApplyInstanceFile(context, token)) return;
+            Reload(context.Name); Status.Text = "实例封面已保存。";
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     });
 
-    private async void ExportInstance(object? sender, RoutedEventArgs e) => await Run(async token =>
+    private async void ExportInstance(object? sender, RoutedEventArgs e) => await ExportInstanceAsync();
+    private Task ExportInstanceAsync(Func<string, Task<IStorageFile?>>? picker = null) => Run(async token =>
     {
         RequireSelection();
+        var context = CaptureInstanceFileContext();
         var top = TopLevel.GetTopLevel(this) ?? throw new IOException("窗口尚未就绪。");
-        var destination = await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-            { Title = "导出实例备份", SuggestedFileName = selected + "-backup.zip", DefaultExtension = "zip", ShowOverwritePrompt = true });
-        if (destination == null) return;
-        string folder = launcher.InstanceFolder(selected);
-        await using var stream = await destination.OpenWriteAsync();
-        if (stream.CanSeek) stream.SetLength(0);
-        await Task.Run(() =>
+        using var destination = picker is null ? await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            { Title = "导出实例备份", SuggestedFileName = context.Name + "-backup.zip", DefaultExtension = "zip", ShowOverwritePrompt = true })
+            : await picker(context.Name + "-backup.zip");
+        if (destination == null || !CanApplyInstanceFile(context, token)) return;
+        string temporary = Path.Combine(root, ".instance-export-" + Guid.NewGuid().ToString("N") + ".zip");
+        try
         {
-            using var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true);
-            var options = new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint, IgnoreInaccessible = false };
-            foreach (string path in Directory.EnumerateFiles(folder, "*", options))
+            // Build the archive before touching an existing destination.
+            await Task.Run(() =>
             {
-                token.ThrowIfCancellationRequested();
-                if (path.EndsWith(".part", StringComparison.OrdinalIgnoreCase) || path.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase)) continue;
-                archive.CreateEntryFromFile(path, Path.GetRelativePath(folder, path).Replace('\\', '/'), CompressionLevel.Fastest);
-            }
-        }, token);
-        Status.Text = "实例备份已导出，不含账号和系统凭据。";
+                using var archive = ZipFile.Open(temporary, ZipArchiveMode.Create);
+                var options = new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint, IgnoreInaccessible = false };
+                foreach (string path in Directory.EnumerateFiles(context.Folder, "*", options))
+                {
+                    token.ThrowIfCancellationRequested();
+                    if (path.EndsWith(".part", StringComparison.OrdinalIgnoreCase) || path.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase)) continue;
+                    archive.CreateEntryFromFile(path, Path.GetRelativePath(context.Folder, path).Replace('\\', '/'), CompressionLevel.Fastest);
+                }
+            }, token);
+            if (!CanApplyInstanceFile(context, token)) return;
+            await using var stream = await destination.OpenWriteAsync();
+            if (!CanApplyInstanceFile(context, token)) return;
+            await using var archiveFile = File.OpenRead(temporary);
+            if (stream.CanSeek) stream.SetLength(0);
+            await archiveFile.CopyToAsync(stream, token);
+            await stream.FlushAsync(token);
+            if (CanApplyInstanceFile(context, token)) Status.Text = "实例备份已导出，不含账号和系统凭据。";
+        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
     });
+
+    private InstanceFileContext CaptureInstanceFileContext() => new(selected, Path.GetFullPath(launcher.InstanceFolder(selected)),
+        instanceRevision, navigationRevision);
+
+    private bool CanApplyInstanceFile(InstanceFileContext context, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        if (disposed || selected != context.Name || instanceRevision != context.InstanceRevision
+            || navigationRevision != context.NavigationRevision || !Directory.Exists(context.Folder)) return false;
+        if ((File.GetAttributes(context.Folder) & FileAttributes.ReparsePoint) != 0)
+            throw new IOException("实例目录已变为链接，请重新选择实例后再试。");
+        return string.Equals(Path.GetFullPath(launcher.InstanceFolder(context.Name)), context.Folder,
+            OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
+    }
 
     private async void Navigate(object? sender, RoutedEventArgs e) { if (sender is Button { Tag: string page }) await NavigateCheckedAsync(page); }
     private async void GoResources(object? sender, RoutedEventArgs e) => await NavigateCheckedAsync("resources");

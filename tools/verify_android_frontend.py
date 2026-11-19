@@ -40,19 +40,33 @@ def read_json(path: str):
         return None
 
 
-def tap_match(labels: tuple[str, ...], *, editable: bool = False) -> None:
-    adb("shell", "uiautomator", "dump", "/sdcard/hell-frontend-window.xml")
-    document = ET.fromstring(adb("shell", "cat", "/sdcard/hell-frontend-window.xml"))
-    for node in document.iter("node"):
-        name = node.get("text", "") + " " + node.get("content-desc", "")
-        if not (any(label in name for label in labels)
-                or editable and "EditText" in node.get("class", "")):
-            continue
-        bounds = [int(part) for part in re.findall(r"\d+", node.get("bounds", ""))]
-        if len(bounds) != 4 or bounds[2] <= bounds[0] or bounds[3] <= bounds[1]:
-            continue
-        adb("shell", "input", "tap", str((bounds[0] + bounds[2]) // 2), str((bounds[1] + bounds[3]) // 2))
-        return
+def tap_match(labels: tuple[str, ...], *, editable: bool = False, scroll: bool = False) -> None:
+    for attempt in range(5 if scroll else 1):
+        adb("shell", "uiautomator", "dump", "/sdcard/hell-frontend-window.xml")
+        document = ET.fromstring(adb("shell", "cat", "/sdcard/hell-frontend-window.xml"))
+        matches = []
+        for node in document.iter("node"):
+            name = node.get("text", "") + " " + node.get("content-desc", "")
+            if not (any(label in name for label in labels)
+                    or editable and "EditText" in node.get("class", "")):
+                continue
+            bounds = [int(part) for part in re.findall(r"\d+", node.get("bounds", ""))]
+            if len(bounds) != 4 or bounds[2] <= bounds[0] or bounds[3] <= bounds[1]:
+                continue
+            matches.append((0 if "EditText" in node.get("class", "") else 1,
+                            (bounds[2] - bounds[0]) * (bounds[3] - bounds[1]), bounds))
+        if matches:
+            _, _, bounds = min(matches)
+            adb("shell", "input", "tap", str((bounds[0] + bounds[2]) // 2), str((bounds[1] + bounds[3]) // 2))
+            return
+        if scroll and attempt < 4:
+            size = re.search(r"(\d+)x(\d+)", adb("shell", "wm", "size"))
+            if size is None:
+                break
+            width, height = map(int, size.groups())
+            adb("shell", "input", "swipe", str(width // 2), str(int(height * 0.78)),
+                str(width // 2), str(int(height * 0.34)), "300")
+            time.sleep(0.4)
     raise RuntimeError("The emulator accessibility tree did not expose the required control: " + ", ".join(labels))
 
 
@@ -92,7 +106,8 @@ def verify(apk: Path, output: Path) -> None:
         screenshot(output / "01-home.png")
         tap_match(("管理当前实例", "管理实例"))
         time.sleep(0.5)
-        tap_match(("实例名称",), editable=True)
+        screenshot(output / "01b-manage.png")
+        tap_match(("实例名称",), editable=True, scroll=True)
         keyboard = wait_for(lambda: (value if (value := read_json(evidence + "/mobile-platform-events.json"))
                                     and value.get("keyboardOpen") else None), "The real Android keyboard-open event was not observed.")
         screenshot(output / "02-keyboard.png")
@@ -128,6 +143,8 @@ def verify(apk: Path, output: Path) -> None:
         (output / "acceptance.json").write_text(json.dumps(acceptance, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(acceptance))
     finally:
+        screenshot(output / "last-native-screen.png")
+        adb("pull", "/sdcard/hell-frontend-window.xml", str(output / "last-native-tree.xml"), allow_failure=True)
         adb("pull", evidence, str(output / "ui-failure-or-final"), allow_failure=True)
         adb("shell", "settings", "put", "system", "font_scale", original_scale if original_scale != "null" else "1.0", allow_failure=True)
         adb("shell", "am", "force-stop", PACKAGE, allow_failure=True)

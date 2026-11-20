@@ -111,7 +111,7 @@ public sealed partial class MainWindow
                 "task-list growth hides the log actions in a short window");
             var taskScroll = taskList.GetVisualDescendants().OfType<ScrollViewer>().Single();
             Check(taskScroll.Extent.Height > taskScroll.Viewport.Height, "many task rows have no scrollable viewport");
-            Button expand = logPanel.GetLogicalDescendants().OfType<Button>().Single(button => button.Content?.ToString() == "展开 / 收起");
+            Button expand = logPanel.GetLogicalDescendants().OfType<Button>().Single(button => button.Content?.ToString() is "展开日志" or "收起日志");
             expand.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
             await SettleReading();
             var logScroll = logPanel.GetLogicalDescendants().OfType<ScrollViewer>().Single();

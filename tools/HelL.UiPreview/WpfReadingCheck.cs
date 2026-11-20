@@ -108,19 +108,35 @@ internal static class WpfReadingCheck
                     var title = Part<TextBlock>("Title");
                     var status = Part<TextBlock>("Status");
                     var log = Part<TextBox>("Log");
+                    string shortLog = task.Log.ToString();
                     var toggle = Part<Button>("Toggle");
                     if (Part<Border>("LogWrap").Visibility != Visibility.Visible) toggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                     await Settle(window);
                     ((Panel)window.FindName("ToastHost")).Children.Clear();
                     Check(status.Text.Contains("client.jar") && status.TextWrapping == TextWrapping.Wrap && status.FontSize >= 13 && status.LineHeight >= 20,
                         "long task errors keep readable text and their complete path at " + suffix);
-                    Check(log.IsReadOnly && log.ActualHeight >= 200 && log.FontSize >= 12.5 && log.Text.Contains("中文生存世界"),
-                        "expanded logs keep room for reading and preserve selectable content at " + suffix);
+                    Check(log.IsReadOnly && log.ActualHeight >= 44 && log.ActualHeight < 120
+                        && log.FontSize >= 12.5 && log.Text.Contains("中文生存世界"),
+                        "short logs size to their content without a large empty viewport at " + suffix);
                     Check(CustomizationPreview.Walk(Part<Border>("Root")).OfType<TextBlock>().Any(text => text.Text == "未完成"),
                         "task outcome has a text marker separate from the error explanation at " + suffix);
                     log.Select(0, Math.Min(12, log.Text.Length));
                     Call(tasks, "Sync", task);
                     Check(log.SelectionLength > 0 && log.IsReadOnly, "task refresh retains its log selection at " + suffix);
+                    task.Log.Clear();
+                    for (int line = 1; line <= 24; line++)
+                        task.Append($"[12:35:{line:00}] long log fixture line {line:00}: 中文路径与安装校验状态保持可读");
+                    Call(tasks, "Sync", task);
+                    await Settle(window);
+                    Check(log.ActualHeight <= 220 && log.ExtentHeight > log.ViewportHeight,
+                        "long logs stay inside the height cap and scroll internally at " + suffix);
+                    log.ScrollToEnd();
+                    await Settle(window);
+                    Check(log.VerticalOffset >= log.ExtentHeight - log.ViewportHeight - 1,
+                        "the final long-log line can be reached at " + suffix);
+                    task.Log.Clear(); task.Log.Append(shortLog);
+                    Call(tasks, "Sync", task);
+                    await Settle(window);
                     Check(toggle.TranslatePoint(new Point(toggle.ActualWidth, 0), window).X <= window.ActualWidth,
                         "task actions remain inside the content viewport at " + suffix);
                     Program.SaveSnapshot(window, Path.Combine(folder, "tasks-" + suffix + ".png"));

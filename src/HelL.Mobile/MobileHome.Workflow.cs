@@ -264,17 +264,36 @@ public sealed partial class MobileHome
         throw new ArgumentException(notice.Text);
     }
 
-    private void PresentLocalTasks()
+    private void PresentLocalTasks(string? notice = null)
     {
         localTasks.Children.Clear();
         localTasks.Children.Add(new TextBlock { Text = "本机任务", FontSize = 22, Margin = new Thickness(0, 0, 0, 8), Classes = { "title" } });
         var storage = WorkflowText("本次启动最多保留 100 条任务。导出诊断包只包含脱敏摘要，不包含原始任务文本。");
         storage.Margin = new Thickness(0, 0, 0, 8);
         localTasks.Children.Add(storage);
-        var clear = new Button { Content = "清除已结束任务", Classes = { "secondary" }, HorizontalAlignment = HorizontalAlignment.Left,
-            Margin = new Thickness(0, 0, 0, 12), MinHeight = 44 };
-        clear.Click += (_, _) => { session.Tasks.ClearFinished(); PresentLocalTasks(); };
+        if (!string.IsNullOrWhiteSpace(notice))
+        {
+            var feedback = WorkflowText(notice);
+            feedback.FontSize = 12;
+            feedback.Margin = new Thickness(0, 0, 0, 8);
+            localTasks.Children.Add(feedback);
+        }
+        var clear = new Button { Name = "ClearFinishedTasksButton", Content = $"清除已结束任务（{session.Tasks.FinishedCount}）", Classes = { "secondary" },
+            HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 12), MinHeight = 44,
+            IsEnabled = session.Tasks.HasFinished };
+        AutomationProperties.SetName(clear, $"清除已结束任务，{session.Tasks.FinishedCount} 条");
+        clear.Click += ClearFinishedTasks;
         localTasks.Children.Add(clear);
+        if (!session.Tasks.HasFinished)
+        {
+            string clearHintText = session.Tasks.Entries.Count == 0
+                ? "暂无已结束任务可清除。"
+                : "运行中的任务结束后可清理历史记录。";
+            var clearHint = WorkflowText(clearHintText);
+            clearHint.FontSize = 12;
+            clearHint.Margin = new Thickness(0, -8, 0, 8);
+            localTasks.Children.Add(clearHint);
+        }
         if (session.Tasks.Entries.Count == 0) localTasks.Children.Add(WorkflowText("尚无任务。搜索、资源下载、账号和实例操作会显示在这里。"));
         foreach (MobileOperation item in session.Tasks.Entries)
         {
@@ -311,7 +330,21 @@ public sealed partial class MobileHome
             label.LineHeight = label.FontSize * 1.5;
     }
 
-    private Task<bool> ConfirmAsync(string title, string message, string accept)
+    private async void ClearFinishedTasks(object? sender, RoutedEventArgs e)
+    {
+        IReadOnlyList<string> confirmedIds = session.Tasks.FinishedIds;
+        if (confirmedIds.Count == 0) return;
+        int requestedCount = confirmedIds.Count;
+        bool confirmed = await ConfirmAsync("清除已结束任务？",
+            $"将从本次启动的任务历史中移除 {requestedCount} 条已结束任务。运行中的任务不会受影响，此操作无法撤销。",
+            "清除历史", "取消");
+        if (!confirmed || disposed) return;
+
+        int removed = session.Tasks.ClearFinished(confirmedIds);
+        if (removed > 0) PresentLocalTasks($"已清除 {removed} 条已结束任务。");
+    }
+
+    private Task<bool> ConfirmAsync(string title, string message, string accept, string cancel = "取消 / 继续编辑")
     {
         if (confirmation is not null) return Task.FromResult(false);
         confirmation = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -320,7 +353,7 @@ public sealed partial class MobileHome
         content.Children.Add(new TextBlock { Text = title, Classes = { "section" }, TextWrapping = TextWrapping.Wrap });
         content.Children.Add(WorkflowText(message));
         var yes = new Button { Content = accept, Classes = { "primary" }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 44 };
-        var no = new Button { Content = "取消 / 继续编辑", Classes = { "secondary" }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 44 };
+        var no = new Button { Content = cancel, Classes = { "secondary" }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 44 };
         yes.Click += (_, _) => CompleteConfirmation(true);
         no.Click += (_, _) => CompleteConfirmation(false);
         content.Children.Add(yes); content.Children.Add(no);

@@ -16,6 +16,7 @@ public partial class ResourceBrowserView : UserControl
     private bool original;
     private int pageIndex;
     private int displayedPage;
+    private int? lastPageIndex;
     private const int PageSize = 30;
     private bool hasSearched;
     private int generation;
@@ -40,9 +41,11 @@ public partial class ResourceBrowserView : UserControl
     {
         InitializeComponent();
         SizeChanged += (_, _) => Reflow();
-        QueryBox.TextChanged += (_, _) =>
+        QueryBox.PropertyChanged += (_, change) =>
         {
+            if (change.Property != TextBox.TextProperty) return;
             generation++; resultsCurrent = false; DetailsButton.IsEnabled = false; DownloadButton.IsEnabled = false;
+            ResetPagination();
             if (host?.IsWorking == true) ResultNotice.Text = "条件已改变，正在进行的旧搜索不会覆盖当前列表；请完成后重新搜索。";
         };
     }
@@ -135,7 +138,7 @@ public partial class ResourceBrowserView : UserControl
         generation++; resultsCurrent = false;
         ResetDocuments();
         project = null;
-        pageIndex = 0;
+        ResetPagination();
         if (!hasSearched) Results.ItemsSource = Array.Empty<CatalogProject>();
         ReleasePicker.ItemsSource = Array.Empty<CatalogRelease>();
         ResultNotice.Text = notice;
@@ -149,8 +152,8 @@ public partial class ResourceBrowserView : UserControl
     }
 
     private async void SearchResources(object? sender, RoutedEventArgs e) { pageIndex = 0; await Search(); }
-    private async void PreviousPage(object? sender, RoutedEventArgs e) { if (pageIndex == 0 || host?.IsWorking == true) return; pageIndex--; await Search(true); }
-    private async void NextPage(object? sender, RoutedEventArgs e) { if (host?.IsWorking == true) return; pageIndex++; await Search(true); }
+    private async void PreviousPage(object? sender, RoutedEventArgs e) { if (!resultsCurrent || pageIndex == 0 || host?.IsWorking == true) return; pageIndex--; await Search(true); }
+    private async void NextPage(object? sender, RoutedEventArgs e) { if (!resultsCurrent || host?.IsWorking == true) return; pageIndex++; await Search(true); }
     private async void SearchKey(object? sender, KeyEventArgs e)
     { if (e.Key == Key.Enter) { e.Handled = true; pageIndex = 0; await Search(); } }
 
@@ -164,7 +167,11 @@ public partial class ResourceBrowserView : UserControl
             string binding = BindingKey;
             if (kind == "world" && source == "modrinth") throw new InvalidOperationException("世界资源请切换到 CurseForge。");
             var target = Target();
-            if (!paging) pageIndex = 0;
+            if (!paging)
+            {
+                pageIndex = 0;
+                lastPageIndex = null;
+            }
             ResultNotice.Text = "正在搜索，保留上次结果，可从底部取消。";
             DetailPanel.IsVisible = false; BrowsePanel.IsVisible = SearchControls.IsVisible = true;
             DiscoveryPanel.IsVisible = false;
@@ -173,6 +180,18 @@ public partial class ResourceBrowserView : UserControl
                 var rows = SearchFixture is { } fixture ? await fixture(token)
                     : await Task.Run(() => catalog.Search(kind, query, source, target, token, order, pageIndex * PageSize, PageSize), token);
                 if (revision != generation || BindingKey != binding) { ResultNotice.Text = "搜索条件已改变，已丢弃旧结果，请重新搜索。"; return; }
+                if (paging && rows.Count == 0 && lastResults.Count > 0)
+                {
+                    lastPageIndex = displayedPage;
+                    pageIndex = displayedPage;
+                    resultsCurrent = true;
+                    PageLabel.Text = $"第 {displayedPage + 1} 页 · 每页最多 {PageSize} 项";
+                    NextPageButton.IsEnabled = false;
+                    DiscoveryPanel.IsVisible = false;
+                    ResultNotice.Text = $"已到末页，保留第 {displayedPage + 1} 页的 {lastResults.Count} 个结果。";
+                    host.SetStatus("资源列表已到末页。");
+                    return;
+                }
                 resultsCurrent = true;
                 hasSearched = true;
                 lastResults = rows;
@@ -181,9 +200,11 @@ public partial class ResourceBrowserView : UserControl
                 PageLabel.Text = $"第 {pageIndex + 1} 页 · 每页最多 {PageSize} 项";
                 PreviousPageButton.IsEnabled = pageIndex > 0;
                 // Aliases and source deduplication can shorten a page without exhausting the upstream feed.
-                NextPageButton.IsEnabled = rows.Count > 0;
+                NextPageButton.IsEnabled = rows.Count > 0 && (!lastPageIndex.HasValue || pageIndex < lastPageIndex.Value);
                 DiscoveryPanel.IsVisible = rows.Count == 0;
-                ResultNotice.Text = rows.Count == 0 ? "没有匹配结果。可换关键词、来源或目标版本后重试。" : $"{rows.Count} 个项目 · 选择项目查看兼容版本";
+                ResultNotice.Text = lastPageIndex == pageIndex
+                    ? $"已到末页，当前第 {pageIndex + 1} 页有 {rows.Count} 个结果。"
+                    : rows.Count == 0 ? "没有匹配结果。可换关键词、来源或目标版本后重试。" : $"{rows.Count} 个项目 · 选择项目查看兼容版本";
                 host.SetStatus("资源搜索完成。");
             }
             catch
@@ -194,6 +215,15 @@ public partial class ResourceBrowserView : UserControl
                 throw;
             }
         });
+    }
+
+    private void ResetPagination()
+    {
+        pageIndex = 0;
+        lastPageIndex = null;
+        PreviousPageButton.IsEnabled = false;
+        NextPageButton.IsEnabled = false;
+        PageLabel.Text = $"第 1 页 · 每页最多 {PageSize} 项";
     }
 
     private void SelectProject(object? sender, SelectionChangedEventArgs e) => DetailsButton.IsEnabled = resultsCurrent && Results.SelectedItem is CatalogProject;

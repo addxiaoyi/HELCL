@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using HelL.Core;
 using HelL.Portable;
 
@@ -48,6 +49,56 @@ public sealed partial class MainWindow
             details.SetResult(new CatalogProjectDetails([], "stale private document", "old note", "https://modrinth.com/"));
             await pendingDetails;
             if (docs.Children.Count != 0) throw new IOException("An old project document crossed a changed target binding.");
+
+            var firstPage = Enumerable.Range(0, 30).Select(index => new CatalogProject(
+                "page-fixture-" + index, "Pagination fixture " + index, "modrinth", "resourcepack",
+                "fixture summary", "fixture", "fixture", "", "", "", index)).ToArray();
+            var lastPage = firstPage.Take(2).Select(project => project with { Id = "last-" + project.Id }).ToArray();
+            int request = 0;
+            ResourcesView.SearchFixture = _ => Task.FromResult<IReadOnlyList<CatalogProject>>(request++ switch
+            {
+                0 or 3 => firstPage,
+                1 or 4 => lastPage,
+                _ => Array.Empty<CatalogProject>()
+            });
+            await ResourcesView.Search();
+            var next = ResourcesView.FindControl<Button>("NextPageButton")!;
+            var previous = ResourcesView.FindControl<Button>("PreviousPageButton")!;
+            var pageLabel = ResourcesView.FindControl<TextBlock>("PageLabel")!;
+            var resultNotice = ResourcesView.FindControl<TextBlock>("ResultNotice")!;
+            if (results.ItemCount != firstPage.Length || !next.IsEnabled || previous.IsEnabled)
+                throw new IOException("The first full resource page did not expose its next-page action.");
+            next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            for (int attempt = 0; attempt < 100 && IsWorking; attempt++) await Task.Delay(20);
+            if (results.ItemCount != lastPage.Length || !next.IsEnabled || !previous.IsEnabled
+                || pageLabel.Text?.Contains("第 2 页", StringComparison.Ordinal) != true)
+                throw new IOException("A short non-empty resource page was mistaken for the end of pagination.");
+            next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            for (int attempt = 0; attempt < 100 && IsWorking; attempt++) await Task.Delay(20);
+            if (results.ItemCount != lastPage.Length || next.IsEnabled || !previous.IsEnabled
+                || pageLabel.Text?.Contains("第 2 页", StringComparison.Ordinal) != true
+                || resultNotice.Text?.Contains("末页", StringComparison.Ordinal) != true)
+                throw new IOException("An empty next resource page cleared the last non-empty results or advanced pagination.");
+
+            previous.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            for (int attempt = 0; attempt < 100 && IsWorking; attempt++) await Task.Delay(20);
+            if (results.ItemCount != firstPage.Length || next.IsEnabled != true || previous.IsEnabled
+                || pageLabel.Text?.Contains("第 1 页", StringComparison.Ordinal) != true)
+                throw new IOException("Returning from the last resource page did not restore the first page.");
+            next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            for (int attempt = 0; attempt < 100 && IsWorking; attempt++) await Task.Delay(20);
+            if (results.ItemCount != lastPage.Length || next.IsEnabled || !previous.IsEnabled
+                || resultNotice.Text?.Contains("末页", StringComparison.Ordinal) != true)
+                throw new IOException("Returning to the known last page lost its terminal-page notice.");
+
+            ResourcesView.FindControl<TextBox>("QueryBox")!.Text = "no matching resource";
+            if (next.IsEnabled || previous.IsEnabled)
+                throw new IOException("Changing the resource query left stale pagination controls enabled.");
+            await ResourcesView.Search();
+            var discovery = ResourcesView.FindControl<Control>("DiscoveryPanel")!;
+            if (results.ItemCount != 0 || next.IsEnabled || previous.IsEnabled || !discovery.IsVisible
+                || resultNotice.Text?.Contains("没有匹配结果", StringComparison.Ordinal) != true)
+                throw new IOException("A new empty resource search inherited the old last-page state.");
         }
         finally { ResourcesView.SearchFixture = null; ResourcesView.ReleasesFixture = null; ResourcesView.DetailsFixture = null; }
     }

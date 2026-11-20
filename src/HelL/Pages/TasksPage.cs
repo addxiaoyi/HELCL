@@ -12,6 +12,10 @@ namespace HelL.Pages;
 
 public sealed partial class TasksPage : PageBase
 {
+	private const double LogLineHeight = 20;
+	private const double MinLogHeight = 44;
+	private const double MaxLogHeight = 220;
+
 	private sealed class Card
 	{
 		public bool Expanded;
@@ -195,9 +199,11 @@ public sealed partial class TasksPage : PageBase
 		button2.Visibility = Visibility.Collapsed;
 		TextBox textBox = Ui.LogBox();
 		System.Windows.Automation.AutomationProperties.SetName(textBox, I18n.L("任务日志"));
-		textBox.Height = 220;
+		textBox.MinHeight = MinLogHeight;
+		textBox.MaxHeight = MaxLogHeight;
         textBox.FontSize = 13;
-        textBox.SetValue(TextBlock.LineHeightProperty, 20d);
+		textBox.SetValue(TextBlock.LineHeightProperty, LogLineHeight);
+		SetLogHeight(textBox, row.Log.ToString());
 		textBox.BorderThickness = new Thickness(0.0);
 		textBox.Background = Brushes.Transparent;
 		Border logWrap = Ui.Pane(Ui.V(8, Ui.Txt("执行日志", 12, fg: "B.InkMuted"), textBox), "B.Paper2", 9.0, 12.0);
@@ -290,6 +296,7 @@ public sealed partial class TasksPage : PageBase
 			if (card.Expanded)
 			{
 				card.Log.Text = row.Log.ToString();
+				SetLogHeight(card.Log, card.Log.Text);
 				card.Log.ScrollToEnd();
 				logWrap.Visibility = Visibility.Visible;
 				Motion.FadeIn(logWrap, 200.0, 8.0);
@@ -300,6 +307,13 @@ public sealed partial class TasksPage : PageBase
 			}
 		};
 		return card;
+	}
+
+	private static void SetLogHeight(TextBox log, string text)
+	{
+		int lineBreaks = text.Count(character => character == '\n');
+		int lines = lineBreaks + (text.Length == 0 || text[text.Length - 1] != '\n' ? 1 : 0);
+		log.Height = Math.Max(MinLogHeight, Math.Min(MaxLogHeight, MinLogHeight + lines * LogLineHeight));
 	}
 
 	private void Sync(TaskRow row)
@@ -340,6 +354,7 @@ public sealed partial class TasksPage : PageBase
 				int selectionStart = value.Log.SelectionStart;
 				int selectionLength = value.Log.SelectionLength;
 				value.Log.Text = newLog;
+				SetLogHeight(value.Log, newLog);
 				value.Log.Select(Math.Min(selectionStart, newLog.Length), Math.Min(selectionLength, Math.Max(0, newLog.Length - selectionStart)));
 				if (num)
 				{

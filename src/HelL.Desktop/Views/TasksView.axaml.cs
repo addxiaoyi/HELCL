@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using HelL.Desktop.Models;
@@ -20,6 +21,8 @@ public partial class TasksView : UserControl
     public TasksView()
     {
         InitializeComponent();
+        UpdateLogToggle();
+        SearchBox.PlaceholderText = "名称、状态、原因或任务 ID";
         SizeChanged += (_, _) => TaskList.MaxHeight = Math.Clamp(Bounds.Height * 0.4, 140, 300);
         SearchBox.PropertyChanged += (_, change) =>
         {
@@ -91,7 +94,9 @@ public partial class TasksView : UserControl
         selection ??= selected?.Id;
         var visible = tasks.Where(task => Matches(task, filter) &&
             (task.Title.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
-             task.StateLabel.Contains(query, StringComparison.CurrentCultureIgnoreCase))).ToArray();
+             task.StateLabel.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
+             task.Message.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
+             task.Id.ToString("D").Contains(query, StringComparison.CurrentCultureIgnoreCase))).ToArray();
         filtering = true;
         try
         {
@@ -139,7 +144,18 @@ public partial class TasksView : UserControl
         catch (Exception error) when (error is not OutOfMemoryException)
         { host?.SetStatus("日志复制失败，请检查系统剪贴板后重试。"); System.Diagnostics.Trace.TraceWarning(error.GetType().Name); }
     }
-    private void ExpandLog(object? sender, RoutedEventArgs e) { LogDetails.MaxHeight = double.IsPositiveInfinity(LogDetails.MaxHeight) ? 280 : double.PositiveInfinity; }
+    private void ExpandLog(object? sender, RoutedEventArgs e)
+    {
+        LogDetails.MaxHeight = double.IsPositiveInfinity(LogDetails.MaxHeight) ? 280 : double.PositiveInfinity;
+        UpdateLogToggle();
+    }
+
+    private void UpdateLogToggle()
+    {
+        string label = double.IsPositiveInfinity(LogDetails.MaxHeight) ? "收起日志" : "展开日志";
+        ExpandLogButton.Content = label;
+        AutomationProperties.SetName(ExpandLogButton, label);
+    }
     private void CancelSelected(object? sender, RoutedEventArgs e)
     {
         if (selected?.CanCancel == true) cancelCurrent?.Invoke();

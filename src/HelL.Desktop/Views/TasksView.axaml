@@ -47,7 +47,7 @@
           <WrapPanel Grid.Row="1">
             <Button x:Name="CancelButton" Content="取消任务" Classes="soft" Margin="0,0,6,0" Click="CancelSelected" IsVisible="False" AutomationProperties.Name="取消所选任务" />
             <Button Content="复制日志" Classes="ghost" Click="CopyLog" Margin="0,0,6,0" />
-            <Button Content="展开 / 收起" Classes="ghost" Click="ExpandLog" Margin="0,0,6,0" />
+            <Button x:Name="ExpandLogButton" Content="展开日志" Classes="ghost" Click="ExpandLog" Margin="0,0,6,0" />
             <Button x:Name="RetryButton" Content="重试" Classes="soft" Click="RetrySelected" IsVisible="False" />
           </WrapPanel>
           <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">

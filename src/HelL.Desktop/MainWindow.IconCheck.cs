@@ -95,6 +95,19 @@ public sealed partial class MainWindow
                 .Where(button => button.Classes.Contains("icon-btn")).ToArray();
             Check(remove.Length > 0 && remove.All(button => AutomationProperties.GetName(button)?.StartsWith("删除资源 ") == true),
                 "Resource-delete icon buttons do not identify their own targets.");
+            ShowPage("ai");
+            await SettleIconsAsync();
+            var aiActions = AiView.GetLogicalDescendants().OfType<Button>()
+                .Where(button => button.Classes.Contains("icon-btn"))
+                .ToArray();
+            Check(aiActions.Length == 2
+                && aiActions[0].GetLogicalDescendants().OfType<LauncherIcon>().Single().Kind == "CogOutline"
+                && aiActions[1].GetLogicalDescendants().OfType<LauncherIcon>().Single().Kind == "TrashCanOutline",
+                "AI header actions use the shared settings and clear drawings.");
+            Check(aiActions.Length == 2
+                && AutomationProperties.GetName(aiActions[0]) == "连接设置"
+                && AutomationProperties.GetName(aiActions[1]) == "清空对话",
+                "AI header icon actions keep explicit accessible names.");
             var font = new Typeface(InstanceName.FontFamily).GlyphTypeface;
             fontFamily = font.FamilyName;
             chineseGlyphs = "设置实例存档资源".Select(character => font.CharacterToGlyphMap.GetGlyph(character)).ToArray();

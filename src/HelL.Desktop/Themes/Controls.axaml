@@ -323,6 +323,7 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="99" />
     <Setter Property="Padding" Value="8,1.5" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
   </Style>
 
   <Style Selector="ListBox"><Setter Property="BorderThickness" Value="0" /><Setter Property="Padding" Value="0" /><Setter Property="Background" Value="Transparent" /></Style>

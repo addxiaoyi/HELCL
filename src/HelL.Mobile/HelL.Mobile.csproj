@@ -19,7 +19,9 @@
     <AvaloniaResource Include="../HelL/Resources/Brand/Helstera.png" Link="Assets/Helstera.png" />
     <AvaloniaResource Include="Assets/*.png" />
     <AvaloniaResource Include="Assets/Fonts/*.otf" />
+    <AvaloniaResource Include="Assets/Fonts/Cousine-Regular.ttf" />
     <AvaloniaResource Include="Assets/NotoSansSC-OFL.txt" Link="Assets/Licenses/NotoSansSC-OFL.txt" />
+    <AvaloniaResource Include="Assets/Cousine-OFL.txt" Link="Assets/Licenses/Cousine-OFL.txt" />
     <AvaloniaResource Include="../HelL.Design/AvaloniaTokens.axaml" Link="Assets/Design/AvaloniaTokens.axaml" />
   </ItemGroup>
 </Project>

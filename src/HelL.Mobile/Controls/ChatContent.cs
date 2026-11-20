@@ -9,11 +9,8 @@ namespace HelL.Mobile.Controls;
 
 public sealed class ChatContent : StackPanel
 {
-    private const string ChineseCodeFallback = ", avares://HelL.Mobile/Assets/Fonts#Noto Sans SC";
-    // Avalonia's composite lookup requires the resolved family name, not the Android generic alias.
-    private static readonly FontFamily CodeFont = FontFamily.Parse((OperatingSystem.IsAndroid()
-        ? "Droid Sans Mono, DroidSansMono, Noto Sans Mono, Roboto Mono, monospace"
-        : "Cascadia Mono, Consolas, DejaVu Sans Mono, monospace") + ChineseCodeFallback);
+    private static readonly FontFamily CodeFont = FontFamily.Parse(
+        "avares://HelL.Mobile/Assets/Fonts#Cousine, avares://HelL.Mobile/Assets/Fonts#Noto Sans SC");
     public static readonly StyledProperty<string> TextProperty = AvaloniaProperty.Register<ChatContent, string>(nameof(Text), "");
     public static readonly StyledProperty<double> TextScaleProperty = AvaloniaProperty.Register<ChatContent, double>(nameof(TextScale), 1);
     public string Text { get => GetValue(TextProperty); set => SetValue(TextProperty, value); }

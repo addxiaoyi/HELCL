@@ -14,8 +14,8 @@ surfaces without introducing dependencies or animation.
   Markdown parser.
 - Code blocks use a compact language/copy header, a 44px minimum copy target and
   a 13px/20px baseline. Long commands scroll inside their code surface rather
-  than widening the message. The font chain uses available platform monospace
-  families and the existing embedded Noto Sans SC fallback. Code content retains
+  than widening the message. Bundled Cousine Regular provides fixed-width Latin
+  characters, with the existing embedded Noto Sans SC fallback for Chinese. Code content retains
   trailing whitespace and unclosed streaming fences; copying still receives
   the rendered block's original code string.
 - Task history uses separated reading rows instead of one heavy card per
@@ -48,9 +48,12 @@ normal/doubled font and line-height, role/content hierarchy, 44px copy bounds,
 code-byte preservation, local horizontal scrolling, real nonzero glyph indices,
 equal Latin monospace advances, stable repeated sizing, copy visibility above
 the composer, unclosed-fence whitespace, task-column containment and state layout.
-Windows resolves the command font to **Cascadia Mono**; its `i` and `W` advances
-are equal. All 88 actual shaped glyph indices in the mixed Chinese/Latin code
-fixture are nonzero. This verifies the rendered fixture, not every font or script.
+Android's initial runs resolved Latin code to proportional Noto Sans SC even
+with explicit Android system family candidates. The test now requires the
+bundled **Cousine** family, nonzero glyphs, and equal `i` and `W` advances.
+It also measures code viewport and extent and scrolls to the last column
+without moving the outer conversation. The bundled font comes from the pinned
+Google Fonts source listed in `THIRD_PARTY_NOTICES.md` and ships with its OFL.
 
 The new reading check runs inside the existing complete smoke chain and keeps
 all earlier draft, focus, resource-position, icons, refinement and 200% system

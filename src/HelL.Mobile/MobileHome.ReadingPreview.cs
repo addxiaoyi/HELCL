@@ -82,9 +82,10 @@ public sealed partial class MobileHome
                 GlyphTypeface latinFont = latinRun.GlyphRun.GlyphTypeface;
                 ushort narrow = latinFont.CharacterToGlyphMap.GetGlyph('i');
                 ushort broad = latinFont.CharacterToGlyphMap.GetGlyph('W');
-                bool fixedAdvance = latinFont.TryGetHorizontalGlyphAdvance(narrow, out ushort narrowAdvance)
+                bool fixedAdvance = narrow != 0 && broad != 0
+                    && latinFont.TryGetHorizontalGlyphAdvance(narrow, out ushort narrowAdvance)
                     && latinFont.TryGetHorizontalGlyphAdvance(broad, out ushort broadAdvance) && narrowAdvance == broadAdvance;
-                Check(fixedAdvance, name + " Latin command characters retain equal monospace advances");
+                Check(fixedAdvance && latinFont.FamilyName == "Cousine", name + " Latin command characters use bundled Cousine with equal advances");
                 for (int pass = 0; pass < 3; pass++) ScaleChatText();
                 Check(body.FontSize == 15 * EffectiveTextScale && code.FontSize == 13 * EffectiveTextScale,
                     name + " repeated generated-message sizing keeps stable font baselines");

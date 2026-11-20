@@ -9,6 +9,11 @@ namespace HelL.Mobile.Controls;
 
 public sealed class ChatContent : StackPanel
 {
+    private const string ChineseCodeFallback = ", avares://HelL.Mobile/Assets/Fonts#Noto Sans SC";
+    // Avalonia's composite lookup requires the resolved family name, not the Android generic alias.
+    private static readonly FontFamily CodeFont = FontFamily.Parse((OperatingSystem.IsAndroid()
+        ? "Droid Sans Mono, DroidSansMono, Noto Sans Mono, Roboto Mono, monospace"
+        : "Cascadia Mono, Consolas, DejaVu Sans Mono, monospace") + ChineseCodeFallback);
     public static readonly StyledProperty<string> TextProperty = AvaloniaProperty.Register<ChatContent, string>(nameof(Text), "");
     public static readonly StyledProperty<double> TextScaleProperty = AvaloniaProperty.Register<ChatContent, double>(nameof(TextScale), 1);
     public string Text { get => GetValue(TextProperty); set => SetValue(TextProperty, value); }
@@ -66,7 +71,7 @@ public sealed class ChatContent : StackPanel
             header.Children.Add(new TextBlock { Text = language.Length == 0 ? "代码" : language, FontSize = 12, LineHeight = 18,
                 Classes = { "caption", "code-language" }, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
             var codeText = new SelectableTextBlock { Text = code,
-                FontFamily = FontFamily.Parse("Cascadia Mono, Consolas, DejaVu Sans Mono, monospace, avares://HelL.Mobile/Assets/Fonts#Noto Sans SC"), FontSize = 13, LineHeight = 20,
+                FontFamily = CodeFont, FontSize = 13, LineHeight = 20,
                 TextWrapping = TextWrapping.NoWrap, Classes = { "chat-code" } };
             var copy = new Button { Content = "复制代码", Classes = { "secondary", "code-copy" }, FontSize = 12,
                 HorizontalAlignment = HorizontalAlignment.Right, MinHeight = 44, Padding = new Thickness(10, 4) };

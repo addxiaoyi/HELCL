@@ -29,7 +29,8 @@ public sealed partial class MobileHome
         string? notice = AiChatNotice.Text;
         Vector offset = AiMessagesScroll.Offset;
         const string prose = "先确认实例的 Minecraft 版本与加载器，再安装兼容的模组。";
-        const string command = "# 这是中文注释：保留命令与原始缩进\njava -Xmx4G -jar minecraft-server-with-a-long-file-name.jar --nogui\n";
+        const string command = "# 这是中文注释：保留命令与原始缩进\n"
+            + "java -Xmx4G -jar /games/minecraft/instances/modded-survival/server/archives/minecraft-server-1.21.1-with-a-long-file-name.jar --nogui\n";
         var fixture = new[]
         {
             new ChatEntry("user", "如何排查启动失败，并保留当前存档？", "complete"),
@@ -62,8 +63,17 @@ public sealed partial class MobileHome
                 Check(code.FontSize >= 13 * EffectiveTextScale - 0.1 && code.LineHeight >= code.FontSize * 1.4,
                     name + " newly generated code respects text scale and readable leading");
                 var codeScroll = code.GetVisualAncestors().OfType<ScrollViewer>().First();
-                Check(codeScroll.Viewport.Width <= content.Bounds.Width + 1 && codeScroll.Extent.Width > codeScroll.Viewport.Width,
+                double codeViewport = codeScroll.Viewport.Width;
+                double codeExtent = codeScroll.Extent.Width;
+                double lastColumn = Math.Max(0, codeExtent - codeViewport);
+                Vector originalCodeOffset = codeScroll.Offset;
+                double outerOffset = AiMessagesScroll.Offset.X;
+                codeScroll.Offset = new Vector(lastColumn, originalCodeOffset.Y);
+                double reachedColumn = codeScroll.Offset.X;
+                Check(codeViewport > 0 && codeViewport <= content.Bounds.Width + 1 && lastColumn > 1
+                    && Math.Abs(reachedColumn - lastColumn) < 1 && Math.Abs(AiMessagesScroll.Offset.X - outerOffset) < 1,
                     name + " long commands scroll locally without widening the message");
+                codeScroll.Offset = originalCodeOffset;
                 ushort[] glyphs = code.TextLayout.TextLines.SelectMany(line => line.TextRuns).OfType<ShapedTextRun>()
                     .SelectMany(run => run.GlyphRun.GlyphInfos.Select(info => info.GlyphIndex)).ToArray();
                 Check(glyphs.Length > 10 && glyphs.All(glyph => glyph != 0), name + " Chinese code text resolves real glyphs without missing-character boxes");
@@ -95,6 +105,7 @@ public sealed partial class MobileHome
                 samples.Add(new { theme = name, proseSize = body.FontSize, proseLeading = double.IsFinite(body.LineHeight) ? body.LineHeight : 0,
                     roleSize = role.FontSize, codeSize = code.FontSize, codeLeading = double.IsFinite(code.LineHeight) ? code.LineHeight : 0,
                     codeGlyphs = glyphs.Length, latinFont = latinFont.FamilyName, fixedAdvance,
+                    codeViewport, codeExtent, reachedColumn,
                     copy = new { copy.Bounds.Width, copy.Bounds.Height } });
 
                 ShowPage("tasks", remember: false);

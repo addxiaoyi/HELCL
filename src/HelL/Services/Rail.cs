@@ -46,7 +46,7 @@ public sealed class Rail : StackPanel
 	public void Add(string key, string label, string glyph)
 	{
 		Grid grid = Ui.G(null, "18,*,Auto");
-		grid.Add(Ui.Glyph(glyph, 14.0), 0);
+		grid.Add(Ui.Glyph(glyph, 16.0), 0);
 		TextBlock text = Ui.Txt(label, 13.0).VCenter().Trim();
 		grid.Add(text.M(10.0, 0.0, 0.0, 0.0), 0, 1);
 		ToggleButton btn = new ToggleButton

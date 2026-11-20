@@ -5,6 +5,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using HelL.Design;
 using HelL.Services;
 
 namespace HelL.Pages.Ai;
@@ -13,25 +14,25 @@ internal static class AiIcons
 {
 	public const string Spark = "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z";
 
-	public const string Layers = "M12 2l10 6-10 6L2 8z M2 14l10 6 10-6";
+	public static readonly string Layers = IconCatalog.GetPath("Layers");
 
-	public const string Check = "M20 6L9 17l-5-5";
+	public static readonly string Check = IconCatalog.GetPath("Check");
 
-	public const string X = "M18 6L6 18 M6 6l12 12";
+	public static readonly string X = IconCatalog.GetPath("Close");
 
-	public const string Skip = "M9 6l6 6-6 6";
+	public static readonly string Skip = IconCatalog.GetPath("ChevronRight");
 
-	public const string ChevDown = "M6 9l6 6 6-6";
+	public static readonly string ChevDown = IconCatalog.GetPath("ChevronDown");
 
-	public const string ChevRight = "M9 6l6 6-6 6";
+	public static readonly string ChevRight = IconCatalog.GetPath("ChevronRight");
 
-	public const string ArrowUp = "M12 19V5 M5 12l7-7 7 7";
+	public static readonly string ArrowUp = IconCatalog.GetPath("ArrowUp");
 
-	public const string Undo = "M3 7v6h6 M21 17a9 9 0 0 0-15-6.7L3 13";
+	public static readonly string Undo = IconCatalog.GetPath("Undo");
 
-	public const string Retry = "M21 12a9 9 0 1 1-3-6.7L21 8 M21 3v5h-5";
+	public static readonly string Retry = IconCatalog.GetPath("Refresh");
 
-	public const string Copy = "M11 9h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1";
+	public static readonly string Copy = IconCatalog.GetPath("Copy");
 
 	public const string ThumbUp = "M7 10v12 M15 5.9L14 10h5.8a2 2 0 0 1 2 2.3l-1.4 8a2 2 0 0 1-2 1.7H7V10l4-8a3 3 0 0 1 4 3.9z";
 
@@ -41,45 +42,45 @@ internal static class AiIcons
 
 	public const string Cpu = "M7 5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M9 9h6v6H9z M9 2v3 M15 2v3 M9 19v3 M15 19v3 M2 9h3 M2 15h3 M19 9h3 M19 15h3";
 
-	public const string Plus = "M12 5v14 M5 12h14";
+	public static readonly string Plus = IconCatalog.GetPath("Plus");
 
 	public const string Panel = "M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z M9 3v18";
 
-	public const string More = "M12 11a1 1 0 1 0 0 2a1 1 0 1 0 0-2z M19 11a1 1 0 1 0 0 2a1 1 0 1 0 0-2z M5 11a1 1 0 1 0 0 2a1 1 0 1 0 0-2z";
+	public static readonly string More = IconCatalog.GetPath("More");
 
 	public const string Branch = "M6 3a3 3 0 1 0 0 6a3 3 0 1 0 0-6z M6 15a3 3 0 1 0 0 6a3 3 0 1 0 0-6z M18 5a3 3 0 1 0 0 6a3 3 0 1 0 0-6z M6 9v6 M18 11a6 6 0 0 1-6 6H9";
 
-	public const string Alert = "M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z M12 9v4 M12 17h.01";
+	public static readonly string Alert = IconCatalog.GetPath("Warning");
 
-	public const string Trash = "M3 6h18 M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2 M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6";
+	public static readonly string Trash = IconCatalog.GetPath("Trash");
 
-	public const string Pen = "M12 20h9 M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z";
+	public static readonly string Pen = IconCatalog.GetPath("Edit");
 
-	public const string Globe = "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M3 12h18 M12 3a14 14 0 0 1 0 18 M12 3a14 14 0 0 0 0 18";
+	public static readonly string Globe = IconCatalog.GetPath("World");
 
-	public const string Eye = "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z";
+	public static readonly string Eye = IconCatalog.GetPath("Eye");
 
-	public const string EyeOff = "M9.88 9.88a3 3 0 1 0 4.24 4.24 M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68 M6.61 6.61A13.53 13.53 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61 M2 2l20 20";
+	public static readonly string EyeOff = IconCatalog.GetPath("EyeOff");
 
 	public const string Plug = "M12 22v-5 M9 8V2 M15 8V2 M18 8v5a6 6 0 0 1-12 0V8z";
 
-	public const string Box = "M21 8l-9-5-9 5v8l9 5 9-5z M3 8l9 5 9-5 M12 13v8";
+	public static readonly string Box = IconCatalog.GetPath("Cube");
 
 	public const string List = "M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01";
 
 	public const string Archive = "M3 3h18a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8 M10 12h4";
 
-	public const string Clock = "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2";
+	public static readonly string Clock = IconCatalog.GetPath("Clock");
 
-	public const string Search = "M21 21l-4.34-4.34 M11 3a8 8 0 1 0 0 16a8 8 0 1 0 0-16z";
+	public static readonly string Search = IconCatalog.GetPath("Search");
 
-	public const string File = "M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2z M14 2v6h6 M8 13h8 M8 17h5";
+	public static readonly string File = IconCatalog.GetPath("File");
 
-	public const string Download = "M12 3v12 M6 11l6 6 6-6 M4 21h16";
+	public static readonly string Download = IconCatalog.GetPath("Download");
 
 	public const string Scan = "M3 7V5a2 2 0 0 1 2-2h2 M17 3h2a2 2 0 0 1 2 2v2 M21 17v2a2 2 0 0 1-2 2h-2 M7 21H5a2 2 0 0 1-2-2v-2 M7 12h10";
 
-	public const string Settings = "M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z M12 2v3 M12 19v3 M2 12h3 M19 12h3 M4.9 4.9l2.1 2.1 M17 17l2.1 2.1 M4.9 19.1L7 17 M17 7l2.1-2.1";
+	public static readonly string Settings = IconCatalog.GetPath("Settings");
 
 	public static Path Icon(string data, double size = 16.0, string brushKey = "B.InkMuted")
 	{
@@ -95,7 +96,7 @@ internal static class AiIcons
 			Width = 24.0,
 			Height = 24.0,
 			Stretch = Stretch.None,
-			StrokeThickness = 2.0,
+			StrokeThickness = IconCatalog.StrokeWidth,
 			StrokeStartLineCap = PenLineCap.Round,
 			StrokeEndLineCap = PenLineCap.Round,
 			StrokeLineJoin = PenLineJoin.Round,

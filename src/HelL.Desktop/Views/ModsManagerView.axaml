@@ -1,5 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="using:HelL.Design"
              x:Class="HelL.Desktop.Views.ModsManagerView"
              DragDrop.AllowDrop="True">
   <Grid Margin="36,10,36,24" RowDefinitions="Auto,Auto,*">
@@ -46,8 +46,8 @@
                 </StackPanel>
                 <TextBlock Grid.Column="1" Text="{Binding StateBadge}" Classes="muted" FontSize="11.5" VerticalAlignment="Center" />
                 <Button Grid.Column="2" Content="{Binding ToggleText}" Classes="soft" IsVisible="{Binding CanToggle}" Click="ToggleModRow" Tag="{Binding FileName}" MinHeight="27" Padding="11,3" FontSize="12" VerticalAlignment="Center" />
-                <Button Grid.Column="3" Classes="icon-btn" ToolTip.Tip="删除" Click="DeleteContentRow" Tag="{Binding FileName}" VerticalAlignment="Center">
-                  <icons:MaterialIcon Kind="TrashCanOutline" Width="15" Height="15" />
+                <Button Grid.Column="3" Classes="icon-btn" ToolTip.Tip="删除" AutomationProperties.Name="{Binding DisplayName, StringFormat=删除资源 {0}}" Click="DeleteContentRow" Tag="{Binding FileName}" VerticalAlignment="Center">
+                  <icons:LauncherIcon Kind="TrashCanOutline" Width="15" Height="15" />
                 </Button>
               </Grid>
             </DataTemplate>

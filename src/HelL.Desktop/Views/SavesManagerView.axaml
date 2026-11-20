@@ -1,5 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="using:HelL.Design"
              xmlns:local="using:HelL.Desktop.Controls"
              x:Class="HelL.Desktop.Views.SavesManagerView">
   <Grid Margin="36,10,36,24" RowDefinitions="Auto,Auto,*">
@@ -31,7 +31,7 @@
                 <Grid ColumnDefinitions="40,*,Auto,Auto,Auto" ColumnSpacing="12">
                   <Grid Width="36" Height="36">
                     <Border CornerRadius="8" Background="{DynamicResource HelL.Field}">
-                      <icons:MaterialIcon Kind="Earth" Width="16" Height="16" Foreground="{DynamicResource HelL.Muted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      <icons:LauncherIcon Kind="Earth" Width="16" Height="16" Foreground="{DynamicResource HelL.Muted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <local:ProjectPicture Source="{Binding IconPath}" Width="36" Height="36" CornerRadius="8" IsVisible="{Binding IconPath.Length}" />
                   </Grid>
@@ -41,8 +41,8 @@
                   </StackPanel>
                   <Button Grid.Column="2" Content="备份" Classes="soft" Tag="{Binding Name}" Click="BackupWorldRow" MinHeight="27" Padding="11,3" FontSize="12" VerticalAlignment="Center" />
                   <Button Grid.Column="3" Content="打开" Classes="ghost" Tag="{Binding FolderPath}" Click="OpenRowFolder" MinHeight="27" Padding="9,3" FontSize="12" VerticalAlignment="Center" />
-                  <Button Grid.Column="4" Classes="icon-btn" ToolTip.Tip="删除" Tag="{Binding Name}" Click="DeleteWorldRow" VerticalAlignment="Center">
-                    <icons:MaterialIcon Kind="TrashCanOutline" Width="15" Height="15" />
+                  <Button Grid.Column="4" Classes="icon-btn" ToolTip.Tip="删除" AutomationProperties.Name="{Binding Name, StringFormat=删除世界 {0}}" Tag="{Binding Name}" Click="DeleteWorldRow" VerticalAlignment="Center">
+                    <icons:LauncherIcon Kind="TrashCanOutline" Width="15" Height="15" />
                   </Button>
                 </Grid>
               </DataTemplate>
@@ -67,8 +67,8 @@
                     <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="11.5" TextTrimming="CharacterEllipsis" />
                   </StackPanel>
                   <Button Grid.Column="1" Content="还原" Classes="soft" Tag="{Binding BackupName}" Click="RestoreBackupRow" MinHeight="27" Padding="11,3" FontSize="12" VerticalAlignment="Center" />
-                  <Button Grid.Column="2" Classes="icon-btn" ToolTip.Tip="删除" Tag="{Binding BackupName}" Click="DeleteBackupRow" VerticalAlignment="Center">
-                    <icons:MaterialIcon Kind="TrashCanOutline" Width="15" Height="15" />
+                  <Button Grid.Column="2" Classes="icon-btn" ToolTip.Tip="删除" AutomationProperties.Name="{Binding BackupName, StringFormat=删除备份 {0}}" Tag="{Binding BackupName}" Click="DeleteBackupRow" VerticalAlignment="Center">
+                    <icons:LauncherIcon Kind="TrashCanOutline" Width="15" Height="15" />
                   </Button>
                 </Grid>
               </DataTemplate>

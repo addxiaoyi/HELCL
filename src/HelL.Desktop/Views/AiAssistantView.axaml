@@ -1,6 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="using:HelL.Desktop.Controls"
-             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="HelL.Desktop.Views.AiAssistantView">
   <Grid Margin="48,10,48,22" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14" MaxWidth="760">
     <!-- 极简顶栏 -->

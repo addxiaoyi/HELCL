@@ -8,6 +8,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using HelL.Pages.Ai;
+using HelL.Design;
 
 namespace HelL.Services;
 
@@ -82,7 +83,7 @@ public static class Lucide
 		path.Width = 24.0;
 		path.Height = 24.0;
 		path.Stretch = Stretch.None;
-		path.StrokeThickness = 2.0;
+		path.StrokeThickness = IconCatalog.StrokeWidth;
 		path.StrokeStartLineCap = PenLineCap.Round;
 		path.StrokeEndLineCap = PenLineCap.Round;
 		path.StrokeLineJoin = PenLineJoin.Round;

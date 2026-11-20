@@ -1,6 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:icons="clr-namespace:HelL.Design;assembly=HelL.Mobile"
              xmlns:pictures="using:HelL.Desktop.Controls"
              x:Class="HelL.Mobile.MobileApp" RequestedThemeVariant="Dark">
   <Application.Resources>
@@ -32,7 +32,6 @@
 
   <Application.Styles>
     <FluentTheme/>
-    <icons:MaterialIconStyles/>
     <Style Selector="pictures|ProjectPicture"><Setter Property="Background" Value="{DynamicResource HelL.Field}"/></Style>
     <Style Selector="UserControl">
       <Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}"/>
@@ -107,7 +106,7 @@
       <Setter Property="MinHeight" Value="44"/>
     </Style>
     <Style Selector="Button.primary TextBlock"><Setter Property="Foreground" Value="{DynamicResource HelL.OnAccent}"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
-    <Style Selector="Button.primary icons|MaterialIcon"><Setter Property="Foreground" Value="{DynamicResource HelL.OnAccent}"/></Style>
+    <Style Selector="Button.primary icons|LauncherIcon"><Setter Property="Foreground" Value="{DynamicResource HelL.OnAccent}"/></Style>
     <Style Selector="Button.primary:pointerover"><Setter Property="Background" Value="{DynamicResource HelL.AccentHover}"/></Style>
     <Style Selector="Button.primary:pressed"><Setter Property="Background" Value="{DynamicResource HelL.AccentPressed}"/></Style>
 

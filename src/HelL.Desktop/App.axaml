@@ -1,8 +1,8 @@
 <Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="HelL.Desktop.App" RequestedThemeVariant="Dark">
   <Application.Resources>
     <ResourceDictionary>
+      <FontFamily x:Key="DefaultFontFamily">avares://HelL.Desktop/Assets/Fonts#Noto Sans SC</FontFamily>
       <ResourceDictionary.MergedDictionaries>
         <ResourceInclude Source="avares://HelL.Desktop/Assets/Design/AvaloniaTokens.axaml" />
       </ResourceDictionary.MergedDictionaries>
@@ -10,7 +10,6 @@
   </Application.Resources>
   <Application.Styles>
     <FluentTheme />
-    <icons:MaterialIconStyles />
     <StyleInclude Source="avares://HelL.Desktop/Themes/Controls.axaml" />
   </Application.Styles>
 </Application>

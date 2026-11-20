@@ -549,14 +549,14 @@
     <Setter Property="Background" Value="#00FFFFFF" />
     <Setter Property="Foreground" Value="{DynamicResource B.InkSoft}" />
     <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-    <Setter Property="FontSize" Value="10" />
+    <Setter Property="FontSize" Value="14" />
     <Setter Property="FrameworkElement.FocusVisualStyle" Value="{StaticResource Focus.Ring}" />
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="{x:Type Button}">
           <Grid Background="{TemplateBinding Background}">
             <Border Name="Ov" Background="{DynamicResource B.Ink}" Opacity="0" />
-            <TextBlock Style="{StaticResource T.Glyph}" Text="{TemplateBinding ContentControl.Content}" FontFamily="Segoe MDL2 Assets" FontSize="{TemplateBinding Control.FontSize}" Foreground="{TemplateBinding Control.Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <ui:VectorGlyph Style="{StaticResource T.Glyph}" Text="{TemplateBinding ContentControl.Content}" FontFamily="Segoe MDL2 Assets" FontSize="{TemplateBinding Control.FontSize}" Foreground="{TemplateBinding Control.Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
           </Grid>
           <ControlTemplate.Triggers>
             <Trigger Property="UIElement.IsMouseOver" Value="True">
@@ -576,7 +576,7 @@
         <ControlTemplate TargetType="{x:Type Button}">
           <Grid Background="#00FFFFFF">
             <Border Name="Ov" Background="#E81123" Opacity="0" />
-            <TextBlock Style="{StaticResource T.Glyph}" Text="{TemplateBinding ContentControl.Content}" FontFamily="Segoe MDL2 Assets" FontSize="{TemplateBinding Control.FontSize}" Foreground="{TemplateBinding Control.Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <ui:VectorGlyph Style="{StaticResource T.Glyph}" Text="{TemplateBinding ContentControl.Content}" FontFamily="Segoe MDL2 Assets" FontSize="{TemplateBinding Control.FontSize}" Foreground="{TemplateBinding Control.Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
           </Grid>
           <ControlTemplate.Triggers>
             <Trigger Property="UIElement.IsMouseOver" Value="True">

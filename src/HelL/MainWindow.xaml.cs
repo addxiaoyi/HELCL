@@ -130,7 +130,7 @@ public partial class MainWindow : Window
 		new NavDef("instance", I18n.L("版本管理"), "\ue80a", () => new InstancePage()),
 		new NavDef("version", I18n.L("原版游戏"), "\ue7fc", () => new VersionPage()),
 		new NavDef("mod", I18n.L("模组下载"), "\uea86", () => new CatalogPage(CatalogKind.Mod)),
-		new NavDef("mods", I18n.L("模组管理"), "\ue8fd", () => new CatalogPage(CatalogKind.Mod, installedFirst: true)),
+		new NavDef("mods", I18n.L("模组管理"), "\uea86", () => new CatalogPage(CatalogKind.Mod, installedFirst: true)),
 		new NavDef("modpack", I18n.L("整合包"), "\ue7b8", () => new CatalogPage(CatalogKind.Modpack)),
 		new NavDef("datapack", I18n.L("数据包"), "\ue8f1", () => new CatalogPage(CatalogKind.Datapack)),
 		new NavDef("resourcepack", I18n.L("资源包"), "\ueb9f", () => new CatalogPage(CatalogKind.ResourcePack)),
@@ -164,7 +164,7 @@ public partial class MainWindow : Window
 		["world"] = "\ue909",
 		["java"] = "\uec32",
 		["instance"] = "\ue80a",
-		["mods"] = "\ue8fd",
+		["mods"] = "\uea86",
 		["account"] = "\ue77b",
 		["multiplayer"] = "\ue701",
 		["servers"] = "\ue968",
@@ -1721,7 +1721,7 @@ public partial class MainWindow : Window
 	private ToggleButton MakeRow(string key, string label, string? section, bool draggable, FrameworkElement? trailing = null)
 	{
 		bool flag = section != null;
-		TextBlock textBlock = Ui.Glyph(NavGlyphs.GetValueOrDefault(key, "\ue80a"));
+		TextBlock textBlock = Ui.Glyph(NavGlyphs.GetValueOrDefault(key, "\ue80a"), 16);
 		TextBlock textBlock2 = Ui.Txt(label).VCenter();
 		if (flag) textBlock2.FontSize = 13;
 		textBlock2.TextTrimming = TextTrimming.CharacterEllipsis;

@@ -111,7 +111,7 @@ public static class Ui
 
 	public static TextBlock Glyph(string glyph, double size = 14.0, string? fg = null)
 	{
-		TextBlock textBlock = new TextBlock
+		TextBlock textBlock = new VectorGlyph
 		{
 			Style = S("T.Glyph"),
 			Text = glyph,

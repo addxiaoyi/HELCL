@@ -256,7 +256,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
             "diagnostics" => "诊断包",
             "home" => "首页", "library" => "实例库", "resources" => "下载资源",
             "create" => "创建实例", "manage" => "实例设置", "account" => "账号",
-            "about" => "关于", "ai" => "AI 助手", "remote" => "远程电脑", _ => "我的"
+            "about" => "关于", "ai" => "AI 助手", "remote" => "远程电脑", "more" => "设置", _ => "我的"
         };
         if (operation == null) Status.Text = "";
         HomePage.IsVisible = page == "home";
@@ -280,24 +280,23 @@ public sealed partial class MobileHome : UserControl, IDisposable
         string tab = page is "create" or "manage" ? "library" : page is "about" or "account" or "remote" or "diagnostics" ? "more" : page;
         foreach (var button in RailNavigation.Children.OfType<Button>().Concat(BottomNavigation.Children.OfType<Button>()))
         {
-            bool active = (string?)button.Tag == tab;
+            string selectedTab = RailNavigation.Children.Contains(button) && page == "account" ? "account" : tab;
+            bool active = (string?)button.Tag == selectedTab;
             button.Classes.Set("current", active);
-            if (button.Content is StackPanel panel && panel.Children[0] is Material.Icons.Avalonia.MaterialIcon icon)
-                icon.Kind = ((string?)button.Tag, active) switch
+            if (button.Content is StackPanel panel && panel.Children[0] is HelL.Design.LauncherIcon icon)
+            {
+                icon.Active = active;
+                icon.Kind = (string?)button.Tag switch
                 {
-                    ("home", true) => Material.Icons.MaterialIconKind.Home,
-                    ("home", false) => Material.Icons.MaterialIconKind.HomeOutline,
-                    ("library", true) => Material.Icons.MaterialIconKind.ViewGrid,
-                    ("library", false) => Material.Icons.MaterialIconKind.ViewGridOutline,
-                    ("resources", _) => Material.Icons.MaterialIconKind.DownloadOutline,
-                    ("ai", true) => Material.Icons.MaterialIconKind.Chat,
-                    ("ai", false) => Material.Icons.MaterialIconKind.ChatOutline,
-                    ("account", true) => Material.Icons.MaterialIconKind.Account,
-                    ("account", false) => Material.Icons.MaterialIconKind.AccountOutline,
-                    ("more", true) => Material.Icons.MaterialIconKind.Account,
-                    ("more", false) => Material.Icons.MaterialIconKind.AccountOutline,
-                    _ => Material.Icons.MaterialIconKind.ViewGridOutline
+                    "home" => "PlayCircleOutline",
+                    "library" => "FolderOutline",
+                    "resources" => "CompassOutline",
+                    "ai" => "CreationOutline",
+                    "account" => "AccountOutline",
+                    "more" => "CogOutline",
+                    _ => "GridLarge"
                 };
+            }
         }
         if (page == "library") PresentInstances();
         if (page == "resources" && searchResults.Count == 0 && !MobileRuntime.Smoke && selected.Length > 0 && operation == null)

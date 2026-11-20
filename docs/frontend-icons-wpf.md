@@ -54,7 +54,7 @@ dotnet build HelL.sln -c Release --no-incremental -v quiet
 dotnet test tests/HelL.Tests -c Release --no-build
 ```
 
-The actual icon run passes 151 assertions, including the 66 raster samples and
+The actual icon run passes 153 assertions, including the 66 raster samples and
 their frame bounds, alongside the existing 53 combined checks. Existing frontend
 remediation passes 17 checks and the base WPF check passes 153. UI and complete
 WPF builds pass with zero warnings and errors. The complete 818-test suite passes
@@ -77,3 +77,11 @@ frame and ink-center assertions; that final coordinate did not rerun the unit
 suite locally. The parent CI checks the integrated source. Generated profiles and images are not
 part of the source patch. Native screen-reader/high-contrast certification and
 physical display scaling remain separate from these WPF raster checks.
+
+The final same-color state check exposed a missing selected fill: favorite and
+pin variants originally had identical raster ink to their outline counterparts.
+Two additional regressions failed first (star 74/74 pixels, pin 62/62 pixels),
+then passed after `VectorGlyph` applied the shared selected-fill metadata. The
+same 66 drawings are retained; selected legacy star/pin variants fill the geometry
+without changing the navigation drawing policy. Receipts and PNGs are in
+`wpf/selection-red/` and `wpf/selection-green/`.

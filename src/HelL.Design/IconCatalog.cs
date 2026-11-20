@@ -142,4 +142,6 @@ public static class IconCatalog
         path = "";
         return glyph != null && Glyphs.TryGetValue(glyph, out var kind) && TryGetPath(kind, out path);
     }
+
+    public static bool IsFilledGlyph(string? glyph) => glyph == "\ue735" || glyph == "\ue840";
 }

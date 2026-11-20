@@ -60,7 +60,7 @@ public sealed class VectorGlyph : TextBlock
                 StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round
             };
             // TextBlock's sealed renderer keeps Text binding compatibility; the actual ink uses the shared frame.
-            Background = new DrawingBrush(new GeometryDrawing(null, pen, Shape(path)))
+            Background = new DrawingBrush(new GeometryDrawing(IconCatalog.IsFilledGlyph(Text) ? Foreground : null, pen, Shape(path)))
             {
                 ViewboxUnits = BrushMappingMode.Absolute,
                 Viewbox = new Rect(0, 0, IconCatalog.Frame, IconCatalog.Frame),

@@ -70,6 +70,22 @@ internal static class WpfIconCheck
         Check(icon.Background is null && icon.TextEffects is null && Pixels(fallback).Any(pixel => pixel.A > 10),
             "unmapped symbols retain their original text fallback");
 
+        foreach (var state in new[] { (Outline: "\ue734", Selected: "\ue735", Name: "star"), (Outline: "\ue718", Selected: "\ue840", Name: "pin") })
+        {
+            TextBlock toggle = Ui.Glyph(state.Outline, 20);
+            toggle.Foreground = Brushes.Black;
+            BitmapSource outline = Draw(toggle);
+            int outlineInk = Pixels(outline).Count(pixel => pixel.A > 128);
+            toggle.Text = state.Selected;
+            BitmapSource selected = Draw(toggle);
+            int selectedInk = Pixels(selected).Count(pixel => pixel.A > 128);
+            Save(outline, Path.Combine(folder, state.Name + "-outline-black.png"));
+            Save(selected, Path.Combine(folder, state.Name + "-selected-black.png"));
+            Check(Digest(selected) != Digest(outline) && selectedInk > outlineInk,
+                "selected " + state.Name + " retains a filled shape in the same foreground color");
+            Console.WriteLine("[ICON STATE] " + state.Name + " outline=" + outlineInk + " selected=" + selectedInk);
+        }
+
         foreach (string name in IconCatalog.Names)
         {
             FrameworkElement sample = CatalogIcon(name, 20, Brushes.Black);

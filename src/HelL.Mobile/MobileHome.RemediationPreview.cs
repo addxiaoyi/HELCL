@@ -80,7 +80,7 @@ public sealed partial class MobileHome
         bool clearFeedbackVisible = session.Tasks.Entries.Count == 1 && session.Tasks.Entries[0].Id == laterTask
             && localTasks.Children.OfType<TextBlock>().Any(label => label.Text == "已清除 1 条已结束任务。")
             && localTasks.Children.OfType<Button>().Single(button => button.Name == "ClearFinishedTasksButton") is { IsEnabled: true } remainingButton
-            && remainingButton.Content?.ToString() == "清除已结束任务（1）"
+            && remainingButton.Content?.ToString() == "清除已结束（1）"
             && AutomationProperties.GetName(remainingButton) == "清除已结束任务，1 条";
         if (!clearFeedbackVisible)
             throw new IOException("Task clearing did not report its removal or preserve tasks that ended after confirmation opened.");

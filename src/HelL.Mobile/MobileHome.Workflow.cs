@@ -278,7 +278,7 @@ public sealed partial class MobileHome
             feedback.Margin = new Thickness(0, 0, 0, 8);
             localTasks.Children.Add(feedback);
         }
-        var clear = new Button { Name = "ClearFinishedTasksButton", Content = $"清除已结束任务（{session.Tasks.FinishedCount}）", Classes = { "secondary" },
+        var clear = new Button { Name = "ClearFinishedTasksButton", Content = $"清除已结束（{session.Tasks.FinishedCount}）", Classes = { "secondary" },
             HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 12), MinHeight = 44,
             IsEnabled = session.Tasks.HasFinished };
         AutomationProperties.SetName(clear, $"清除已结束任务，{session.Tasks.FinishedCount} 条");

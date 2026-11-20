@@ -116,5 +116,13 @@ internal static class Program
         using (home) return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
-    public static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<App>().UsePlatformDetect().LogToTrace();
+    public static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<App>().UsePlatformDetect()
+        .With(new Avalonia.Media.FontManagerOptions
+        {
+            FontFallbacks = [new Avalonia.Media.FontFallback
+            {
+                FontFamily = new Avalonia.Media.FontFamily("avares://HelL.Desktop/Assets/Fonts#Noto Sans SC"),
+                UnicodeRange = Avalonia.Media.UnicodeRange.Parse("U+3000-30FF,U+3400-9FFF,U+FF00-FFEF")
+            }]
+        }).LogToTrace();
 }

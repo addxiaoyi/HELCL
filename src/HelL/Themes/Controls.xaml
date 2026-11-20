@@ -1364,11 +1364,11 @@
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
-      <TextBlock Grid.Column="0" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding Version}" />
+      <TextBlock Grid.Column="0" FontSize="13.5" FontWeight="Medium" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding Version}" />
       <Border Grid.Column="1" Background="{DynamicResource B.LineSoft}" CornerRadius="5" Padding="6,1,6,2" VerticalAlignment="Center">
         <TextBlock FontSize="11" Foreground="{DynamicResource B.InkMuted}" Text="{Binding TypeLabel}" />
       </Border>
-      <TextBlock Grid.Column="2" FontSize="11" Margin="10,0,0,0" Foreground="{DynamicResource B.InkFaint}" VerticalAlignment="Center" MinWidth="72" TextAlignment="Right" Text="{Binding Date}" />
+      <TextBlock Grid.Column="2" FontSize="12" Margin="10,0,0,0" Foreground="{DynamicResource B.InkMuted}" VerticalAlignment="Center" MinWidth="72" TextAlignment="Right" Text="{Binding Date}" />
     </Grid>
   </DataTemplate>
   <DataTemplate x:Key="Tpl.Installed">

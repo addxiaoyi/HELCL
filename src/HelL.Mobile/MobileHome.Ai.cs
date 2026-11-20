@@ -29,7 +29,7 @@ public sealed partial class MobileHome
         };
         try { session.Chat.Restore(ChatPath); }
         catch (Exception error) when (error is not OutOfMemoryException) { AiChatNotice.Text = "无法恢复聊天记录：" + error.Message; }
-        AiStorageNotice.Text = "对话仅保存在本机 mobile-chat.json，最多保留最近 48 条；不包含 API 密钥。可清空并撤销。";
+        AiStorageNotice.Text = "仅存本机 · 最近 48 条 · 清空可撤销";
         aiRecoverHistory.Click += RecoverChatHistory;
         if (AiStorageNotice.Parent is StackPanel storage) storage.Children.Insert(storage.Children.IndexOf(AiStorageNotice) + 1, aiRecoverHistory);
         if (session.Chat.NeedsHistoryRecovery) AiStorageNotice.Text = "原聊天记录无法读取，已阻止覆盖。可先备份原件并新建聊天记录。";

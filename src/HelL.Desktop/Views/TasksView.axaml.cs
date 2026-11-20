@@ -20,6 +20,7 @@ public partial class TasksView : UserControl
     public TasksView()
     {
         InitializeComponent();
+        SizeChanged += (_, _) => TaskList.MaxHeight = Math.Clamp(Bounds.Height * 0.4, 140, 300);
         SearchBox.PropertyChanged += (_, change) =>
         {
             if (change.Property == TextBox.TextProperty) Refresh();
@@ -138,7 +139,7 @@ public partial class TasksView : UserControl
         catch (Exception error) when (error is not OutOfMemoryException)
         { host?.SetStatus("日志复制失败，请检查系统剪贴板后重试。"); System.Diagnostics.Trace.TraceWarning(error.GetType().Name); }
     }
-    private void ExpandLog(object? sender, RoutedEventArgs e) { LogDetails.MaxHeight = double.IsPositiveInfinity(LogDetails.MaxHeight) ? 220 : double.PositiveInfinity; }
+    private void ExpandLog(object? sender, RoutedEventArgs e) { LogDetails.MaxHeight = double.IsPositiveInfinity(LogDetails.MaxHeight) ? 280 : double.PositiveInfinity; }
     private void CancelSelected(object? sender, RoutedEventArgs e)
     {
         if (selected?.CanCancel == true) cancelCurrent?.Invoke();

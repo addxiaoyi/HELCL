@@ -196,7 +196,7 @@ public sealed partial class VersionPage : PageBase
 		grid2.Add(el2.VCenter().M(8.0, 0.0, 0.0, 0.0), 0, 2);
 		_fetchError = Ui.RowCard(grid2, null, 10.0);
 		_fetchError.Visibility = Visibility.Collapsed;
-		SPanel border = Ui.V(12.0, new PageHeader(Ui.H3("选择版本"), Ui.Btn("最新正式版", BtnKind.Ghost, (_, _) => SelectRecommended())), _search, el, _fetchError, _list, _count);
+		SPanel border = Ui.V(12.0, new PageHeader(Ui.H3("1 · 选择版本"), Ui.Btn("最新正式版", BtnKind.Ghost, (_, _) => SelectRecommended())), _search, el, _fetchError, _list, _count);
 		_list.Height = 290;
         SizeChanged += (_, _) => _list.Height = Math.Max(220, Math.Min(620, ActualHeight - 260));
 		SPanel border2 = BuildInstallPanel();

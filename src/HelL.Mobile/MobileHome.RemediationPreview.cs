@@ -15,6 +15,7 @@ public sealed partial class MobileHome
         await CheckMobileDetailsAsync();
         await CheckMobileIconsAsync();
         await CheckMobileRefinementAsync();
+        await CheckMobileReadingAsync();
         ShowPage("manage");
         string originalName = InstanceName.Text ?? "";
         InstanceName.Text = originalName + " draft";
@@ -42,7 +43,7 @@ public sealed partial class MobileHome
             Point position = label.TranslatePoint(default, localTasksPage!) ?? default;
             double textRight = position.X + label.TextLayout.WidthIncludingTrailingWhitespace + Math.Max(0, label.TextLayout.OverhangTrailing);
             if (position.X < -1 || textRight > safeTaskWidth + 1)
-                throw new IOException($"Task text exceeds its safe viewport beside the overlay scrollbar (x={position.X:0.0}, glyphRight={textRight:0.0}, safeWidth={safeTaskWidth:0.0}).");
+                throw new IOException($"Task text exceeds its safe viewport beside the overlay scrollbar (text={label.Text}, x={position.X:0.0}, width={label.Bounds.Width:0.0}, size={label.FontSize:0.0}, glyphRight={textRight:0.0}, safeWidth={safeTaskWidth:0.0}).");
         }
 
         ShowPage("resources");

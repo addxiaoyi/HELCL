@@ -17,20 +17,20 @@
       </ComboBox>
     </Grid>
 
-    <Grid Grid.Row="2" RowDefinitions="*,Auto" RowSpacing="12">
-      <Border Classes="inset-group" ClipToBounds="True">
+    <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="14">
+      <Border ClipToBounds="True">
         <Grid>
-          <ListBox x:Name="TaskList" Classes="rows" SelectionChanged="ChooseTask" AutomationProperties.Name="最近任务记录">
+          <ListBox x:Name="TaskList" Classes="rows" MaxHeight="240" SelectionChanged="ChooseTask" AutomationProperties.Name="最近任务记录">
             <ListBox.ItemTemplate>
               <DataTemplate>
                 <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
-                  <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                  <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="Medium" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,12,0" />
                   <Border Grid.Column="1" Background="{Binding BadgeBackground}" CornerRadius="6" Padding="7,1.5" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding StateLabel}" FontSize="11" Foreground="{Binding BadgeForeground}" />
+                    <TextBlock Text="{Binding StateLabel}" FontSize="12" Foreground="{Binding BadgeForeground}" />
                   </Border>
                   <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto" Margin="0,4,0,0">
-                    <TextBlock Text="{Binding Message}" Classes="muted" FontSize="11.5" TextTrimming="CharacterEllipsis" />
-                    <TextBlock Grid.Column="1" Text="{Binding StartedLabel}" Classes="muted" FontSize="11" Margin="10,0,0,0" />
+                    <TextBlock Text="{Binding Message}" Classes="muted" FontSize="12.5" LineHeight="20" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="1" Text="{Binding StartedLabel}" Classes="muted" FontSize="12" Margin="12,0,0,0" />
                   </Grid>
                   <ProgressBar Grid.Row="2" Grid.ColumnSpan="2" MinWidth="0" HorizontalAlignment="Stretch" Height="2.5" Margin="0,6,0,0" IsVisible="{Binding IsActive}" IsIndeterminate="{Binding Indeterminate}" Value="{Binding Percent}" />
                 </Grid>
@@ -41,17 +41,17 @@
         </Grid>
       </Border>
 
-      <Border Grid.Row="1" x:Name="LogDetails" Classes="inset-group" Padding="16,13" MaxHeight="220">
-        <Grid RowDefinitions="Auto,*">
-          <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="0,0,0,6">
-            <TextBlock x:Name="DetailTitle" Text="任务详情" FontSize="13" FontWeight="Medium" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-            <Button Grid.Column="2" Content="复制" Classes="ghost" Click="CopyLog" />
-            <Button Grid.Column="3" Content="展开 / 收起" Classes="ghost" Click="ExpandLog" />
-            <Button x:Name="RetryButton" Grid.Column="4" Content="重试" Classes="soft" Click="RetrySelected" IsVisible="False" />
-            <Button x:Name="CancelButton" Grid.Column="1" Content="取消任务" Classes="soft" MinHeight="26" Padding="10,2" FontSize="11.5" Click="CancelSelected" IsVisible="False" AutomationProperties.Name="取消所选任务" />
-          </Grid>
-          <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-            <SelectableTextBlock x:Name="LogText" Text="选择上方任务查看执行日志。" Classes="muted" FontSize="11.5" TextWrapping="Wrap" LineHeight="18" />
+      <Border Grid.Row="1" x:Name="LogDetails" Classes="inset-group" Padding="16,14" MaxHeight="280" VerticalAlignment="Top">
+        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
+          <TextBlock x:Name="DetailTitle" Text="任务详情" FontSize="14" FontWeight="Medium" TextWrapping="Wrap" LineHeight="22" />
+          <WrapPanel Grid.Row="1">
+            <Button x:Name="CancelButton" Content="取消任务" Classes="soft" Margin="0,0,6,0" Click="CancelSelected" IsVisible="False" AutomationProperties.Name="取消所选任务" />
+            <Button Content="复制日志" Classes="ghost" Click="CopyLog" Margin="0,0,6,0" />
+            <Button Content="展开 / 收起" Classes="ghost" Click="ExpandLog" Margin="0,0,6,0" />
+            <Button x:Name="RetryButton" Content="重试" Classes="soft" Click="RetrySelected" IsVisible="False" />
+          </WrapPanel>
+          <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
+            <SelectableTextBlock x:Name="LogText" Text="选择上方任务查看执行日志。" Classes="muted" FontSize="13" TextWrapping="Wrap" LineHeight="20" />
           </ScrollViewer>
         </Grid>
       </Border>

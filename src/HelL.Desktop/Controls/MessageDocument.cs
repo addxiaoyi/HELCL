@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Input.Platform;
+using Avalonia.Layout;
 
 namespace HelL.Desktop.Controls;
 
@@ -16,23 +17,30 @@ public sealed class MessageDocument : ContentControl
     }
     private void Render()
     {
-        var layout = new StackPanel { Spacing = 7 };
+        var layout = new StackPanel { Spacing = 6 };
         var code = new List<string>();
         bool fenced = false;
+        bool paragraphBreak = false;
+        string language = "";
         foreach (string line in (Text ?? "").Split('\n'))
         {
             if (line.TrimStart().StartsWith("```", StringComparison.Ordinal))
             {
-                if (fenced) { AddCode(layout, string.Join("\n", code)); code.Clear(); }
+                if (fenced) { AddCode(layout, string.Join("\n", code), language); code.Clear(); }
+                else language = line.Trim()[3..].Trim();
                 fenced = !fenced;
                 continue;
             }
             if (fenced) { code.Add(line); continue; }
+            if (string.IsNullOrWhiteSpace(line)) { paragraphBreak = true; continue; }
             int heading = line.TakeWhile(c => c == '#').Count();
             string text = heading is > 0 and <= 6 ? line[heading..].TrimStart() : line;
             layout.Children.Add(new SelectableTextBlock { Text = text, TextWrapping = TextWrapping.Wrap,
                 FontWeight = heading is > 0 and <= 6 ? FontWeight.SemiBold : FontWeight.Normal,
-                FontSize = heading is > 0 and <= 6 ? 17 : 13, LineHeight = 21 });
+                Margin = new Thickness(0, paragraphBreak || heading is > 0 and <= 6 && layout.Children.Count > 0 ? 6 : 0, 0, 0),
+                FontSize = heading is > 0 and <= 2 ? 18 : heading is > 2 and <= 6 ? 16 : 14,
+                LineHeight = heading is > 0 and <= 2 ? 26 : 22 });
+            paragraphBreak = false;
             foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(text, @"https?://[^\s)<>]+"))
             {
                 if (!Uri.TryCreate(match.Value, UriKind.Absolute, out Uri? address) || address.UserInfo.Length != 0) continue;
@@ -50,12 +58,13 @@ public sealed class MessageDocument : ContentControl
                 layout.Children.Add(link);
             }
         }
-        if (code.Count > 0) AddCode(layout, string.Join("\n", code));
+        if (code.Count > 0) AddCode(layout, string.Join("\n", code), language);
         Content = layout;
     }
-    private void AddCode(StackPanel layout, string text)
+    private void AddCode(StackPanel layout, string text, string language)
     {
-        var copy = new Button { Content = "复制代码", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left };
+        var copy = new Button { Content = "复制代码", Classes = { "ghost" }, HorizontalAlignment = HorizontalAlignment.Right,
+            MinHeight = 30, Padding = new Thickness(8, 3), FontSize = 12 };
         Avalonia.Automation.AutomationProperties.SetName(copy, "复制此代码块");
         copy.Click += async (_, _) =>
         {
@@ -68,7 +77,20 @@ public sealed class MessageDocument : ContentControl
             catch (Exception error) when (error is not OutOfMemoryException)
             { copy.Content = "复制失败，请重试"; System.Diagnostics.Trace.TraceWarning("MessageDocument copy: " + error.GetType().Name); }
         };
-        layout.Children.Add(new Border { Classes = { "tile" }, Padding = new Thickness(10), Child = new StackPanel { Spacing = 5, Children =
-        { new ScrollViewer { HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto, Content = new SelectableTextBlock { Text = text, FontFamily = new FontFamily("monospace"), FontSize = 12 } }, copy } } });
+        bool knownLanguage = language.Length is > 0 and <= 24 && language.All(character => char.IsLetterOrDigit(character) || character is '#' or '+' or '-' or '_');
+        var caption = new TextBlock { Text = knownLanguage ? language : "代码", FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center, Classes = { "muted" } };
+        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 12 };
+        header.Children.Add(caption);
+        Grid.SetColumn(copy, 1);
+        header.Children.Add(copy);
+        var source = new SelectableTextBlock { Text = text,
+            FontFamily = FontFamily.Parse("Cascadia Mono, Consolas, DejaVu Sans Mono"),
+            FontSize = 13, LineHeight = 20, TextWrapping = TextWrapping.NoWrap };
+        var block = new StackPanel { Spacing = 8, Children =
+        { header, new ScrollViewer { HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto, Content = source } } };
+        var surface = new Border { Padding = new Thickness(14, 10, 14, 14), CornerRadius = new CornerRadius(8), Child = block };
+        surface.Bind(Border.BackgroundProperty, this.GetResourceObservable("HelL.Field"));
+        layout.Children.Add(surface);
     }
 }

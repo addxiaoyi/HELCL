@@ -329,11 +329,12 @@
                 <TextBlock Text="模型名称" Classes="field-label"/><TextBox x:Name="AiModel" PlaceholderText="gpt-4o-mini" AutomationProperties.Name="AI 模型名称"/>
                 <StackPanel x:Name="AiKeyField" Spacing="5"><TextBlock Text="API 密钥" Classes="field-label"/><TextBox x:Name="AiKey" PasswordChar="●" AutomationProperties.Name="AI API 密钥"/></StackPanel>
                 <Button x:Name="AiSaveButton" Content="保存连接" Classes="primary" Click="SaveAiSettings" HorizontalAlignment="Stretch"/>
+                <TextBlock Text="聊天记录保存在本机 mobile-chat.json，最多保留最近 48 条，不包含 API 密钥；可清空并撤销。" Classes="caption" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel></Border>
               <Border x:Name="AiEmpty" Classes="glass"><StackPanel Spacing="6"><TextBlock Text="需要排查什么问题？" Classes="section"/><TextBlock Text="支持询问版本搭配、模组冲突与报错原因。" Classes="muted" FontSize="13" TextWrapping="Wrap"/></StackPanel></Border>
               <ItemsControl x:Name="AiMessages">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="10"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate><DataTemplate><Border Classes="glass"><StackPanel Spacing="6"><TextBlock Text="{Binding Speaker}" Classes="caption"/><chat:ChatContent Text="{Binding Content}"/><TextBlock Text="{Binding Notice}" Classes="caption"/></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate>
+                <ItemsControl.ItemTemplate><DataTemplate><Border Classes="chat-message"><StackPanel Spacing="8"><TextBlock Text="{Binding Speaker}" Classes="chat-role" FontSize="12"/><chat:ChatContent Text="{Binding Content}"/><TextBlock Text="{Binding Notice}" Classes="caption" FontSize="12" IsVisible="{Binding Notice.Length}"/></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate>
               </ItemsControl>
             </StackPanel></ScrollViewer>
           </Grid>

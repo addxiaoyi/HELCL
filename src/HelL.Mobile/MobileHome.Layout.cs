@@ -90,6 +90,8 @@ public sealed partial class MobileHome
         HomeAccountLayout.RowSpacing = stacked ? 4 : 0;
         Grid.SetRow(HomeAccountLabel, stacked ? 1 : 0);
         Grid.SetColumn(HomeAccountLabel, stacked ? 0 : 1);
+        HomeAccountLabel.HorizontalAlignment = stacked
+            ? Avalonia.Layout.HorizontalAlignment.Left : Avalonia.Layout.HorizontalAlignment.Right;
         Grid.SetColumn(HomeAccountChevron, stacked ? 1 : 2);
         Grid.SetRowSpan(HomeAccountChevron, stacked ? 2 : 1);
         foreach (Button button in BottomNavigation.Children.OfType<Button>())

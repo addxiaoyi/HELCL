@@ -77,6 +77,20 @@ public sealed partial class MobileHome
                 Point action = LaunchButton.TranslatePoint(default, HomePage) ?? default;
                 bool actionVisible = action.Y >= 0 && action.Y + LaunchButton.Bounds.Height <= HomePage.Bounds.Height;
                 Check(actionVisible, name + " primary instance action remains in the initial home viewport");
+                bool homeStacked = !wide && EffectiveTextScale >= 1.5;
+                Point accountPosition = HomeAccountLabel.TranslatePoint(default, InstanceContent) ?? default;
+                Point instancePosition = SelectedVersionDetail.TranslatePoint(default, InstanceContent) ?? default;
+                Point accountTitlePosition = HomeAccountTitle.TranslatePoint(default, InstanceContent) ?? default;
+                double accountRight = accountPosition.X + HomeAccountLabel.Bounds.Width;
+                double instanceRight = instancePosition.X + SelectedVersionDetail.Bounds.Width;
+                bool accountAligned = homeStacked
+                    ? Math.Abs(accountPosition.X - accountTitlePosition.X) < 1
+                        && Math.Abs(accountPosition.X - instancePosition.X) < 1 && Grid.GetRow(HomeAccountLabel) == 1
+                    : Math.Abs(accountRight - instanceRight) < 1
+                        && Math.Abs(HomeAccountLabel.Bounds.Width - HomeAccountLabel.TextLayout.WidthIncludingTrailingWhitespace) < 1;
+                Check(accountAligned, name + (homeStacked
+                    ? " stacked account and instance values align with the field leading edge"
+                    : " single-row account and instance values share the trailing column edge"));
                 await Capture("refine-home-" + name);
                 string? instanceTitle = SelectedVersionDetail.Text;
                 SelectedVersionDetail.Text = new string('长', 48);
@@ -182,7 +196,10 @@ public sealed partial class MobileHome
                     Check(widthRoundTrip == true, name + " returning narrow restores the stacked resource action and reading width");
                 }
                 samples.Add(new { theme = name, surface = surface.ToString(), variation, bodyContrast, labelContrast,
-                    actionContrast, actionVisible, headingSize = ResourcesTitle.FontSize, captionSize = ResourcesSubtitle.FontSize,
+                    actionContrast, actionVisible, accountAligned, homeStacked,
+                    accountTextLeft = accountPosition.X, accountTextRight = accountRight,
+                    instanceTextLeft = instancePosition.X, instanceTextRight = instanceRight,
+                    headingSize = ResourcesTitle.FontSize, captionSize = ResourcesSubtitle.FontSize,
                     resourceTitleSize = title.FontSize, resourceActionSize = acquire.FontSize,
                     resourceAction = new { width = acquire.Bounds.Width, height = acquire.Bounds.Height }, titleWidth = title.Bounds.Width,
                     resourceTitleLines = title.TextLayout.TextLines.Count, stacked, widthRoundTrip });

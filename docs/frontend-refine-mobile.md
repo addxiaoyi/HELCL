@@ -92,3 +92,10 @@ profiles, screenshots and temporary test keys are excluded from the source hando
 These are Windows-hosted Avalonia previews and service tests. The parent branch
 must run the integrated native Android pipeline. Physical touch accuracy,
 TalkBack and vendor-specific keyboard/cutout behavior are not certified here.
+
+The integrated Linux screenshot exposed one final alignment mismatch after the
+column refinement: the account value stayed at the left of its flexible column.
+Same-data bounds checks failed in both themes before correction. The account
+value now shares the instance value's trailing edge in a normal single-row
+layout and its leading edge in the large-text stacked layout. These two extra
+checks bring the desktop-hosted normal/200% receipts to 38/42 assertions.

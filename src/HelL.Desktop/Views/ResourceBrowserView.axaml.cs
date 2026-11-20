@@ -17,7 +17,8 @@ public partial class ResourceBrowserView : UserControl
     private int pageIndex;
     private int displayedPage;
     private int? lastPageIndex;
-    private const int PageSize = 30;
+    internal const int PageSize = 30;
+    internal const int MaximumPageIndex = PortableCatalog.MaximumSearchOffset / PageSize;
     private bool hasSearched;
     private int generation;
     private int projectGeneration;
@@ -29,7 +30,7 @@ public partial class ResourceBrowserView : UserControl
     private bool documentsPending;
     private bool documentsQueued;
     private IReadOnlyList<CatalogProject> lastResults = [];
-    internal Func<CancellationToken, Task<IReadOnlyList<CatalogProject>>>? SearchFixture { get; set; }
+    internal Func<int, CancellationToken, Task<IReadOnlyList<CatalogProject>>>? SearchFixture { get; set; }
     internal Func<CancellationToken, Task<IReadOnlyList<CatalogRelease>>>? ReleasesFixture { get; set; }
     internal Func<CancellationToken, Task<CatalogProjectDetails>>? DetailsFixture { get; set; }
     private string Kind => (KindPicker.SelectedItem as ComboBoxItem)?.Tag as string ?? "resourcepack";
@@ -45,8 +46,12 @@ public partial class ResourceBrowserView : UserControl
         {
             if (change.Property != TextBox.TextProperty) return;
             generation++; resultsCurrent = false; DetailsButton.IsEnabled = false; DownloadButton.IsEnabled = false;
-            ResetPagination();
-            if (host?.IsWorking == true) ResultNotice.Text = "条件已改变，正在进行的旧搜索不会覆盖当前列表；请完成后重新搜索。";
+            MarkResultsStale();
+            ResultNotice.Text = hasSearched
+                ? host?.IsWorking == true
+                    ? $"搜索条件已改变，仍显示上一条件的第 {displayedPage + 1} 页；当前请求结束后请重新搜索。"
+                    : $"搜索条件已改变，仍显示上一条件的第 {displayedPage + 1} 页；点击搜索后更新。"
+                : "搜索条件已改变，点击搜索后显示匹配的资源。";
         };
     }
     private void Reflow()
@@ -138,7 +143,7 @@ public partial class ResourceBrowserView : UserControl
         generation++; resultsCurrent = false;
         ResetDocuments();
         project = null;
-        ResetPagination();
+        MarkResultsStale();
         if (!hasSearched) Results.ItemsSource = Array.Empty<CatalogProject>();
         ReleasePicker.ItemsSource = Array.Empty<CatalogRelease>();
         ResultNotice.Text = notice;
@@ -153,7 +158,7 @@ public partial class ResourceBrowserView : UserControl
 
     private async void SearchResources(object? sender, RoutedEventArgs e) { pageIndex = 0; await Search(); }
     private async void PreviousPage(object? sender, RoutedEventArgs e) { if (!resultsCurrent || pageIndex == 0 || host?.IsWorking == true) return; pageIndex--; await Search(true); }
-    private async void NextPage(object? sender, RoutedEventArgs e) { if (!resultsCurrent || host?.IsWorking == true) return; pageIndex++; await Search(true); }
+    private async void NextPage(object? sender, RoutedEventArgs e) { if (!resultsCurrent || pageIndex >= MaximumPageIndex || host?.IsWorking == true) return; pageIndex++; await Search(true); }
     private async void SearchKey(object? sender, KeyEventArgs e)
     { if (e.Key == Key.Enter) { e.Handled = true; pageIndex = 0; await Search(); } }
 
@@ -177,8 +182,9 @@ public partial class ResourceBrowserView : UserControl
             DiscoveryPanel.IsVisible = false;
             try
             {
-                var rows = SearchFixture is { } fixture ? await fixture(token)
-                    : await Task.Run(() => catalog.Search(kind, query, source, target, token, order, pageIndex * PageSize, PageSize), token);
+                int offset = pageIndex * PageSize;
+                var rows = SearchFixture is { } fixture ? await fixture(offset, token)
+                    : await Task.Run(() => catalog.Search(kind, query, source, target, token, order, offset, PageSize), token);
                 if (revision != generation || BindingKey != binding) { ResultNotice.Text = "搜索条件已改变，已丢弃旧结果，请重新搜索。"; return; }
                 if (paging && rows.Count == 0 && lastResults.Count > 0)
                 {
@@ -200,11 +206,15 @@ public partial class ResourceBrowserView : UserControl
                 PageLabel.Text = $"第 {pageIndex + 1} 页 · 每页最多 {PageSize} 项";
                 PreviousPageButton.IsEnabled = pageIndex > 0;
                 // Aliases and source deduplication can shorten a page without exhausting the upstream feed.
-                NextPageButton.IsEnabled = rows.Count > 0 && (!lastPageIndex.HasValue || pageIndex < lastPageIndex.Value);
+                NextPageButton.IsEnabled = rows.Count > 0 && pageIndex < MaximumPageIndex
+                    && (!lastPageIndex.HasValue || pageIndex < lastPageIndex.Value);
                 DiscoveryPanel.IsVisible = rows.Count == 0;
                 ResultNotice.Text = lastPageIndex == pageIndex
                     ? $"已到末页，当前第 {pageIndex + 1} 页有 {rows.Count} 个结果。"
-                    : rows.Count == 0 ? "没有匹配结果。可换关键词、来源或目标版本后重试。" : $"{rows.Count} 个项目 · 选择项目查看兼容版本";
+                    : rows.Count == 0 ? "没有匹配结果。可换关键词、来源或目标版本后重试。"
+                    : pageIndex == MaximumPageIndex
+                        ? $"已达到可翻页范围上限，最多可浏览前 {MaximumPageIndex * PageSize + PageSize:N0} 项。"
+                        : $"{rows.Count} 个项目 · 选择项目查看兼容版本";
                 host.SetStatus("资源搜索完成。");
             }
             catch
@@ -217,13 +227,15 @@ public partial class ResourceBrowserView : UserControl
         });
     }
 
-    private void ResetPagination()
+    private void MarkResultsStale()
     {
-        pageIndex = 0;
+        pageIndex = displayedPage;
         lastPageIndex = null;
         PreviousPageButton.IsEnabled = false;
         NextPageButton.IsEnabled = false;
-        PageLabel.Text = $"第 1 页 · 每页最多 {PageSize} 项";
+        PageLabel.Text = hasSearched
+            ? $"上次结果：第 {displayedPage + 1} 页 · 每页最多 {PageSize} 项"
+            : $"第 1 页 · 每页最多 {PageSize} 项";
     }
 
     private void SelectProject(object? sender, SelectionChangedEventArgs e) => DetailsButton.IsEnabled = resultsCurrent && Results.SelectedItem is CatalogProject;

@@ -5,6 +5,7 @@ using Avalonia.LogicalTree;
 using Avalonia.Media;
 using Avalonia.Media.TextFormatting;
 using Avalonia.Threading;
+using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using HelL.Mobile.Ai;
 using HelL.Mobile.Controls;
@@ -36,6 +37,26 @@ public sealed partial class MobileHome
             new ChatEntry("user", "如何排查启动失败，并保留当前存档？", "complete"),
             new ChatEntry("assistant", "## 排查步骤\n" + prose + "\n\n- 先备份存档\n- 再核对日志\n\n```shell\n" + command + "```\n\n收到报错后保留完整文本，再检查版本与运行环境。", "complete")
         };
+        const string copyProbeText = "isolated clipboard preview\n";
+        var copyProbe = new ChatContent { Text = "```text\n" + copyProbeText + "```" };
+        var copyProbeButton = copyProbe.GetLogicalDescendants().OfType<Button>().Single();
+        copyProbe.ClipboardWriter = copied => copied == copyProbeText ? Task.CompletedTask
+            : Task.FromException(new IOException("The clipboard preview received unexpected text."));
+        copyProbeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(copyProbeButton.Content?.ToString() == "已复制代码"
+            && Avalonia.Automation.AutomationProperties.GetName(copyProbeButton) == "复制代码，已复制"
+            && Avalonia.Automation.AutomationProperties.GetLiveSetting(copyProbeButton) == Avalonia.Automation.AutomationLiveSetting.Polite,
+            "successful code copy exposes a polite accessible result");
+
+        copyProbe.Text = "```text\nclipboard failure preview\n```";
+        copyProbe.ClipboardWriter = _ => Task.FromException(new IOException("Controlled clipboard rejection."));
+        copyProbeButton = copyProbe.GetLogicalDescendants().OfType<Button>().Single();
+        copyProbeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Check(copyProbeButton.Content?.ToString() == "复制失败，可长按选择文本"
+            && Avalonia.Automation.AutomationProperties.GetName(copyProbeButton) == "复制代码失败，可长按选择文本"
+            && Avalonia.Automation.AutomationProperties.GetLiveSetting(copyProbeButton) == Avalonia.Automation.AutomationLiveSetting.Polite,
+            "failed code copy exposes polite retry guidance to assistive technology");
+
         try
         {
             foreach (var (index, name) in new[] { (0, "dark"), (1, "light") })

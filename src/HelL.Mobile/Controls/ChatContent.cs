@@ -15,6 +15,7 @@ public sealed class ChatContent : StackPanel
     public static readonly StyledProperty<double> TextScaleProperty = AvaloniaProperty.Register<ChatContent, double>(nameof(TextScale), 1);
     public string Text { get => GetValue(TextProperty); set => SetValue(TextProperty, value); }
     public double TextScale { get => GetValue(TextScaleProperty); set => SetValue(TextScaleProperty, value); }
+    internal Func<string, Task>? ClipboardWriter { get; set; }
     static ChatContent()
     {
         TextProperty.Changed.AddClassHandler<ChatContent>((view, _) => view.Render());
@@ -73,16 +74,26 @@ public sealed class ChatContent : StackPanel
             var copy = new Button { Content = "复制代码", Classes = { "secondary", "code-copy" }, FontSize = 12,
                 HorizontalAlignment = HorizontalAlignment.Right, MinHeight = 44, Padding = new Thickness(10, 4) };
             Avalonia.Automation.AutomationProperties.SetName(copy, "复制此代码块的原始内容");
+            Avalonia.Automation.AutomationProperties.SetLiveSetting(copy, Avalonia.Automation.AutomationLiveSetting.Polite);
             copy.Click += async (_, _) =>
             {
                 try
                 {
-                    var clipboard = TopLevel.GetTopLevel(this)?.Clipboard ?? throw new IOException("剪贴板不可用。");
-                    await clipboard.SetTextAsync(code);
+                    if (ClipboardWriter is { } writer) await writer(code);
+                    else
+                    {
+                        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard ?? throw new IOException("剪贴板不可用。");
+                        await clipboard.SetTextAsync(code);
+                    }
                     copy.Content = "已复制代码";
+                    Avalonia.Automation.AutomationProperties.SetName(copy, "复制代码，已复制");
                 }
                 catch (Exception error) when (error is not OutOfMemoryException)
-                { copy.Content = "复制失败，可长按选择文本"; System.Diagnostics.Trace.TraceWarning("Mobile code copy: " + error.GetType().Name); }
+                {
+                    copy.Content = "复制失败，可长按选择文本";
+                    Avalonia.Automation.AutomationProperties.SetName(copy, "复制代码失败，可长按选择文本");
+                    System.Diagnostics.Trace.TraceWarning("Mobile code copy: " + error.GetType().Name);
+                }
             };
             Grid.SetColumn(copy, 1);
             header.Children.Add(copy);

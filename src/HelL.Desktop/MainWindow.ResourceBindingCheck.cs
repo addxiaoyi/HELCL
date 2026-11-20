@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using HelL.Core;
+using HelL.Desktop.Views;
 using HelL.Portable;
 
 namespace HelL.Desktop;
@@ -21,7 +22,7 @@ public sealed partial class MainWindow
         try
         {
             var search = new TaskCompletionSource<IReadOnlyList<CatalogProject>>(TaskCreationOptions.RunContinuationsAsynchronously);
-            ResourcesView.SearchFixture = _ => search.Task;
+            ResourcesView.SearchFixture = (_, _) => search.Task;
             Task pendingSearch = ResourcesView.Search();
             source.SelectedIndex = 1;
             search.SetResult([project]);
@@ -55,7 +56,7 @@ public sealed partial class MainWindow
                 "fixture summary", "fixture", "fixture", "", "", "", index)).ToArray();
             var lastPage = firstPage.Take(2).Select(project => project with { Id = "last-" + project.Id }).ToArray();
             int request = 0;
-            ResourcesView.SearchFixture = _ => Task.FromResult<IReadOnlyList<CatalogProject>>(request++ switch
+            ResourcesView.SearchFixture = (_, _) => Task.FromResult<IReadOnlyList<CatalogProject>>(request++ switch
             {
                 0 or 3 => firstPage,
                 1 or 4 => lastPage,
@@ -91,14 +92,41 @@ public sealed partial class MainWindow
                 || resultNotice.Text?.Contains("末页", StringComparison.Ordinal) != true)
                 throw new IOException("Returning to the known last page lost its terminal-page notice.");
 
-            ResourcesView.FindControl<TextBox>("QueryBox")!.Text = "no matching resource";
+            var query = ResourcesView.FindControl<TextBox>("QueryBox")!;
+            query.Text = "no matching resource";
             if (next.IsEnabled || previous.IsEnabled)
                 throw new IOException("Changing the resource query left stale pagination controls enabled.");
+            if (results.ItemCount != lastPage.Length
+                || pageLabel.Text?.Contains("上次结果：第 2 页", StringComparison.Ordinal) != true
+                || resultNotice.Text?.Contains("搜索条件已改变", StringComparison.Ordinal) != true)
+                throw new IOException("Editing a query while idle did not clearly identify the retained page as stale.");
             await ResourcesView.Search();
             var discovery = ResourcesView.FindControl<Control>("DiscoveryPanel")!;
             if (results.ItemCount != 0 || next.IsEnabled || previous.IsEnabled || !discovery.IsVisible
                 || resultNotice.Text?.Contains("没有匹配结果", StringComparison.Ordinal) != true)
                 throw new IOException("A new empty resource search inherited the old last-page state.");
+
+            int boundaryOffset = -1;
+            ResourcesView.SearchFixture = (offset, _) =>
+            {
+                boundaryOffset = offset;
+                return Task.FromResult<IReadOnlyList<CatalogProject>>(firstPage);
+            };
+            await ResourcesView.Search();
+            typeof(ResourceBrowserView).GetField("pageIndex", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                .SetValue(ResourcesView, ResourceBrowserView.MaximumPageIndex - 1);
+            typeof(ResourceBrowserView).GetField("displayedPage", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                .SetValue(ResourcesView, ResourceBrowserView.MaximumPageIndex - 1);
+            next.IsEnabled = true;
+            next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            for (int attempt = 0; attempt < 100 && IsWorking; attempt++) await Task.Delay(20);
+            if (boundaryOffset != PortableCatalog.MaximumSearchOffset - (PortableCatalog.MaximumSearchOffset % ResourceBrowserView.PageSize)
+                || results.ItemCount != firstPage.Length || pageLabel.Text?.Contains($"第 {ResourceBrowserView.MaximumPageIndex + 1} 页", StringComparison.Ordinal) != true
+                || next.IsEnabled || resultNotice.Text?.Contains("达到可翻页范围上限", StringComparison.Ordinal) != true)
+                throw new IOException("The final valid resource page did not explain why further pagination is unavailable.");
+            next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            if (boundaryOffset != PortableCatalog.MaximumSearchOffset - (PortableCatalog.MaximumSearchOffset % ResourceBrowserView.PageSize))
+                throw new IOException("The disabled resource pager attempted an out-of-range offset.");
         }
         finally { ResourcesView.SearchFixture = null; ResourcesView.ReleasesFixture = null; ResourcesView.DetailsFixture = null; }
     }

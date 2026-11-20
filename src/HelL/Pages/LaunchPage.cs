@@ -782,15 +782,24 @@ public sealed partial class LaunchPage : PageBase
 
 		_bBadge.Child = _bBadgeText;
 		_bBadge.HorizontalAlignment = HorizontalAlignment.Left;
-		_bTitle.FontSize = 23;
-		_bTitle.LineHeight = 31;
+		_bTitle.FontSize = 21;
+		_bTitle.LineHeight = UiMetrics.HeadingLine;
 		_bTitle.FontWeight = FontWeights.SemiBold;
 		_bTitle.TextWrapping = TextWrapping.Wrap;
 		_bSub.TextWrapping = TextWrapping.Wrap;
+		_bSub.FontSize = 13;
+		_bSub.LineHeight = 20;
 		_bSub.Opacity = 1;
 		SPanel el2 = Ui.V(4, _bBadge, _bTitle, _bSub);
 		var grid = Ui.V(16, el2, el);
 		SPanel sPanel = Ui.V(5.0, _prog, _status);
+        var statusAreaStyle = new Style(typeof(SPanel));
+        var noStatus = new MultiDataTrigger();
+        noStatus.Conditions.Add(new Condition(new System.Windows.Data.Binding("Visibility") { Source = _prog }, Visibility.Collapsed));
+        noStatus.Conditions.Add(new Condition(new System.Windows.Data.Binding("Visibility") { Source = _status }, Visibility.Collapsed));
+        noStatus.Setters.Add(new Setter(VisibilityProperty, Visibility.Collapsed));
+        statusAreaStyle.Triggers.Add(noStatus);
+        sPanel.Style = statusAreaStyle;
 		_status.SetResourceReference(TextBlock.ForegroundProperty, "B.InkMuted");
 		_status.Opacity = 1;
 		var statusStyle = new Style(typeof(TextBlock), Ui.S("T.Small"));

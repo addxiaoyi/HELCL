@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Styling;
 using HelL.Core;
@@ -82,6 +83,10 @@ public sealed partial class MainWindow
             (true, "deep") => "#D6EFF2F7",
             _ => "#F8F2F4F8"
         };
-        WindowShell.Background = new SolidColorBrush(Color.Parse(hex));
+        bool hasBlur = ActualTransparencyLevel == WindowTransparencyLevel.AcrylicBlur
+            || ActualTransparencyLevel == WindowTransparencyLevel.Blur || ActualTransparencyLevel == WindowTransparencyLevel.Mica;
+        Color tint = Color.Parse(hex);
+        if (!hasBlur || CurrentGlass == "solid") tint = Color.FromRgb(tint.R, tint.G, tint.B);
+        WindowShell.Background = new SolidColorBrush(tint);
     }
 }

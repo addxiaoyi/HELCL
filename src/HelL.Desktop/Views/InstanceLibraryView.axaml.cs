@@ -8,6 +8,8 @@ namespace HelL.Desktop.Views;
 
 public partial class InstanceLibraryView : UserControl
 {
+    private const double NarrowInspectorMinHeight = 220;
+    private const double NarrowInspectorMaxHeight = 320;
     private MainWindow? host;
     private IReadOnlyList<LibraryInstance> instances = [];
     private bool refreshing;
@@ -37,7 +39,7 @@ public partial class InstanceLibraryView : UserControl
             Grid.SetColumn(InspectorCard, 0);
             Grid.SetRow(InspectorCard, 1);
             InspectorCard.Margin = new Avalonia.Thickness(0, 12, 0, 0);
-            InspectorCard.MaxHeight = 250;
+            InspectorCard.MaxHeight = Math.Clamp(Bounds.Height / 2, NarrowInspectorMinHeight, NarrowInspectorMaxHeight);
         }
         else
         {

@@ -46,6 +46,8 @@ public sealed partial class MainWindow : Window
         JavaView.Initialize(this);
         PropertyChanged += (_, change) =>
         {
+            if (change.Property == ActualTransparencyLevelProperty || change.Property == ActualThemeVariantProperty)
+                ApplyGlassBackdrop();
             if (change.Property == WindowStateProperty && MaxIcon != null)
             {
                 MaxIcon.Kind = WindowState == WindowState.Maximized
@@ -60,6 +62,7 @@ public sealed partial class MainWindow : Window
         ShowPage("launch");
         Closing += OnClosing;
         Opened += RestoreAccount;
+        Opened += (_, _) => ApplyGlassBackdrop();
         if (Program.UiSmoke) Opened += RunUiSmoke;
         if (Program.CatalogSmoke) Opened += RunCatalogSmoke;
     }

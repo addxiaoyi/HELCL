@@ -149,7 +149,8 @@ internal static class WpfReadingCheck
             {
                 host.LayoutTransform = new ScaleTransform(2, 2);
                 await Settle(window);
-                install.BringIntoView();
+                var pageScroll = (SmoothScroll)version.Content;
+                pageScroll.ScrollToVerticalOffset(pageScroll.ScrollableHeight);
                 await Settle(window);
                 Check(install.IsVisible && install.TranslatePoint(new Point(install.ActualWidth, 0), window).X <= window.ActualWidth + 1,
                     "the installation action remains horizontally available at two-times page layout");

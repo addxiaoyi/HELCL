@@ -195,7 +195,7 @@
           <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
             <Grid ColumnDefinitions="*,Auto">
               <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center" HorizontalAlignment="Left"/>
-              <TextBlock Grid.Column="1" Text="›" FontSize="17" Foreground="{DynamicResource HelL.Muted}" VerticalAlignment="Center" Margin="8,0,2,0"/>
+              <icons:LauncherIcon Grid.Column="1" Kind="ChevronRight" Width="16" Height="16" Foreground="{DynamicResource HelL.Muted}" VerticalAlignment="Center" Margin="8,0,2,0"/>
             </Grid>
           </Border>
         </ControlTemplate>

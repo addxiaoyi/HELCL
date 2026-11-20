@@ -156,11 +156,11 @@ public partial class ResourceBrowserView : UserControl
         if (hasSearched && host is { IsWorking: false }) Avalonia.Threading.Dispatcher.UIThread.Post(async () => await Search());
     }
 
-    private async void SearchResources(object? sender, RoutedEventArgs e) { pageIndex = 0; await Search(); }
+    private async void SearchResources(object? sender, RoutedEventArgs e) => await Search();
     private async void PreviousPage(object? sender, RoutedEventArgs e) { if (!resultsCurrent || pageIndex == 0 || host?.IsWorking == true) return; pageIndex--; await Search(true); }
     private async void NextPage(object? sender, RoutedEventArgs e) { if (!resultsCurrent || pageIndex >= MaximumPageIndex || host?.IsWorking == true) return; pageIndex++; await Search(true); }
     private async void SearchKey(object? sender, KeyEventArgs e)
-    { if (e.Key == Key.Enter) { e.Handled = true; pageIndex = 0; await Search(); } }
+    { if (e.Key == Key.Enter) { e.Handled = true; await Search(); } }
 
     internal async Task Search(bool paging = false)
     {

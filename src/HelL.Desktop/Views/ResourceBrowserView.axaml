@@ -37,7 +37,7 @@
           <ComboBoxItem Content="综合推荐" Tag="relevance" /><ComboBoxItem Content="下载最多" Tag="downloads" />
           <ComboBoxItem Content="最新发布" Tag="newest" /><ComboBoxItem Content="最近更新" Tag="updated" />
         </ComboBox>
-        <Button Grid.Column="3" Content="搜索" Classes="accent" Click="SearchResources" />
+        <Button x:Name="SearchButton" Grid.Column="3" Content="搜索" Classes="accent" Click="SearchResources" />
       </Grid>
     </StackPanel>
 

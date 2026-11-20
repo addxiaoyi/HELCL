@@ -56,12 +56,25 @@ public sealed partial class MainWindow
                 "fixture summary", "fixture", "fixture", "", "", "", index)).ToArray();
             var lastPage = firstPage.Take(2).Select(project => project with { Id = "last-" + project.Id }).ToArray();
             int request = 0;
-            ResourcesView.SearchFixture = (_, _) => Task.FromResult<IReadOnlyList<CatalogProject>>(request++ switch
+            var pageTwo = new TaskCompletionSource<IReadOnlyList<CatalogProject>>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var pageTwoRequested = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var requestedOffsets = new List<int>();
+            ResourcesView.SearchFixture = (offset, _) =>
             {
-                0 or 3 => firstPage,
-                1 or 4 => lastPage,
-                _ => Array.Empty<CatalogProject>()
-            });
+                requestedOffsets.Add(offset);
+                int current = request++;
+                if (current == 1)
+                {
+                    pageTwoRequested.TrySetResult();
+                    return pageTwo.Task;
+                }
+                return Task.FromResult<IReadOnlyList<CatalogProject>>(current switch
+                {
+                    0 or 3 => firstPage,
+                    1 or 4 => lastPage,
+                    _ => Array.Empty<CatalogProject>()
+                });
+            };
             await ResourcesView.Search();
             var next = ResourcesView.FindControl<Button>("NextPageButton")!;
             var previous = ResourcesView.FindControl<Button>("PreviousPageButton")!;
@@ -70,8 +83,12 @@ public sealed partial class MainWindow
             if (results.ItemCount != firstPage.Length || !next.IsEnabled || previous.IsEnabled)
                 throw new IOException("The first full resource page did not expose its next-page action.");
             next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await pageTwoRequested.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            ResourcesView.FindControl<Button>("SearchButton")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            pageTwo.SetResult(lastPage);
             for (int attempt = 0; attempt < 100 && IsWorking; attempt++) await Task.Delay(20);
-            if (results.ItemCount != lastPage.Length || !next.IsEnabled || !previous.IsEnabled
+            if (requestedOffsets.Count != 2 || requestedOffsets[0] != 0 || requestedOffsets[1] != ResourceBrowserView.PageSize
+                || results.ItemCount != lastPage.Length || !next.IsEnabled || !previous.IsEnabled
                 || pageLabel.Text?.Contains("第 2 页", StringComparison.Ordinal) != true)
                 throw new IOException("A short non-empty resource page was mistaken for the end of pagination.");
             next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

@@ -29,6 +29,7 @@ internal static class FrontendRecheckCheck
         Motion.Enabled = false;
         window.Width = 1180; window.Height = 740;
         await WpfIconCheck.Run(window, Path.Combine(folder, "icons"));
+        await WpfAestheticCheck.Run(window, Path.Combine(folder, "aesthetics"));
         await WpfDetailCheck.Run(window, Path.Combine(folder, "details"));
         var failures = new List<string>();
         void Check(bool condition, string label)

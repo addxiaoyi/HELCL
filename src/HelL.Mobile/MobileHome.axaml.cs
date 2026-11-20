@@ -262,6 +262,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
         HomePage.IsVisible = page == "home";
         LibraryWorkspace.IsVisible = page == "library";
         ResourcesPage.IsVisible = page == "resources";
+        if (page == "resources") ScheduleResourceTypography();
         if (page == "resources" && !DetailsPanel.IsVisible) ResourcesPage.Offset = resourceListOffset;
         AboutPage.IsVisible = page == "about";
         CreatePage.IsVisible = page == "create";
@@ -367,6 +368,8 @@ public sealed partial class MobileHome : UserControl, IDisposable
         SizeChanged -= ArrangeWorkspace;
         AttachedToVisualTree -= RestoreAccount;
         AttachedToVisualTree -= RunSmoke;
+        Projects.PropertyChanged -= QueueResourceTypography;
+        Projects.ContainerPrepared -= ResourceContainerPrepared;
         DetachRemote();
     }
 }

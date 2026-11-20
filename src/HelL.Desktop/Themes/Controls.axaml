@@ -193,6 +193,12 @@
     <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
     <Setter Property="FontWeight" Value="Medium" />
   </Style>
+  <Style Selector="Border.nav-count">
+    <Setter Property="MinWidth" Value="22" />
+    <Setter Property="Padding" Value="6,1" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Background" Value="{DynamicResource HelL.Selection}" />
+  </Style>
 
   <!-- macOS Segmented Control -->
   <Style Selector="Border.segmented">
@@ -275,11 +281,26 @@
 
   <!-- VisionOS / macOS 磨砂玻璃面单（1px 高光斜折射边框 + 柔和阴影） -->
   <Style Selector="Border.surface, Border.inset-group">
-    <Setter Property="Background" Value="{DynamicResource HelL.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}" />
+    <Setter Property="Background" Value="{DynamicResource HelL.DesktopPanel}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.DesktopPanelBorder}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="14" />
-    <Setter Property="BoxShadow" Value="0 8 28 0 #1C000000" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="BoxShadow" Value="0 3 12 0 #0B000000" />
+  </Style>
+  <Style Selector="Border.library-list">
+    <Setter Property="CornerRadius" Value="10" />
+  </Style>
+  <Style Selector="ListBox.library-rows > ListBoxItem">
+    <Setter Property="Padding" Value="14,12" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Margin" Value="0,1" />
+    <Setter Property="CornerRadius" Value="10" />
+  </Style>
+  <Style Selector="ListBox.library-rows > ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource HelL.Selection}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.InkSoft}" />
+    <Setter Property="BorderThickness" Value="2,0,0,0" />
+    <Setter Property="CornerRadius" Value="10" />
   </Style>
   <Style Selector="Border.group-row">
     <Setter Property="Padding" Value="16,12" />

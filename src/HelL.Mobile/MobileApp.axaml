@@ -8,6 +8,30 @@
       <ResourceDictionary.MergedDictionaries>
         <ResourceInclude Source="avares://HelL.Mobile/Assets/Design/AvaloniaTokens.axaml"/>
       </ResourceDictionary.MergedDictionaries>
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="HelL.Mobile.Surface">#181C23</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Border">#2A303A</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Divider">#282E37</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Selection">#252C36</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Hover">#202630</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Thumbnail">#252C36</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Segmented">#181C23</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.SegmentSelected">#353D49</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Muted">#A3ADBC</SolidColorBrush>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="HelL.Mobile.Surface">#FFFFFF</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Border">#DDE3EC</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Divider">#E7EBF1</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Selection">#EDF1F7</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Hover">#F4F6FA</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Thumbnail">#E9EEF5</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Segmented">#E5EAF2</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.SegmentSelected">#FFFFFF</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Mobile.Muted">#596579</SolidColorBrush>
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
       <FontFamily x:Key="DefaultFontFamily">avares://HelL.Mobile/Assets/Fonts#Noto Sans SC</FontFamily>
       <Thickness x:Key="TextControlBorderThemeThicknessFocused">1</Thickness>
       <ControlTheme x:Key="RowTheme" TargetType="ListBoxItem">
@@ -17,22 +41,22 @@
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         <Setter Property="Template">
           <ControlTemplate>
-            <Border x:Name="RowSurface" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="0,0,0,1">
+            <Border x:Name="RowSurface" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource HelL.Mobile.Divider}" BorderThickness="0,0,0,1">
               <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="Stretch"/>
             </Border>
           </ControlTemplate>
         </Setter>
         <Style Selector="^:selected /template/ Border#RowSurface">
-          <Setter Property="Background" Value="{DynamicResource HelL.Selection}"/>
+          <Setter Property="Background" Value="{DynamicResource HelL.Mobile.Selection}"/>
         </Style>
-        <Style Selector="^:pointerover /template/ Border#RowSurface"><Setter Property="Background" Value="{DynamicResource HelL.Selection}"/></Style>
+        <Style Selector="^:pointerover /template/ Border#RowSurface"><Setter Property="Background" Value="{DynamicResource HelL.Mobile.Hover}"/></Style>
       </ControlTheme>
     </ResourceDictionary>
   </Application.Resources>
 
   <Application.Styles>
     <FluentTheme/>
-    <Style Selector="pictures|ProjectPicture"><Setter Property="Background" Value="{DynamicResource HelL.Field}"/></Style>
+    <Style Selector="pictures|ProjectPicture"><Setter Property="Background" Value="{DynamicResource HelL.Mobile.Thumbnail}"/></Style>
     <Style Selector="UserControl">
       <Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}"/>
       <Setter Property="FontSize" Value="14"/>
@@ -42,34 +66,34 @@
     <Style Selector="TextBlock"><Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}"/><Setter Property="FontSize" Value="14"/></Style>
     <Style Selector="SelectableTextBlock"><Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}"/></Style>
     <Style Selector="ContentPresenter"><Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}"/></Style>
-    <Style Selector="TextBlock.muted"><Setter Property="Foreground" Value="{DynamicResource HelL.Muted}"/></Style>
+    <Style Selector="TextBlock.muted"><Setter Property="Foreground" Value="{DynamicResource HelL.Mobile.Muted}"/></Style>
     <Style Selector="TextBlock.title"><Setter Property="FontSize" Value="22"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
     <Style Selector="TextBlock.section"><Setter Property="FontSize" Value="14"/><Setter Property="FontWeight" Value="Medium"/></Style>
-    <Style Selector="TextBlock.caption"><Setter Property="FontSize" Value="12"/><Setter Property="Foreground" Value="{DynamicResource HelL.Muted}"/></Style>
-    <Style Selector="TextBlock.field-label"><Setter Property="FontSize" Value="12"/><Setter Property="Foreground" Value="{DynamicResource HelL.Muted}"/></Style>
+    <Style Selector="TextBlock.caption"><Setter Property="FontSize" Value="12"/><Setter Property="Foreground" Value="{DynamicResource HelL.Mobile.Muted}"/></Style>
+    <Style Selector="TextBlock.field-label"><Setter Property="FontSize" Value="12"/><Setter Property="Foreground" Value="{DynamicResource HelL.Mobile.Muted}"/></Style>
 
-    <!-- iOS / iPadOS Inset Grouped 容器与 1px 内部分割行 -->
+    <!-- A single quiet surface keeps grouped rows readable in either theme. -->
     <Style Selector="Border.glass, Border.inset-group">
-      <Setter Property="Background" Value="{DynamicResource HelL.Surface}"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}"/>
+      <Setter Property="Background" Value="{DynamicResource HelL.Mobile.Surface}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource HelL.Mobile.Border}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="12"/>
       <Setter Property="Padding" Value="16"/>
     </Style>
     <Style Selector="Border.group-sheet">
-      <Setter Property="Background" Value="{DynamicResource HelL.Surface}"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}"/>
+      <Setter Property="Background" Value="{DynamicResource HelL.Mobile.Surface}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource HelL.Mobile.Border}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="12"/>
       <Setter Property="ClipToBounds" Value="True"/>
     </Style>
     <Style Selector="Border.group-row">
-      <Setter Property="Padding" Value="15,12"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}"/>
+      <Setter Property="Padding" Value="16,10"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource HelL.Mobile.Divider}"/>
       <Setter Property="BorderThickness" Value="0,0,0,1"/>
     </Style>
     <Style Selector="Border.group-row-last">
-      <Setter Property="Padding" Value="15,12"/>
+      <Setter Property="Padding" Value="16,10"/>
       <Setter Property="BorderThickness" Value="0"/>
     </Style>
     <Style Selector="Border.tile">
@@ -123,7 +147,7 @@
     </Style>
     <Style Selector="Button.nav.current"><Setter Property="Background" Value="{DynamicResource HelL.Selection}"/><Setter Property="Foreground" Value="{DynamicResource HelL.Ink}"/><Setter Property="FontWeight" Value="Medium"/></Style>
 
-    <Style Selector="Border.segmented"><Setter Property="Background" Value="{DynamicResource HelL.Field}"/><Setter Property="CornerRadius" Value="9"/><Setter Property="Padding" Value="2.5"/></Style>
+    <Style Selector="Border.segmented"><Setter Property="Background" Value="{DynamicResource HelL.Mobile.Segmented}"/><Setter Property="CornerRadius" Value="9"/><Setter Property="Padding" Value="2.5"/></Style>
     <Style Selector="Button.category, Button.tab">
       <Setter Property="Padding" Value="12,5"/>
       <Setter Property="MinHeight" Value="44"/>
@@ -132,18 +156,21 @@
       <Setter Property="Foreground" Value="{DynamicResource HelL.Muted}"/>
     </Style>
     <Style Selector="Button.category.current, Button.tab.current">
-      <Setter Property="Background" Value="{DynamicResource HelL.SurfaceRaised}"/>
+      <Setter Property="Background" Value="{DynamicResource HelL.Mobile.SegmentSelected}"/>
       <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}"/>
       <Setter Property="FontWeight" Value="Medium"/>
     </Style>
 
     <Style Selector="Button.download">
-      <Setter Property="Background" Value="{DynamicResource HelL.Field}"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource HelL.Mobile.Border}"/>
+      <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}"/>
       <Setter Property="FontWeight" Value="Medium"/>
       <Setter Property="MinHeight" Value="44"/>
-      <Setter Property="Padding" Value="14,4"/>
-      <Setter Property="CornerRadius" Value="99"/>
+      <Setter Property="MinWidth" Value="56"/>
+      <Setter Property="Padding" Value="12,5"/>
+      <Setter Property="CornerRadius" Value="9"/>
     </Style>
 
     <Style Selector="Button.inline"><Setter Property="Padding" Value="6,2"/><Setter Property="MinHeight" Value="44"/><Setter Property="Foreground" Value="{DynamicResource HelL.Muted}"/></Style>
@@ -154,10 +181,10 @@
       <Setter Property="HorizontalAlignment" Value="Stretch"/>
       <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
       <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource HelL.Mobile.Divider}"/>
       <Setter Property="BorderThickness" Value="0,0,0,1"/>
       <Setter Property="CornerRadius" Value="0"/>
-      <Setter Property="Padding" Value="15,12"/>
+      <Setter Property="Padding" Value="16,10"/>
       <Setter Property="Margin" Value="0"/>
       <Setter Property="Template">
         <ControlTemplate>

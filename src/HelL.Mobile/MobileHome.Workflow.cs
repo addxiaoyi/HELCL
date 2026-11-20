@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.LogicalTree;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using HelL.Mobile.Workflow;
 
 namespace HelL.Mobile;
@@ -19,6 +20,7 @@ public sealed partial class MobileHome
     private readonly TextBlock editError = WorkflowText("");
     private readonly Stack<string> pageHistory = new();
     private bool backNavigationPending;
+    private bool resourceTypographyQueued;
     private string currentPage = "home";
     private int navigationRevision;
     private string? savedEditState;
@@ -58,6 +60,8 @@ public sealed partial class MobileHome
         };
         AddHandler(KeyDownEvent, WorkflowKeyDown, RoutingStrategies.Tunnel);
         AttachedToVisualTree += AttachMobileInsets;
+        Projects.PropertyChanged += QueueResourceTypography;
+        Projects.ContainerPrepared += ResourceContainerPrepared;
         if (MorePage.Content is StackPanel settings)
         {
             double savedScale = HelL.Core.Py.Float(HelL.Core.Launcher.Config.CONFIG.Get("mobile_text_scale", 1d));
@@ -84,9 +88,36 @@ public sealed partial class MobileHome
         ApplyTextScale();
     }
 
-    private void ApplyTextScale()
+    private void QueueResourceTypography(object? sender, AvaloniaPropertyChangedEventArgs change)
     {
-        Control[] controls = this.GetLogicalDescendants().OfType<Control>().ToArray();
+        if (change.Property == ItemsControl.ItemsSourceProperty) ScheduleResourceTypography();
+    }
+
+    private void ResourceContainerPrepared(object? sender, ContainerPreparedEventArgs args) => ScheduleResourceTypography();
+
+    private void ScheduleResourceTypography()
+    {
+        if (resourceTypographyQueued) return;
+        resourceTypographyQueued = true;
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            try
+            {
+                if (disposed) return;
+                // Templates created after the initial pass must receive the same user text scale.
+                Projects.UpdateLayout();
+                ScaleText(this.GetLogicalDescendants().OfType<Control>()
+                    .Concat(Projects.GetVisualDescendants().OfType<Control>()).Distinct());
+            }
+            finally { resourceTypographyQueued = false; }
+        }, Avalonia.Threading.DispatcherPriority.Background);
+    }
+
+    private void ApplyTextScale() => ScaleText(this.GetLogicalDescendants().OfType<Control>());
+
+    private void ScaleText(IEnumerable<Control> content)
+    {
+        Control[] controls = content.ToArray();
         // Restore parents before sampling new children so inherited sizes do not compound.
         foreach (Control control in controls)
             if (originalFontSizes.TryGetValue(control, out FontSizeSnapshot? saved)) SetFontSize(control, saved.Value);

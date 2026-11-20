@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
+using Avalonia.VisualTree;
 using HelL.Portable;
 
 namespace HelL.Mobile;
@@ -74,7 +75,7 @@ public sealed partial class MobileHome
     private void ArrangeTextLayout()
     {
         bool stacked = !wide && EffectiveTextScale >= 1.5;
-        InstancePickerLayout.ColumnDefinitions = new ColumnDefinitions(stacked ? "*,16" : "*,Auto,16");
+        InstancePickerLayout.ColumnDefinitions = new ColumnDefinitions(stacked ? "*,16" : "Auto,*,16");
         InstancePickerLayout.RowDefinitions = new RowDefinitions(stacked ? "Auto,Auto" : "Auto");
         InstancePickerLayout.RowSpacing = stacked ? 4 : 0;
         Grid.SetRow(InstancePickerDetails, stacked ? 1 : 0);
@@ -84,11 +85,13 @@ public sealed partial class MobileHome
             ? Avalonia.Layout.HorizontalAlignment.Left : Avalonia.Layout.HorizontalAlignment.Right;
         Grid.SetColumn(InstancePickerChevron, stacked ? 1 : 2);
         Grid.SetRowSpan(InstancePickerChevron, stacked ? 2 : 1);
-        HomeAccountLayout.ColumnDefinitions = new ColumnDefinitions(stacked ? "*,16" : "*,Auto,16");
+        HomeAccountLayout.ColumnDefinitions = new ColumnDefinitions(stacked ? "*,16" : "Auto,*,16");
         HomeAccountLayout.RowDefinitions = new RowDefinitions(stacked ? "Auto,Auto" : "Auto");
         HomeAccountLayout.RowSpacing = stacked ? 4 : 0;
         Grid.SetRow(HomeAccountLabel, stacked ? 1 : 0);
         Grid.SetColumn(HomeAccountLabel, stacked ? 0 : 1);
+        HomeAccountLabel.HorizontalAlignment = stacked
+            ? Avalonia.Layout.HorizontalAlignment.Left : Avalonia.Layout.HorizontalAlignment.Right;
         Grid.SetColumn(HomeAccountChevron, stacked ? 1 : 2);
         Grid.SetRowSpan(HomeAccountChevron, stacked ? 2 : 1);
         foreach (Button button in BottomNavigation.Children.OfType<Button>())
@@ -99,6 +102,31 @@ public sealed partial class MobileHome
             {
                 label.Classes.Add("single-line");
                 label.TextWrapping = Avalonia.Media.TextWrapping.NoWrap;
+            }
+        }
+        ArrangeResourceRows();
+    }
+
+    private void ArrangeResourceRows()
+    {
+        bool stacked = !wide && EffectiveTextScale >= 1.5;
+        foreach (Grid row in Projects.GetVisualDescendants().OfType<Grid>().Where(grid => grid.Classes.Contains("resource-result")))
+        {
+            var text = row.Children.OfType<StackPanel>().Single();
+            var acquire = row.Children.OfType<Button>().Single();
+            var picture = row.Children.OfType<HelL.Desktop.Controls.ProjectPicture>().Single();
+            row.ColumnDefinitions = new ColumnDefinitions(stacked ? "42,*" : "42,*,Auto");
+            row.RowDefinitions = new RowDefinitions(stacked ? "Auto,Auto" : "Auto");
+            row.RowSpacing = stacked ? 10 : 0;
+            Grid.SetRow(acquire, stacked ? 1 : 0);
+            Grid.SetColumn(acquire, stacked ? 0 : 2);
+            Grid.SetColumnSpan(acquire, stacked ? 2 : 1);
+            acquire.HorizontalAlignment = stacked ? Avalonia.Layout.HorizontalAlignment.Right : Avalonia.Layout.HorizontalAlignment.Stretch;
+            picture.VerticalAlignment = stacked ? Avalonia.Layout.VerticalAlignment.Top : Avalonia.Layout.VerticalAlignment.Center;
+            foreach (TextBlock label in text.Children.OfType<TextBlock>())
+            {
+                label.TextWrapping = stacked ? Avalonia.Media.TextWrapping.Wrap : Avalonia.Media.TextWrapping.NoWrap;
+                label.MaxLines = stacked ? 2 : 1;
             }
         }
     }

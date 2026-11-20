@@ -60,10 +60,10 @@
                   <StackPanel>
                     <Border Classes="group-row">
                       <Button x:Name="InstancePicker" Padding="0" Tag="library" Click="Navigate" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" AutomationProperties.Name="切换游戏实例">
-                        <Grid x:Name="InstancePickerLayout" ColumnDefinitions="*,Auto,16" ColumnSpacing="8">
-                          <TextBlock x:Name="InstancePickerLabel" Text="当前实例" FontWeight="Medium" VerticalAlignment="Center"/>
+                        <Grid x:Name="InstancePickerLayout" ColumnDefinitions="Auto,*,16" ColumnSpacing="8">
+                          <TextBlock x:Name="InstancePickerLabel" Text="当前实例" FontSize="12" Classes="muted" VerticalAlignment="Center"/>
                           <StackPanel x:Name="InstancePickerDetails" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <TextBlock x:Name="SelectedVersionDetail" Text="未选择" FontSize="13" Classes="muted" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="SelectedVersionDetail" Text="未选择" FontSize="14" FontWeight="Medium" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
                             <TextBlock x:Name="SelectedVersion" Text="" FontSize="11.5" Classes="muted" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
                           </StackPanel>
                           <icons:LauncherIcon x:Name="InstancePickerChevron" Kind="ChevronRight" Width="16" Height="16" Grid.Column="2" Foreground="{DynamicResource HelL.Muted}" VerticalAlignment="Center"/>
@@ -72,9 +72,9 @@
                     </Border>
                     <Border Classes="group-row-last">
                       <Button x:Name="HomeAccountButton" Padding="0" Tag="account" Click="Navigate" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-                        <Grid x:Name="HomeAccountLayout" ColumnDefinitions="*,Auto,16" ColumnSpacing="8">
-                          <TextBlock x:Name="HomeAccountTitle" Text="游戏账户" FontWeight="Medium" VerticalAlignment="Center"/>
-                          <TextBlock x:Name="HomeAccountLabel" Grid.Column="1" Text="未登录" FontSize="13" Classes="muted" VerticalAlignment="Center"/>
+                        <Grid x:Name="HomeAccountLayout" ColumnDefinitions="Auto,*,16" ColumnSpacing="8">
+                          <TextBlock x:Name="HomeAccountTitle" Text="游戏账户" FontSize="12" Classes="muted" VerticalAlignment="Center"/>
+                          <TextBlock x:Name="HomeAccountLabel" Grid.Column="1" Text="未登录" FontSize="13" Classes="muted" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                           <icons:LauncherIcon x:Name="HomeAccountChevron" Grid.Column="2" Kind="ChevronRight" Width="16" Height="16" Foreground="{DynamicResource HelL.Muted}" VerticalAlignment="Center"/>
                         </Grid>
                       </Button>
@@ -89,7 +89,7 @@
 
               <!-- 常用功能分组列表（无彩色方块、纯 1px 分割行） -->
               <StackPanel x:Name="HomeLibrary" Grid.Row="2" Spacing="8">
-                <TextBlock Text="内容与环境" Classes="caption" Margin="4,0"/>
+                <TextBlock Text="内容与环境" Classes="caption" FontSize="12" Margin="4,2,0,2"/>
                 <Border Classes="group-sheet">
                   <StackPanel>
                     <Button Tag="mod" Click="SelectCategory" Classes="row-action"><TextBlock Text="浏览模组"/></Button>
@@ -118,7 +118,7 @@
             <StackPanel x:Name="LibraryLayout" Margin="20,18,20,88" Spacing="14" MaxWidth="860">
               <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                 <StackPanel Spacing="2" VerticalAlignment="Center">
-                  <TextBlock Text="实例" Classes="title"/>
+                  <TextBlock Text="实例" Classes="title" FontSize="22"/>
                   <TextBlock x:Name="LibrarySubtitle" Text="独立管理版本与资源" Classes="caption"/>
                 </StackPanel>
                 <Button x:Name="LibraryTopCreateButton" Grid.Column="1" Classes="secondary" Click="OpenCreate" AutomationProperties.Name="新建实例">
@@ -167,7 +167,7 @@
         <ScrollViewer x:Name="ResourcesPage" IsVisible="False" HorizontalScrollBarVisibility="Disabled">
           <StackPanel x:Name="ResourcesLayout" Margin="20,18,20,24" Spacing="14" MaxWidth="860">
             <Grid ColumnDefinitions="*,44">
-              <StackPanel Spacing="2"><TextBlock Text="资源" Classes="title"/><TextBlock x:Name="ResourcesSubtitle" Text="Modrinth 与 CurseForge" Classes="caption"/></StackPanel>
+              <StackPanel Spacing="4"><TextBlock x:Name="ResourcesTitle" Text="资源" Classes="title" FontSize="22"/><TextBlock x:Name="ResourcesSubtitle" Text="Modrinth 与 CurseForge" Classes="caption" FontSize="12"/></StackPanel>
               <Button Grid.Column="1" Classes="icon" Click="FocusSearch" AutomationProperties.Name="搜索资源关键词"><icons:LauncherIcon Kind="Magnify" Width="18" Height="18"/></Button>
             </Grid>
 
@@ -185,7 +185,7 @@
                 </Border>
               </ScrollViewer>
 
-              <TextBlock x:Name="ResourceTarget" Classes="caption" TextWrapping="Wrap"/>
+              <TextBlock x:Name="ResourceTarget" Classes="caption" FontSize="12" TextWrapping="Wrap"/>
               <StackPanel x:Name="SearchFilters" IsVisible="False" Spacing="8">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8"><TextBox x:Name="Query" PlaceholderText="搜索资源名称…" KeyDown="SearchKey" TextChanged="ResourceQueryChanged" AutomationProperties.Name="搜索资源"/><Button Grid.Column="1" Classes="primary" Content="搜索" Click="SearchResources"/></Grid>
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="8"><ComboBox x:Name="Kind" SelectedIndex="0" SelectionChanged="FiltersChanged" AutomationProperties.Name="资源类型"><ComboBoxItem Content="模组" Tag="mod"/><ComboBoxItem Content="整合包" Tag="modpack"/><ComboBoxItem Content="光影" Tag="shader"/><ComboBoxItem Content="资源包" Tag="resourcepack"/><ComboBoxItem Content="世界" Tag="world"/><ComboBoxItem Content="数据包" Tag="datapack"/></ComboBox><ComboBox x:Name="Provider" Grid.Column="1" SelectedIndex="0" SelectionChanged="FiltersChanged" AutomationProperties.Name="资源来源"><ComboBoxItem Content="Modrinth" Tag="modrinth"/><ComboBoxItem Content="CurseForge" Tag="curseforge"/></ComboBox></Grid>
@@ -203,17 +203,17 @@
                 <Button Grid.Column="1" Classes="icon" Click="ToggleSearch" AutomationProperties.Name="筛选资源"><icons:LauncherIcon Kind="TuneVariant" Width="18" Height="18" /></Button>
               </Grid>
 
-              <TextBlock x:Name="SearchNotice" Text="选择分类或点击右上角搜索" Classes="caption" TextWrapping="Wrap"/>
+              <TextBlock x:Name="SearchNotice" Text="选择分类或点击右上角搜索" Classes="caption" FontSize="12" TextWrapping="Wrap"/>
               <Button x:Name="SearchRetry" Content="重新加载" Classes="secondary" Click="SearchResources" HorizontalAlignment="Left" IsVisible="False"/>
 
               <Button x:Name="LoadMoreResourcesButton" Content="加载更多兼容资源" Classes="secondary" Click="LoadMoreResources" IsVisible="False" HorizontalAlignment="Stretch"/>
               <Border Classes="group-sheet">
                 <ListBox x:Name="Projects" ItemContainerTheme="{StaticResource RowTheme}" SelectionChanged="ProjectSelected" AutomationProperties.Name="资源结果">
-                  <ListBox.ItemTemplate><DataTemplate><Border Padding="14,11">
-                    <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="12">
+                  <ListBox.ItemTemplate><DataTemplate><Border Padding="16,12">
+                    <Grid Classes="resource-result" ColumnDefinitions="42,*,Auto" ColumnSpacing="10">
                       <pictures:ProjectPicture Source="{Binding Icon}" Width="42" Height="42" CornerRadius="9" VerticalAlignment="Center"/>
-                      <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
+                      <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
                         <TextBlock Text="{Binding PreviewSummary}" Classes="muted" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis"/>
                       </StackPanel>
                       <Button Grid.Column="2" Content="获取" Classes="download" VerticalAlignment="Center" Click="OpenProjectRow" AutomationProperties.Name="{Binding Title, StringFormat='获取 {0} 的资源文件'}"/>
@@ -247,7 +247,7 @@
         <!-- [4] 新建实例 -->
         <ScrollViewer x:Name="CreatePage" IsVisible="False"><StackPanel Margin="20,18" Spacing="14" MaxWidth="600">
           <Button Classes="back" Tag="library" Click="Navigate" AutomationProperties.Name="返回版本管理"><TextBlock Text="‹ 实例"/></Button>
-          <TextBlock Text="新建实例" Classes="title"/>
+          <TextBlock Text="新建实例" Classes="title" FontSize="22"/>
           <Border Classes="glass">
             <StackPanel Spacing="12">
               <StackPanel Spacing="5"><TextBlock Text="名称" Classes="field-label"/><TextBox x:Name="NewName" PlaceholderText="生存世界" MaxLength="48" AutomationProperties.Name="新实例名称"/></StackPanel>
@@ -260,7 +260,7 @@
         <!-- [5] 管理实例 -->
         <ScrollViewer x:Name="ManagePage" IsVisible="False"><StackPanel Margin="20,18" Spacing="14" MaxWidth="600">
           <Button Classes="back" Tag="library" Click="Navigate" AutomationProperties.Name="返回版本管理"><TextBlock Text="‹ 实例"/></Button>
-          <TextBlock Text="实例设置" Classes="title"/>
+          <TextBlock Text="实例设置" Classes="title" FontSize="22"/>
           <StackPanel x:Name="InstanceEditor" Spacing="14">
             <Border Classes="glass">
               <StackPanel Spacing="12">
@@ -287,7 +287,7 @@
 
         <!-- [6] 账户页（圆形单色头像，零二次元立绘） -->
         <ScrollViewer x:Name="AccountPage" IsVisible="False"><StackPanel Margin="20,20" Spacing="14" MaxWidth="600">
-          <TextBlock Text="游戏账户" Classes="title"/>
+          <TextBlock Text="游戏账户" Classes="title" FontSize="22"/>
           <Border Classes="glass"><StackPanel Spacing="14">
             <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
               <Border Width="42" Height="42" CornerRadius="99" Background="{DynamicResource HelL.Field}">
@@ -316,7 +316,7 @@
         <!-- [7] AI 助手 -->
         <Grid x:Name="AiPage" IsVisible="False" RowDefinitions="Auto,*,Auto" Margin="20,18,20,14" RowSpacing="12" MaxWidth="720">
           <Grid ColumnDefinitions="*,44,44">
-            <StackPanel Spacing="2"><TextBlock Text="助手" Classes="title"/><TextBlock x:Name="AiProviderNotice" Text="连接模型后提问" Classes="caption" TextWrapping="Wrap"/></StackPanel>
+            <StackPanel Spacing="4"><TextBlock Text="助手" Classes="title" FontSize="22"/><TextBlock x:Name="AiProviderNotice" Text="连接模型后提问" Classes="caption" FontSize="12" TextWrapping="Wrap"/></StackPanel>
             <Button Grid.Column="1" Classes="icon" Click="ToggleAiSettings" AutomationProperties.Name="AI 连接设置"><icons:LauncherIcon Kind="TuneVariant" Width="18" Height="18"/></Button>
             <Button x:Name="AiClearButton" Grid.Column="2" Classes="icon" Click="ClearAiChat" AutomationProperties.Name="清空本次 AI 对话"><icons:LauncherIcon Kind="TrashCanOutline" Width="18" Height="18"/></Button>
           </Grid>
@@ -342,7 +342,7 @@
 
         <!-- [8] 设置页（iOS Grouped Table） -->
         <ScrollViewer x:Name="MorePage" IsVisible="False"><StackPanel Margin="20,20" Spacing="16" MaxWidth="600">
-          <TextBlock Text="设置" Classes="title"/>
+          <TextBlock Text="设置" Classes="title" FontSize="22"/>
           <Border Classes="glass">
             <StackPanel Spacing="8">
               <TextBlock Text="外观" Classes="field-label"/>
@@ -367,7 +367,7 @@
 
         <!-- [9] 关于 -->
         <ScrollViewer x:Name="AboutPage" IsVisible="False"><StackPanel Margin="20,20" Spacing="14" MaxWidth="600">
-          <TextBlock Text="关于" Classes="title"/>
+          <TextBlock Text="关于" Classes="title" FontSize="22"/>
           <Border Classes="glass"><StackPanel Spacing="10">
             <TextBlock Text="HelL" FontSize="16" FontWeight="SemiBold"/>
             <TextBlock Text="轻量跨端 Minecraft 实例与资源管理工具。" Classes="muted" TextWrapping="Wrap" LineHeight="21"/>

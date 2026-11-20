@@ -12,13 +12,13 @@
           <local:ProjectPicture Source="{Binding Cover}" Width="34" Height="34" CornerRadius="8" IsVisible="{Binding Cover.Length}" />
         </Grid>
         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-            <Border Classes="badge" IsVisible="{Binding Pinned}" Padding="6,1"><TextBlock Text="已固定" FontSize="10.5" Classes="muted" /></Border>
-          </StackPanel>
-          <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <TextBlock x:Name="RowTitle" Text="{Binding Name}" FontSize="14" FontWeight="Medium" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" VerticalAlignment="Center" />
+            <Border Grid.Column="1" Classes="badge" IsVisible="{Binding Pinned}" Padding="6,1"><TextBlock Text="已固定" FontSize="10.5" Classes="muted" /></Border>
+          </Grid>
+          <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" />
         </StackPanel>
-        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+        <StackPanel x:Name="RowActions" Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
           <Button Classes="ghost" Content="启动页" Tag="{Binding Name}" Click="QuickOpenRow" MinHeight="27" Padding="10,3" FontSize="12" />
           <Button Classes="icon-btn" ToolTip.Tip="模组" AutomationProperties.Name="{Binding Name, StringFormat=管理实例 {0} 的模组}" Tag="{Binding Name}" Click="QuickModsRow"><icons:LauncherIcon Kind="PuzzleOutline" Width="14" Height="14" /></Button>
           <Button Classes="icon-btn" ToolTip.Tip="存档" AutomationProperties.Name="{Binding Name, StringFormat=管理实例 {0} 的存档}" Tag="{Binding Name}" Click="QuickSavesRow"><icons:LauncherIcon Kind="FolderOutline" Width="14" Height="14" /></Button>
@@ -48,8 +48,8 @@
         <TextBlock Text="实例" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
         <TextBlock x:Name="CountLabel" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
       </StackPanel>
-      <Button x:Name="ViewButton" Grid.Column="1" Classes="soft" Content="封面视图" Click="SwitchView" VerticalAlignment="Center" Margin="0,0,8,0" />
-      <Button Grid.Column="2" Classes="soft" Content="刷新" Click="RefreshLibrary" VerticalAlignment="Center" Margin="0,0,8,0" />
+      <Button x:Name="ViewButton" Grid.Column="1" Classes="ghost" Content="封面视图" Click="SwitchView" VerticalAlignment="Center" Margin="0,0,8,0" />
+      <Button Grid.Column="2" Classes="ghost" Content="刷新" Click="RefreshLibrary" VerticalAlignment="Center" Margin="0,0,8,0" />
       <Button Grid.Column="3" Content="安装版本" Classes="accent" Click="JumpToInstaller" VerticalAlignment="Center" />
     </Grid>
 
@@ -62,9 +62,9 @@
 
     <!-- 左单张分组列表 + 右纯净检视栏 -->
     <Grid x:Name="WorkspaceSplit" Grid.Row="2" ColumnDefinitions="*,276" ColumnSpacing="16">
-      <Border Grid.Column="0" Classes="inset-group" ClipToBounds="True">
+      <Border Grid.Column="0" Classes="library-list" ClipToBounds="True">
         <Grid>
-          <ListBox x:Name="LibraryList" Classes="rows" SelectionChanged="ChooseInstance" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="实例库" />
+          <ListBox x:Name="LibraryList" Classes="rows library-rows" SelectionChanged="ChooseInstance" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="实例库" />
           <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
             <TextBlock x:Name="EmptyTitle" Text="暂无实例" FontSize="15" FontWeight="Medium" HorizontalAlignment="Center" />
             <TextBlock Text="可在左下角新建第一个实例" Classes="muted" FontSize="12.5" HorizontalAlignment="Center" />
@@ -74,7 +74,7 @@
         </Grid>
       </Border>
 
-      <Border x:Name="InspectorCard" Grid.Column="1" Classes="inset-group" Padding="18,16">
+      <Border x:Name="InspectorCard" Grid.Column="1" Classes="inset-group inspector" Padding="20,18" VerticalAlignment="Top">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled">
           <StackPanel x:Name="Editor" Spacing="12" IsEnabled="False">
             <local:ProjectPicture x:Name="InspectorCover" Height="116" CornerRadius="8" IsVisible="False" />
@@ -83,9 +83,9 @@
               <TextBlock x:Name="SelectionTitle" Text="未选择实例" FontSize="15.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
               <Button x:Name="ManageButton" Grid.Column="1" Content="编辑" Classes="ghost" IsVisible="False" Click="ToggleDetails" MinHeight="24" Padding="6,2" />
             </Grid>
-            <TextBlock x:Name="SelectionMeta" Text="选择左侧实例查看属性" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+            <TextBlock x:Name="SelectionMeta" Text="选择左侧实例查看属性" Classes="muted" FontSize="12.5" TextWrapping="Wrap" />
 
-            <Button Content="打开启动页" Click="OpenInstance" Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+            <Button x:Name="OpenLaunchButton" Content="打开启动页" Click="OpenInstance" Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
 
             <StackPanel x:Name="ManagementFields" Spacing="10" Margin="0,4,0,0">
               <StackPanel Spacing="4">

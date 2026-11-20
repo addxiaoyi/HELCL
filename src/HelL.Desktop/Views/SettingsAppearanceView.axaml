@@ -29,7 +29,7 @@
               <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Spacing="2" VerticalAlignment="Center">
                   <TextBlock Text="窗口通透度" FontWeight="Medium" />
-                  <TextBlock Text="调节桌面壁纸透过 Acrylic 磨砂层的比例" Classes="muted" FontSize="11.5" />
+                  <TextBlock Text="系统支持时调整背景通透度；不可用时使用清晰实色，偏好会保留。" Classes="muted" FontSize="12" TextWrapping="Wrap" />
                 </StackPanel>
                 <Border Grid.Column="1" Classes="segmented" VerticalAlignment="Center">
                   <StackPanel x:Name="GlassCards" Orientation="Horizontal" Spacing="2">

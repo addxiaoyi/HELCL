@@ -29,8 +29,8 @@ public sealed class NewsTranslation
 
 public sealed class NewsPanel : UserControl
 {
-    private readonly SPanel _items = Ui.V(18);
-    private readonly TextBlock _state = Ui.Txt("正在读取新闻…", 11, false, "B.InkMuted").Wrap();
+    private readonly SPanel _items = Ui.V(16);
+    private readonly TextBlock _state = Ui.Txt("正在读取新闻…", UiMetrics.CaptionSize, false, "B.InkMuted").Wrap();
     private readonly Button _refresh;
     private readonly Button _translate;
     private readonly Button _more;
@@ -50,6 +50,7 @@ public sealed class NewsPanel : UserControl
     {
         _refresh = Ui.Btn("", BtnKind.Icon, (_, _) => RefreshRequested?.Invoke(), "\ue72c");
         _refresh.ToolTip = I18n.L("刷新新闻");
+        _state.LineHeight = UiMetrics.CaptionLine;
         AutomationProperties.SetName(_refresh, I18n.L("刷新新闻"));
         _translate = Ui.Btn(I18n.L("翻译新内容"), BtnKind.Ghost, (_, _) => TranslationRequested?.Invoke());
         _translate.ToolTip = I18n.L("使用本机 Ollama 翻译英文简介，保留官方原文");
@@ -127,19 +128,22 @@ public sealed class NewsPanel : UserControl
 
     private FrameworkElement Article(NewsRow row, bool featured)
     {
-        var picture = new NewsImage(row.Image, row.Title, featured ? 190 : 74);
+        var picture = new NewsImage(row.Image, row.Title, featured ? 190 : 80);
         if (featured) picture.SizeChanged += (_, _) => picture.Height = picture.ActualWidth < 310 ? 140 : 190;
-        var meta = Ui.Txt((Preview(row) ? I18n.L("开发快照") : I18n.L("正式更新")) + (row.Date.Length > 0 ? "  ·  " + row.Date : ""), 11, false, "B.InkMuted");
-        var title = Ui.Txt(row.Title, featured ? 19 : 13.5, true).Wrap();
-        var body = Ui.Txt(row.Body, 12.5, false, "B.InkMuted").Wrap();
-        body.MaxHeight = featured ? 58 : 38;
+        var meta = Ui.Txt((Preview(row) ? I18n.L("开发快照") : I18n.L("正式更新")) + (row.Date.Length > 0 ? "  ·  " + row.Date : ""), UiMetrics.CaptionSize, false, "B.InkMuted");
+        meta.LineHeight = UiMetrics.CaptionLine;
+        var title = Ui.Txt(row.Title, featured ? 19 : UiMetrics.BodySize, true).Wrap();
+        title.LineHeight = featured ? UiMetrics.HeadingLine : UiMetrics.BodyLine;
+        var body = Ui.Txt(row.Body, 13, false, "B.InkMuted").Wrap();
+        body.LineHeight = 20;
+        body.MaxHeight = featured ? 60 : 40;
         body.TextTrimming = TextTrimming.CharacterEllipsis;
         var words = Ui.V(featured ? 7 : 4, meta, title, body);
         FrameworkElement composition;
         if (featured) composition = Ui.V(12, picture, words);
         else
         {
-            picture.Width = 102;
+            picture.Width = 112;
             var line = Ui.G(null, "Auto,*");
             line.Add(picture, 0); line.Add(words.M(12, 0, 0, 0).VCenter(), 0, 1);
             composition = line;

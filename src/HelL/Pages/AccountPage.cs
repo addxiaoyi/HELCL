@@ -561,7 +561,10 @@ public sealed partial class AccountPage : PageBase
             Dlg.Require(!string.IsNullOrWhiteSpace(sid.Text), sid, "请输入统一通行证服务器 ID 或可识别链接");
             Dlg.Require(!string.IsNullOrWhiteSpace(user.Text), user, "请输入用户名");
             Dlg.Require(!string.IsNullOrWhiteSpace(pw.Password), pw, "请输入密码");
-            _nide8Task = await PageBase.Api.StartTaskAsync("start_nide8_login", new { server_id = sid.Text.Trim(), username = user.Text.Trim(), password = pw.Password });
+            string serverId;
+            try { serverId = HelL.Core.Launcher.Nide8.NormalizeServerId(sid.Text); }
+            catch (HelL.Core.Launcher.AuthError error) { throw new FieldValidationException(sid, error.Message); }
+            _nide8Task = await PageBase.Api.StartTaskAsync("start_nide8_login", new { server_id = serverId, username = user.Text.Trim(), password = pw.Password });
             PageBase.Toast("正在登录", "统一通行证验证中，结果会显示在任务与账号列表中。");
         }, I18n.L("登录"));
 	}

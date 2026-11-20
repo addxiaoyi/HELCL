@@ -43,6 +43,7 @@ public sealed partial class MainWindow
         await CheckResourceBinding();
         await CheckDocumentReleaseBinding();
         await CheckDesktopRecheckSafetyAsync();
+        await CheckDesktopDetailsAsync();
 
         var document = new MessageDocument { Text = "# Heading\ntext\n```sh\necho fixture\n```" };
         if (document.Content is not StackPanel { Children.Count: > 2 }) throw new IOException("Structured AI document did not render its code block.");

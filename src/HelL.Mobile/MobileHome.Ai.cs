@@ -15,6 +15,7 @@ public sealed partial class MobileHome
     private MobileAiProfile? aiProfile;
     private bool aiNearBottom = true;
     private string failedPrompt = "";
+    private Func<string, CancellationToken, Task>? aiSendPreview;
     private readonly Button aiRecoverHistory = new() { Content = "备份损坏记录并重置", Classes = { "secondary" }, MinHeight = 44 };
     private string ChatPath => Path.Combine(root, "mobile-chat.json");
 
@@ -89,7 +90,8 @@ public sealed partial class MobileHome
         Status.Text = "AI 正在回复，可在底部停止。";
         try
         {
-            await Task.Run(() => session.Chat.Send(profile, prompt, QueueAiPaint, token), token);
+            if (aiSendPreview is { } preview) await preview(prompt, token);
+            else await Task.Run(() => session.Chat.Send(profile, prompt, QueueAiPaint, token), token);
             AiChatNotice.Text = "回复完成";
             Status.Text = "AI 回复完成。";
         }
@@ -124,6 +126,7 @@ public sealed partial class MobileHome
         if (operation is not null) { AiChatNotice.Text = "有任务开始执行，请等待或停止任务后再清空聊天。"; return; }
         try { session.Chat.Clear(); }
         catch (InvalidOperationException error) { AiChatNotice.Text = error.Message; return; }
+        failedPrompt = "";
         try { session.Chat.Save(ChatPath); }
         catch (Exception error) when (error is not OutOfMemoryException) { AiStorageNotice.Text = "保存聊天变更失败，当前内容仍在内存：" + error.Message; }
         AiUndoClearButton.IsVisible = true;
@@ -155,8 +158,31 @@ public sealed partial class MobileHome
         catch (Exception error) when (error is not OutOfMemoryException)
         { AiStorageNotice.Text = "重置未完成，原件没有被删除：" + error.Message; }
     }
-    private async void RetryAiMessage(object? sender, RoutedEventArgs e) { if (failedPrompt.Length > 0) await SendAiPromptAsync(failedPrompt); }
-    private void EditFailedAi(object? sender, RoutedEventArgs e) { AiPrompt.Text = failedPrompt; AiPrompt.Focus(); }
+    private async void RetryAiMessage(object? sender, RoutedEventArgs e) => await RetryFailedAiAsync();
+    private async Task RetryFailedAiAsync()
+    {
+        if (failedPrompt.Length == 0 || operation is not null) return;
+        string draft = AiPrompt.Text?.Trim() ?? "";
+        if (draft.Length > 0 && draft != failedPrompt)
+        {
+            AiChatNotice.Text = "新草稿已保留。请先发送或清空草稿，再重试上次问题。";
+            AiPrompt.Focus();
+            return;
+        }
+        await SendAiPromptAsync(failedPrompt);
+    }
+    private async void EditFailedAi(object? sender, RoutedEventArgs e) => await EditFailedAiAsync();
+    private async Task EditFailedAiAsync()
+    {
+        if (failedPrompt.Length == 0 || operation is not null) return;
+        string previous = failedPrompt;
+        string draft = AiPrompt.Text ?? "";
+        if (!string.IsNullOrWhiteSpace(draft) && draft.Trim() != previous
+            && !await ConfirmAsync("替换当前草稿？", "上次失败的问题将替换当前输入。取消可继续编辑新草稿。", "替换为失败问题")) return;
+        if (disposed || operation is not null || failedPrompt != previous || AiPrompt.Text != draft) return;
+        AiPrompt.Text = previous;
+        AiPrompt.Focus();
+    }
     private void JumpToLatestAi(object? sender, RoutedEventArgs e) { aiNearBottom = true; AiMessagesScroll.ScrollToEnd(); AiLatestButton.IsVisible = false; }
 
     private void QueueAiPaint()
@@ -179,6 +205,7 @@ public sealed partial class MobileHome
         AiEmpty.IsVisible = entries.Count == 0;
         AiRetryButton.IsVisible = AiEditRetryButton.IsVisible = failedPrompt.Length > 0;
         bool idle = operation == null;
+        AiRetryButton.IsEnabled = AiEditRetryButton.IsEnabled = idle;
         aiRecoverHistory.IsVisible = session.Chat.NeedsHistoryRecovery;
         aiRecoverHistory.IsEnabled = idle;
         AiSendButton.IsEnabled = AiSaveButton.IsEnabled = AiClearButton.IsEnabled = idle;

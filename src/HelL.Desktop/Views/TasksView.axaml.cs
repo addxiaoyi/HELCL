@@ -117,7 +117,7 @@ public partial class TasksView : UserControl
     private void UpdateDetails()
     {
         DetailTitle.Text = selected?.Title ?? "选择任务查看记录";
-        LogText.Text = selected == null ? "任务记录仅保留在本次会话中。" : string.Join(Environment.NewLine, selected.Log);
+        LogText.Text = selected == null ? "最近 100 条已结束任务会保存在本机；选择任务查看执行日志。" : string.Join(Environment.NewLine, selected.Log);
         CancelButton.IsVisible = selected?.CanCancel == true;
         RetryButton.IsVisible = selected?.State is DesktopTaskState.Failed or DesktopTaskState.Cancelled && retries.ContainsKey(selected.Id);
     }

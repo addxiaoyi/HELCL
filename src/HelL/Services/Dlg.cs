@@ -239,6 +239,7 @@ public static class Dlg
 			{
 				return textBox;
 			}
+            if (child is PasswordBox password && password.Focusable && password.IsEnabled && password.IsVisible) return password;
 			UIElement uIElement = FindInput(child);
 			if (uIElement != null)
 			{
@@ -525,7 +526,11 @@ public static class Dlg
 		var footer = Ui.V(10, error, Ui.H(8, cancel, submit).Right());
 		Border card = Shell(title, body, footer, width);
 		bool saving = false;
+        UIElement? previousEditor = null;
+        void RememberEditor(object sender, KeyboardFocusChangedEventArgs args) => previousEditor = args.NewFocus as UIElement;
+        body.GotKeyboardFocus += RememberEditor;
 		Layer layer = Push(card, () => completion.TrySetResult(false), ok: submit, canDismiss: () => !saving);
+        layer.Root.Unloaded += (_, _) => body.GotKeyboardFocus -= RememberEditor;
 		FocusOnLoad(layer, card, submit);
 		cancel.Click += (_, _) => layer.Dismiss();
 		submit.Click += async (_, _) =>
@@ -561,7 +566,7 @@ public static class Dlg
 				saving = false;
 				submit.IsEnabled = cancel.IsEnabled = body.IsEnabled = true;
 				submit.Content = label;
-				invalidField?.Focus();
+                if (!completion.Task.IsCompleted) (invalidField ?? previousEditor ?? FindInput(body))?.Focus();
 			}
 		};
 		return completion.Task;

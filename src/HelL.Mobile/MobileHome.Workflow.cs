@@ -25,6 +25,7 @@ public sealed partial class MobileHome
     private string? activeLocalTask;
     private TaskCompletionSource<bool>? confirmation;
     private Border? confirmationOverlay;
+    private Control? confirmationFocus;
     private CancellationTokenSource? versionsLoading;
     private sealed record FontSizeSnapshot(double Value);
     private readonly System.Runtime.CompilerServices.ConditionalWeakTable<Control, FontSizeSnapshot> originalFontSizes = new();
@@ -226,6 +227,7 @@ public sealed partial class MobileHome
     {
         if (confirmation is not null) return Task.FromResult(false);
         confirmation = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        confirmationFocus = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Control;
         var content = new StackPanel { Spacing = 12, MaxWidth = 520 };
         content.Children.Add(new TextBlock { Text = title, Classes = { "section" }, TextWrapping = TextWrapping.Wrap });
         content.Children.Add(WorkflowText(message));
@@ -255,11 +257,16 @@ public sealed partial class MobileHome
     private void CompleteConfirmation(bool accepted)
     {
         TaskCompletionSource<bool>? pending = confirmation;
+        Control? previousFocus = confirmationFocus;
+        confirmationFocus = null;
         confirmation = null;
         if (confirmationOverlay is not null) Pages.Children.Remove(confirmationOverlay);
         confirmationOverlay = null;
         foreach ((Control background, bool enabled) in confirmationBackground) background.IsEnabled = enabled;
         confirmationBackground.Clear();
+        if (!accepted && !disposed && previousFocus is { IsEffectivelyVisible: true, IsEffectivelyEnabled: true }
+            && TopLevel.GetTopLevel(this) is { } top && ReferenceEquals(TopLevel.GetTopLevel(previousFocus), top))
+            previousFocus.Focus();
         pending?.TrySetResult(accepted);
     }
 

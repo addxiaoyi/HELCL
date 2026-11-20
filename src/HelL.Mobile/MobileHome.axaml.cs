@@ -244,6 +244,8 @@ public sealed partial class MobileHome : UserControl, IDisposable
     private async void GoResources(object? sender, RoutedEventArgs e) => await NavigateCheckedAsync("resources");
     private void ShowPage(string page, bool remember = true)
     {
+        if (currentPage == "resources" && page != currentPage && SearchPanel.IsVisible)
+            resourceListOffset = ResourcesPage.Offset;
         if (page != currentPage) ++navigationRevision;
         if (remember && currentPage != page && (pageHistory.Count == 0 || pageHistory.Peek() != currentPage)) pageHistory.Push(currentPage);
         currentPage = page;

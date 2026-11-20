@@ -156,3 +156,7 @@ Claude Desktop 等只支持 stdio 的客户端可以通过 `npx mcp-remote http:
 ## 前端百项复核（2026-11-19）
 
 本次增量修复真实实例虚拟化、原子设置保存与三端异步状态边界，验收与未验证设备条件见 [复核交付说明](docs/frontend-recheck-2026-11-19.md) 和 [100 项状态](docs/frontend-completion-status.json)。基于 Draft PR #6，不包含合并、发布或部署。
+
+## 前端交互细节（2026-11-20）
+
+继续完善登录输入校验、错误与焦点恢复、AI 草稿及日志发送确认、配置保存反馈和资源列表阅读位置。具体修补与验收边界见 [交互细节记录](docs/frontend-details-2026-11-20.md)，基于已验提交 `1fbdeae`；真机触控与读屏仍需专项验收。

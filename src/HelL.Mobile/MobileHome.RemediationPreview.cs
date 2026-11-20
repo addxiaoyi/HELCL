@@ -12,6 +12,7 @@ public sealed partial class MobileHome
     {
         await CheckMobileRecheckAsync();
         await CheckMobileSafetyGuardsAsync();
+        await CheckMobileDetailsAsync();
         ShowPage("manage");
         string originalName = InstanceName.Text ?? "";
         InstanceName.Text = originalName + " draft";

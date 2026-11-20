@@ -3,7 +3,7 @@ name: Frontend completion acceptance
 on:
   workflow_dispatch:
   pull_request:
-    branches: ['codex/remote-close-loop', 'codex/frontend-foundation', 'codex/frontend-completion']
+    branches: ['codex/remote-close-loop', 'codex/frontend-foundation', 'codex/frontend-completion', 'codex/frontend-recheck']
 
 permissions:
   contents: read

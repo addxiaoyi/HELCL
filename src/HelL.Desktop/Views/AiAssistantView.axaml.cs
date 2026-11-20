@@ -16,6 +16,7 @@ public partial class AiAssistantView : UserControl
     private bool failedPromptNeedsReview;
     private bool reviewLog;
     internal Func<string, CancellationToken, Task>? SendFixture { get; set; }
+    internal Func<DesktopAiProfile, CancellationToken, Task>? SaveConfigFixture { get; set; }
 
     public AiAssistantView() => InitializeComponent();
 
@@ -62,7 +63,9 @@ public partial class AiAssistantView : UserControl
             EndpointBox.Text = "http://127.0.0.1:11434/v1";
     }
 
-    private async void SaveConfig(object? sender, RoutedEventArgs e)
+    private async void SaveConfig(object? sender, RoutedEventArgs e) => await SaveConfigurationAsync();
+
+    internal async Task SaveConfigurationAsync()
     {
         if (host == null) return;
         await host.RunTask(async token =>
@@ -71,12 +74,19 @@ public partial class AiAssistantView : UserControl
             string key = ApiKeyBox.Text ?? "";
             if (key.Length == 0 && activeProfile?.Mode == mode) key = activeProfile.ApiKey;
             var profile = DesktopAiProfile.Validate(mode, EndpointBox.Text ?? "", ModelBox.Text ?? "", key);
-            await Task.Run(() => DesktopAiProfile.Save(Config.CONFIG, session.Secrets, profile), token);
-            activeProfile = profile;
-            ApiKeyBox.Clear();
-            ConfigPanel.IsVisible = false;
-            ProviderSubtitle.Text = $"当前模型：{profile.Model} · {new Uri(profile.Endpoint).Host}";
-            host.SetStatus("AI 模型连接配置已保存。");
+            bool wasEnabled = ConfigPanel.IsEnabled;
+            ConfigPanel.IsEnabled = false;
+            try
+            {
+                if (SaveConfigFixture is { } save) await save(profile, token);
+                else await Task.Run(() => DesktopAiProfile.Save(Config.CONFIG, session.Secrets, profile), token);
+                activeProfile = profile;
+                ApiKeyBox.Clear();
+                ConfigPanel.IsVisible = false;
+                ProviderSubtitle.Text = $"当前模型：{profile.Model} · {new Uri(profile.Endpoint).Host}";
+                host.SetStatus("AI 模型连接配置已保存。");
+            }
+            finally { ConfigPanel.IsEnabled = wasEnabled; }
         });
     }
 
@@ -135,7 +145,8 @@ public partial class AiAssistantView : UserControl
     internal async Task SendCurrentPromptAsync()
     {
         if (host == null) return;
-        string prompt = PromptInput.Text?.Trim() ?? "";
+        string draft = PromptInput.Text ?? "";
+        string prompt = draft.Trim();
         if (prompt.Length == 0)
         {
             PromptInput.Focus();
@@ -149,6 +160,12 @@ public partial class AiAssistantView : UserControl
         {
             prompt = LogPreview.Redact(prompt);
             if (!await host.ConfirmAction("发送日志分析", $"目标服务：{new Uri(profile.Endpoint).Host}\n模式：{profile.Mode}\n请确认以下脱敏内容可以发送：\n\n{prompt}", "确认发送")) return;
+            if ((PromptInput.Text ?? "") != draft || reviewLog != requiresReview)
+            {
+                host.SetStatus("待发送内容已变化，新草稿已保留。请重新核对后再发送。");
+                PromptInput.Focus();
+                return;
+            }
         }
         await host.RunTask(async token =>
         {
@@ -183,9 +200,29 @@ public partial class AiAssistantView : UserControl
 
     private async void CopyBubbleText(object? sender, RoutedEventArgs e)
     {
-        if (host?.Clipboard == null || sender is not Button { Tag: string content } || string.IsNullOrEmpty(content)) return;
-        await Avalonia.Input.Platform.ClipboardExtensions.SetTextAsync(host.Clipboard, content);
-        host.SetStatus("已复制飞鱼 AI 回复内容。");
+        if (sender is Button { Tag: string content }) await CopyReplyAsync(content);
+    }
+
+    internal async Task<bool> CopyReplyAsync(string content, Func<string, Task>? write = null)
+    {
+        if (string.IsNullOrEmpty(content)) return false;
+        try
+        {
+            if (write is not null) await write(content);
+            else
+            {
+                if (host?.Clipboard is not { } clipboard) throw new IOException("Clipboard unavailable.");
+                await Avalonia.Input.Platform.ClipboardExtensions.SetTextAsync(clipboard, content);
+            }
+            host?.SetStatus("已复制飞鱼 AI 回复内容。");
+            return true;
+        }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        {
+            host?.SetStatus("回复复制失败，原内容已保留。请检查系统剪贴板后重试。");
+            System.Diagnostics.Trace.TraceWarning("AiAssistantView.CopyReplyAsync: " + error.GetType().Name);
+            return false;
+        }
     }
 
     private async void ClearConversation(object? sender, RoutedEventArgs e)

@@ -12,11 +12,35 @@ public static class FieldState
     public static readonly DependencyProperty HasErrorProperty = HasErrorKey.DependencyProperty;
     public static bool GetHasError(DependencyObject field) => (bool)field.GetValue(HasErrorProperty);
     public static readonly DependencyProperty ErrorProperty = DependencyProperty.RegisterAttached(
-        "Error", typeof(string), typeof(FieldState), new FrameworkPropertyMetadata("", (field, args) =>
-            field.SetValue(HasErrorKey, !string.IsNullOrEmpty((string)args.NewValue))));
+        "Error", typeof(string), typeof(FieldState), new FrameworkPropertyMetadata("", ErrorChanged));
 
     public static string GetError(DependencyObject field) => (string)field.GetValue(ErrorProperty);
     public static void SetError(DependencyObject field, string message) => field.SetValue(ErrorProperty, message);
+
+    private static void ErrorChanged(DependencyObject field, DependencyPropertyChangedEventArgs args)
+    {
+        bool hasError = !string.IsNullOrEmpty((string)args.NewValue);
+        field.SetValue(HasErrorKey, hasError);
+        if (field is TextBox input)
+        {
+            input.TextChanged -= ClearTextError;
+            if (hasError) input.TextChanged += ClearTextError;
+        }
+        else if (field is PasswordBox password)
+        {
+            password.PasswordChanged -= ClearPasswordError;
+            if (hasError) password.PasswordChanged += ClearPasswordError;
+        }
+        else if (field is ComboBox combo)
+        {
+            combo.SelectionChanged -= ClearSelectionError;
+            if (hasError) combo.SelectionChanged += ClearSelectionError;
+        }
+    }
+
+    private static void ClearTextError(object sender, TextChangedEventArgs args) => SetError((DependencyObject)sender, "");
+    private static void ClearPasswordError(object sender, RoutedEventArgs args) => SetError((DependencyObject)sender, "");
+    private static void ClearSelectionError(object sender, SelectionChangedEventArgs args) => SetError((DependencyObject)sender, "");
 
     public static TextBlock ErrorText(UIElement field)
     {
@@ -31,8 +55,6 @@ public static class FieldState
         var text = new TextBlock { Style = style };
         text.SetResourceReference(TextBlock.ForegroundProperty, "B.Danger");
         text.SetBinding(TextBlock.TextProperty, new Binding { Source = field, Path = new PropertyPath(ErrorProperty) });
-        if (field is TextBox input) input.TextChanged += (_, _) => SetError(field, "");
-        if (field is ComboBox combo) combo.SelectionChanged += (_, _) => SetError(field, "");
         return text;
     }
 }

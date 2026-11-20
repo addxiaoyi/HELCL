@@ -124,6 +124,7 @@ def verify(apk: Path, output: Path) -> None:
         if not isinstance(recheck, dict) or recheck.get("ok") is not True:
             raise RuntimeError("Android frontend recheck assertions did not pass.")
         require_receipt(evidence, "mobile-details-preview.json")
+        require_receipt(evidence, "mobile-icons.json")
         screenshot(output / "01-home.png")
         tap_match(("管理当前实例", "管理实例"))
         time.sleep(0.5)
@@ -172,6 +173,7 @@ def verify(apk: Path, output: Path) -> None:
         remediation_200 = require_receipt(evidence_200, "mobile-frontend-remediation.json")
         recheck_200 = require_receipt(evidence_200, "mobile-recheck-preview.json")
         details_200 = require_receipt(evidence_200, "mobile-details-preview.json")
+        icons_200 = require_receipt(evidence_200, "mobile-icons.json")
         layout_200 = require_receipt(evidence_200, "mobile-system-font-200.json")
         if layout_200.get("systemTextScale", 0) < 1.99 or any(layout_200.get(key) is not True for key in
                 ("primaryActionVisible", "dynamicInheritedTextStable", "bottomLabelsSingleLine")):
@@ -214,6 +216,7 @@ def verify(apk: Path, output: Path) -> None:
                       "fontScaleObserved": enlarged["systemTextScale"], "fontHomeRendered": True,
                       "frontendRecheck": True, "fontScale200Observed": enlarged_200["systemTextScale"],
                       "frontendDetails": True, "font200Details": details_200["ok"],
+                      "vectorIcons": True, "font200VectorIcons": icons_200["ok"],
                       "fontHome200Rendered": True, "font200ProcessRestarted": restarted_process_200 != smoke_process_200,
                       "font200Session": session_200, "font200Smoke": smoke_200["ok"],
                       "font200Remediation": remediation_200["ok"], "font200Recheck": recheck_200["ok"],

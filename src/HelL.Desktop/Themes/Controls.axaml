@@ -5,9 +5,12 @@
   </Style>
   <Style Selector="Window">
     <Setter Property="FontSize" Value="13.5" />
-    <Setter Property="FontFamily" Value="-apple-system, SF Pro Display, SF Pro Text, Segoe UI Variable Display, PingFang SC, Microsoft YaHei UI, Noto Sans CJK SC" />
+    <Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}" />
     <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
   </Style>
+  <Style Selector="TextBlock"><Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}"/></Style>
+  <Style Selector="SelectableTextBlock"><Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}"/></Style>
+  <Style Selector="ContentPresenter"><Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}"/></Style>
 
   <!-- VisionOS / macOS 通透毛玻璃按钮 -->
   <Style Selector="Button">

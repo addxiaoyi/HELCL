@@ -2,7 +2,7 @@
         xmlns:portable="using:HelL.Portable"
         xmlns:views="using:HelL.Desktop.Views"
         xmlns:controls="using:HelL.Desktop.Controls"
-        xmlns:icons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        xmlns:icons="using:HelL.Design"
         x:Class="HelL.Desktop.MainWindow"
         Title="HelL" Width="1180" Height="760" MinWidth="800" MinHeight="600"
         WindowDecorations="BorderOnly"
@@ -34,20 +34,20 @@
                 <TextBlock Text="工作台" Classes="group-header" Margin="10,2,0,3" />
                 <Button Tag="launch" Click="Navigate" Classes="nav">
                   <StackPanel Orientation="Horizontal" Spacing="9">
-                    <icons:MaterialIcon Kind="PlayCircleOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <icons:LauncherIcon Kind="PlayCircleOutline" Width="18" Height="18" VerticalAlignment="Center" />
                     <TextBlock Text="启动工作台" FontSize="12.5" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
                 <Button Tag="library" Click="Navigate" Classes="nav">
                   <Grid ColumnDefinitions="Auto,*,Auto">
-                    <icons:MaterialIcon Kind="FolderOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <icons:LauncherIcon Kind="FolderOutline" Width="18" Height="18" VerticalAlignment="Center" />
                     <TextBlock Grid.Column="1" Text="我的实例" FontSize="12.5" Margin="9,0,0,0" VerticalAlignment="Center" />
                     <TextBlock x:Name="InstanceCount" Grid.Column="2" Text="0" FontSize="11" Classes="muted" VerticalAlignment="Center" />
                   </Grid>
                 </Button>
                 <Button Tag="install" Click="Navigate" Classes="nav">
                   <StackPanel Orientation="Horizontal" Spacing="9">
-                    <icons:MaterialIcon Kind="ArrowDownCircleOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <icons:LauncherIcon Kind="ArrowDownCircleOutline" Width="18" Height="18" VerticalAlignment="Center" />
                     <TextBlock Text="版本与整合包" FontSize="12.5" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
@@ -55,25 +55,25 @@
                 <TextBlock Text="内容生态" Classes="group-header" Margin="10,8,0,3" />
                 <Button Tag="resources" Click="Navigate" Classes="nav">
                   <StackPanel Orientation="Horizontal" Spacing="9">
-                    <icons:MaterialIcon Kind="CompassOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <icons:LauncherIcon Kind="CompassOutline" Width="18" Height="18" VerticalAlignment="Center" />
                     <TextBlock Text="资源下载中心" FontSize="12.5" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
                 <Button Tag="mods" Click="Navigate" Classes="nav">
                   <StackPanel Orientation="Horizontal" Spacing="9">
-                    <icons:MaterialIcon Kind="PuzzleOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <icons:LauncherIcon Kind="PuzzleOutline" Width="18" Height="18" VerticalAlignment="Center" />
                     <TextBlock Text="模组与光影" FontSize="12.5" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
                 <Button Tag="saves" Click="Navigate" Classes="nav">
                   <StackPanel Orientation="Horizontal" Spacing="9">
-                    <icons:MaterialIcon Kind="Earth" Width="15" Height="15" VerticalAlignment="Center" />
+                    <icons:LauncherIcon Kind="Earth" Width="18" Height="18" VerticalAlignment="Center" />
                     <TextBlock Text="存档与日志" FontSize="12.5" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
                 <Button Tag="servers" Click="Navigate" Classes="nav">
                   <StackPanel Orientation="Horizontal" Spacing="9">
-                    <icons:MaterialIcon Kind="ServerNetwork" Width="15" Height="15" VerticalAlignment="Center" />
+                    <icons:LauncherIcon Kind="ServerNetwork" Width="18" Height="18" VerticalAlignment="Center" />
                     <TextBlock Text="多人联机" FontSize="12.5" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
@@ -81,25 +81,25 @@
                 <TextBlock Text="系统与工具" Classes="group-header" Margin="10,8,0,3" />
                 <Button Tag="ai" Click="Navigate" Classes="nav">
                   <StackPanel Orientation="Horizontal" Spacing="9">
-                    <icons:MaterialIcon Kind="CreationOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <icons:LauncherIcon Kind="CreationOutline" Width="18" Height="18" VerticalAlignment="Center" />
                     <TextBlock Text="AI 助手" FontSize="12.5" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
                 <Button Tag="java" Click="Navigate" Classes="nav">
                   <StackPanel Orientation="Horizontal" Spacing="9">
-                    <icons:MaterialIcon Kind="CoffeeOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <icons:LauncherIcon Kind="CoffeeOutline" Width="18" Height="18" VerticalAlignment="Center" />
                     <TextBlock Text="Java 运行时" FontSize="12.5" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
                 <Button Tag="playtime" Click="Navigate" Classes="nav">
                   <StackPanel Orientation="Horizontal" Spacing="9">
-                    <icons:MaterialIcon Kind="ClockOutline" Width="15" Height="15" VerticalAlignment="Center" />
+                    <icons:LauncherIcon Kind="ClockOutline" Width="18" Height="18" VerticalAlignment="Center" />
                     <TextBlock Text="游玩统计" FontSize="12.5" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
                 <Button Tag="tasks" Click="Navigate" Classes="nav">
                   <StackPanel Orientation="Horizontal" Spacing="9">
-                    <icons:MaterialIcon Kind="FormatListChecks" Width="15" Height="15" VerticalAlignment="Center" />
+                    <icons:LauncherIcon Kind="FormatListChecks" Width="18" Height="18" VerticalAlignment="Center" />
                     <TextBlock Text="任务队列" FontSize="12.5" VerticalAlignment="Center" />
                   </StackPanel>
                 </Button>
@@ -107,7 +107,12 @@
             </ScrollViewer>
 
             <!-- 底部实例速切区 -->
-            <StackPanel Grid.Row="2" Spacing="4"><Button x:Name="FooterSettingsButton" Tag="settings" Content="设置" Classes="nav" Click="Navigate" AutomationProperties.Name="设置" /><Button Content="易读字号 / 标准字号" Classes="ghost" Click="ToggleReadableText" FontSize="12" /></StackPanel>
+            <StackPanel Grid.Row="2" Spacing="4">
+              <Button x:Name="FooterSettingsButton" Tag="settings" Classes="nav" Click="Navigate" AutomationProperties.Name="设置">
+                <StackPanel Orientation="Horizontal" Spacing="9"><icons:LauncherIcon x:Name="SettingsIcon" Kind="CogOutline" Width="18" Height="18" VerticalAlignment="Center"/><TextBlock Text="设置" FontSize="12.5" VerticalAlignment="Center"/></StackPanel>
+              </Button>
+              <Button Content="易读字号 / 标准字号" Classes="ghost" Click="ToggleReadableText" FontSize="12" />
+            </StackPanel>
             <Border Grid.Row="3" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="0,1,0,0" Padding="0,7,0,5" Margin="0,5,0,0">
               <Grid MaxHeight="84">
                 <TextBlock x:Name="LibraryEmpty" Text="暂无实例" Classes="muted" FontSize="11.5" Margin="8,3" />
@@ -137,7 +142,7 @@
             <StackPanel Grid.Row="4" Spacing="4">
               <Grid ColumnDefinitions="*,32" ColumnSpacing="6">
                 <TextBox x:Name="InstanceName" PlaceholderText="新建实例…" MaxLength="48" MinHeight="30" Padding="9,4" FontSize="12" TextChanged="EditInstanceName" KeyDown="SubmitInstanceName" AutomationProperties.Name="新实例名称" />
-                <Button Grid.Column="1" x:Name="CreateButton" Classes="soft" Content="+" Width="32" MinHeight="30" Padding="0" FontSize="14" Click="CreateInstance" HorizontalContentAlignment="Center" AutomationProperties.Name="创建实例" />
+                <Button Grid.Column="1" x:Name="CreateButton" Classes="soft" Width="32" MinHeight="30" Padding="0" Click="CreateInstance" HorizontalContentAlignment="Center" AutomationProperties.Name="创建实例"><icons:LauncherIcon Kind="Plus" Width="16" Height="16"/></Button>
               </Grid>
               <TextBlock x:Name="InstanceError" Classes="error" FontSize="11" TextWrapping="Wrap" IsVisible="False" Margin="2,0" />
             </StackPanel>
@@ -150,7 +155,7 @@
           <Border Grid.Row="0" Background="Transparent" PointerPressed="BeginTitleBarDrag" DoubleTapped="ToggleMaximizeTitleBar">
             <Grid ColumnDefinitions="*,Auto,*">
               <TextBlock x:Name="ChromeTitle" IsVisible="False" FontSize="12" TextWrapping="Wrap" />
-              <TextBlock x:Name="TopInstanceLabel" Grid.Column="1" IsVisible="True" TextTrimming="CharacterEllipsis" MaxWidth="400" FontSize="12.5" ToolTip.Tip="{Binding #TopInstanceLabel.Text}" />
+              <TextBlock x:Name="TopInstanceLabel" Grid.Column="1" IsVisible="True" TextTrimming="CharacterEllipsis" MaxWidth="400" FontSize="12.5" VerticalAlignment="Center" ToolTip.Tip="{Binding #TopInstanceLabel.Text}" />
 
               <Border x:Name="InstanceSegBar" Grid.Column="1" Classes="segmented" VerticalAlignment="Center" IsVisible="False">
                 <StackPanel x:Name="InstanceSegButtons" Orientation="Horizontal" Spacing="2">
@@ -172,13 +177,13 @@
 
               <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" HorizontalAlignment="Right" Margin="0,0,8,0" VerticalAlignment="Center">
                 <Button Classes="caption" Click="MinimizeWindow" ToolTip.Tip="最小化" AutomationProperties.Name="最小化">
-                  <icons:MaterialIcon Kind="WindowMinimize" Width="14" Height="14" />
+                  <icons:LauncherIcon Kind="WindowMinimize" Width="14" Height="14" />
                 </Button>
-                <Button Classes="caption" Click="MaximizeRestoreWindow" ToolTip.Tip="最大化 / 还原" AutomationProperties.Name="最大化">
-                  <icons:MaterialIcon x:Name="MaxIcon" Kind="WindowMaximize" Width="14" Height="14" />
+                <Button x:Name="MaximizeButton" Classes="caption" Click="MaximizeRestoreWindow" ToolTip.Tip="最大化" AutomationProperties.Name="最大化">
+                  <icons:LauncherIcon x:Name="MaxIcon" Kind="WindowMaximize" Width="14" Height="14" />
                 </Button>
                 <Button Classes="caption close" Click="CloseWindow" ToolTip.Tip="关闭" AutomationProperties.Name="关闭">
-                  <icons:MaterialIcon Kind="WindowClose" Width="15" Height="15" />
+                  <icons:LauncherIcon Kind="WindowClose" Width="15" Height="15" />
                 </Button>
               </StackPanel>
             </Grid>
@@ -199,7 +204,7 @@
                 <Border x:Name="WelcomePanel" Classes="surface" Padding="32,36">
                   <StackPanel Spacing="14" HorizontalAlignment="Center">
                     <Border Width="42" Height="42" CornerRadius="11" Background="{DynamicResource HelL.Field}" BorderBrush="{DynamicResource HelL.GlassBorder}" BorderThickness="1" HorizontalAlignment="Center">
-                      <icons:MaterialIcon Kind="CubeOutline" Width="20" Height="20" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      <icons:LauncherIcon Kind="CubeOutline" Width="20" Height="20" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <TextBlock Text="创建第一个 Minecraft 实例" FontSize="19" FontWeight="SemiBold" HorizontalAlignment="Center" />
                     <TextBlock Text="每个实例拥有独立的游戏核心、模组、光影、存档与启动参数。" Classes="muted" FontSize="13" TextAlignment="Center" MaxWidth="400" TextWrapping="Wrap" />
@@ -242,7 +247,7 @@
                       <StackPanel Spacing="6">
                         <Grid ColumnDefinitions="*,Auto">
                           <TextBlock Text="模组与光影" Classes="group-header" />
-                          <icons:MaterialIcon Grid.Column="1" Kind="PuzzleOutline" Width="15" Height="15" Foreground="{DynamicResource HelL.Muted}" />
+                          <icons:LauncherIcon Grid.Column="1" Kind="PuzzleOutline" Width="15" Height="15" Foreground="{DynamicResource HelL.Muted}" />
                         </Grid>
                         <TextBlock x:Name="MetricModsValue" Text="0 项内容" FontSize="17" FontWeight="SemiBold" />
                         <TextBlock x:Name="MetricModsSub" Text="管理本地包 ›" Classes="muted" FontSize="11.5" />
@@ -253,7 +258,7 @@
                       <StackPanel Spacing="6">
                         <Grid ColumnDefinitions="*,Auto">
                           <TextBlock Text="世界与日志" Classes="group-header" />
-                          <icons:MaterialIcon Grid.Column="1" Kind="Earth" Width="15" Height="15" Foreground="{DynamicResource HelL.Muted}" />
+                          <icons:LauncherIcon Grid.Column="1" Kind="Earth" Width="15" Height="15" Foreground="{DynamicResource HelL.Muted}" />
                         </Grid>
                         <TextBlock x:Name="MetricSavesValue" Text="0 个世界" FontSize="17" FontWeight="SemiBold" />
                         <TextBlock x:Name="MetricSavesSub" Text="快照备份与日志 ›" Classes="muted" FontSize="11.5" />
@@ -264,7 +269,7 @@
                       <StackPanel Spacing="6">
                         <Grid ColumnDefinitions="*,Auto">
                           <TextBlock Text="多人联机" Classes="group-header" />
-                          <icons:MaterialIcon Grid.Column="1" Kind="ServerNetwork" Width="15" Height="15" Foreground="{DynamicResource HelL.Muted}" />
+                          <icons:LauncherIcon Grid.Column="1" Kind="ServerNetwork" Width="15" Height="15" Foreground="{DynamicResource HelL.Muted}" />
                         </Grid>
                         <TextBlock x:Name="MetricServersValue" Text="0 个服务器" FontSize="17" FontWeight="SemiBold" />
                         <TextBlock x:Name="MetricServersSub" Text="直连与局域网 ›" Classes="muted" FontSize="11.5" />
@@ -275,7 +280,7 @@
                       <StackPanel Spacing="6">
                         <Grid ColumnDefinitions="*,Auto">
                           <TextBlock Text="游玩足迹" Classes="group-header" />
-                          <icons:MaterialIcon Grid.Column="1" Kind="ClockOutline" Width="15" Height="15" Foreground="{DynamicResource HelL.Muted}" />
+                          <icons:LauncherIcon Grid.Column="1" Kind="ClockOutline" Width="15" Height="15" Foreground="{DynamicResource HelL.Muted}" />
                         </Grid>
                         <TextBlock x:Name="MetricPlaytimeValue" Text="0 分钟" FontSize="17" FontWeight="SemiBold" />
                         <TextBlock x:Name="MetricPlaytimeSub" Text="查看时长统计 ›" Classes="muted" FontSize="11.5" />
@@ -303,7 +308,7 @@
                             <TextBlock Text="游戏账户" FontWeight="Medium" VerticalAlignment="Center" />
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
                               <Border Width="28" Height="28" CornerRadius="99" Background="{DynamicResource HelL.Field}" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="1">
-                                <icons:MaterialIcon Kind="AccountOutline" Width="15" Height="15" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <icons:LauncherIcon Kind="AccountOutline" Width="15" Height="15" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                               </Border>
                               <StackPanel Spacing="1" VerticalAlignment="Center">
                                 <TextBlock x:Name="AccountName" Text="微软账号" FontSize="13" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
@@ -362,37 +367,37 @@
                           <UniformGrid Rows="2" Columns="3">
                             <Button Classes="soft" Tag="mod" Click="QuickCategoryJump" Margin="0,0,6,6" Padding="8,10" HorizontalAlignment="Stretch">
                               <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                <icons:MaterialIcon Kind="PuzzleOutline" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
+                                <icons:LauncherIcon Kind="PuzzleOutline" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
                                 <TextBlock Text="模组" FontSize="12" HorizontalAlignment="Center" />
                               </StackPanel>
                             </Button>
                             <Button Classes="soft" Tag="shader" Click="QuickCategoryJump" Margin="0,0,6,6" Padding="8,10" HorizontalAlignment="Stretch">
                               <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                <icons:MaterialIcon Kind="WhiteBalanceSunny" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
+                                <icons:LauncherIcon Kind="WhiteBalanceSunny" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
                                 <TextBlock Text="光影" FontSize="12" HorizontalAlignment="Center" />
                               </StackPanel>
                             </Button>
                             <Button Classes="soft" Tag="modpack" Click="QuickCategoryJump" Margin="0,0,0,6" Padding="8,10" HorizontalAlignment="Stretch">
                               <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                <icons:MaterialIcon Kind="CubeOutline" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
+                                <icons:LauncherIcon Kind="CubeOutline" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
                                 <TextBlock Text="整合包" FontSize="12" HorizontalAlignment="Center" />
                               </StackPanel>
                             </Button>
                             <Button Classes="soft" Tag="resourcepack" Click="QuickCategoryJump" Margin="0,0,6,0" Padding="8,10" HorizontalAlignment="Stretch">
                               <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                <icons:MaterialIcon Kind="LayersTripleOutline" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
+                                <icons:LauncherIcon Kind="LayersTripleOutline" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
                                 <TextBlock Text="资源包" FontSize="12" HorizontalAlignment="Center" />
                               </StackPanel>
                             </Button>
                             <Button Classes="soft" Tag="world" Click="QuickCategoryJump" Margin="0,0,6,0" Padding="8,10" HorizontalAlignment="Stretch">
                               <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                <icons:MaterialIcon Kind="Earth" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
+                                <icons:LauncherIcon Kind="Earth" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
                                 <TextBlock Text="世界地图" FontSize="12" HorizontalAlignment="Center" />
                               </StackPanel>
                             </Button>
                             <Button Classes="soft" Tag="ai" Click="Navigate" Padding="8,10" HorizontalAlignment="Stretch">
                               <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                <icons:MaterialIcon Kind="CreationOutline" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
+                                <icons:LauncherIcon Kind="CreationOutline" Width="17" Height="17" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" />
                                 <TextBlock Text="AI 诊断" FontSize="12" HorizontalAlignment="Center" />
                               </StackPanel>
                             </Button>

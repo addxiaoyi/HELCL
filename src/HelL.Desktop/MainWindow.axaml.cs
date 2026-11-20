@@ -3,6 +3,8 @@ using Avalonia.Interactivity;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Avalonia.LogicalTree;
+using HelL.Design;
 using HelL.Core;
 using HelL.Core.Launcher;
 using HelL.Portable;
@@ -45,9 +47,14 @@ public sealed partial class MainWindow : Window
         PropertyChanged += (_, change) =>
         {
             if (change.Property == WindowStateProperty && MaxIcon != null)
+            {
                 MaxIcon.Kind = WindowState == WindowState.Maximized
-                    ? Material.Icons.MaterialIconKind.WindowRestore
-                    : Material.Icons.MaterialIconKind.WindowMaximize;
+                    ? "WindowRestore"
+                    : "WindowMaximize";
+                string action = WindowState == WindowState.Maximized ? "还原" : "最大化";
+                Avalonia.Automation.AutomationProperties.SetName(MaximizeButton, action);
+                ToolTip.SetTip(MaximizeButton, action);
+            }
         };
         ReloadInstances(launcher.SelectedInstance);
         ShowPage("launch");
@@ -585,10 +592,15 @@ public sealed partial class MainWindow : Window
         TasksView.IsVisible = page == "tasks";
         SettingsView.IsVisible = page == "settings";
         FooterSettingsButton.Classes.Set("current", page == "settings");
+        SettingsIcon.Active = page == "settings";
         ApplyFrontendLayout();
 
         foreach (var button in Navigation.Children.OfType<Button>())
-            button.Classes.Set("current", (string?)button.Tag == page);
+        {
+            bool current = (string?)button.Tag == page;
+            button.Classes.Set("current", current);
+            foreach (var icon in button.GetLogicalDescendants().OfType<LauncherIcon>()) icon.Active = current;
+        }
 
         if (!Program.UiSmoke && PageHost != null)
         {

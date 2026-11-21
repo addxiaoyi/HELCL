@@ -55,6 +55,21 @@ public sealed partial class MainWindow
                     SelectableTextBlock codeText = document.GetLogicalDescendants().OfType<SelectableTextBlock>().Single(text => text.Text == code);
                     var prose = document.GetLogicalDescendants().OfType<SelectableTextBlock>().Single(text => text.Text == "保留当前存档，确认 Minecraft 版本和加载器后再安装资源。");
                     Button copy = document.GetLogicalDescendants().OfType<Button>().Single(button => button.Content?.ToString() == "复制代码");
+                    document.ClipboardWriter = copied => copied == code ? Task.CompletedTask
+                        : Task.FromException(new IOException("The code-copy preview received unexpected text."));
+                    copy.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+                    Check(Avalonia.Automation.AutomationProperties.GetName(copy) == "代码已复制"
+                        && Avalonia.Automation.AutomationProperties.GetLiveSetting(copy) == Avalonia.Automation.AutomationLiveSetting.Polite,
+                        mode + " successful code copy exposes an accessible result");
+                    copy = document.GetLogicalDescendants().OfType<Button>().Single(button => button.Content?.ToString() == "已复制代码");
+                    document.ClipboardWriter = _ => Task.FromException(new IOException("Controlled clipboard rejection."));
+                    copy.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+                    Check(Avalonia.Automation.AutomationProperties.GetName(copy) == "代码复制失败，请重试"
+                        && Avalonia.Automation.AutomationProperties.GetLiveSetting(copy) == Avalonia.Automation.AutomationLiveSetting.Polite,
+                        mode + " failed code copy exposes retry guidance to assistive technology");
+                    document.ClipboardWriter = null;
+                    copy.Content = "复制代码";
+                    Avalonia.Automation.AutomationProperties.SetName(copy, "复制此代码块的原始内容");
                     double copyTop = (copy.TranslatePoint(default, document) ?? default).Y;
                     double codeTop = (codeText.TranslatePoint(default, document) ?? default).Y;
                     Check(prose.FontSize >= 14 && prose.LineHeight >= 22, mode + " assistant prose is too small or tightly spaced at " + viewport);

@@ -8,6 +8,7 @@ namespace HelL.Desktop.Controls;
 
 public sealed class MessageDocument : ContentControl
 {
+    internal Func<string, Task>? ClipboardWriter { get; set; }
     public static readonly StyledProperty<string> TextProperty = AvaloniaProperty.Register<MessageDocument, string>(nameof(Text), "");
     public string Text { get => GetValue(TextProperty); set => SetValue(TextProperty, value); }
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -65,17 +66,27 @@ public sealed class MessageDocument : ContentControl
     {
         var copy = new Button { Content = "复制代码", Classes = { "ghost" }, HorizontalAlignment = HorizontalAlignment.Right,
             MinHeight = 30, Padding = new Thickness(8, 3), FontSize = 12 };
-        Avalonia.Automation.AutomationProperties.SetName(copy, "复制此代码块");
+        Avalonia.Automation.AutomationProperties.SetName(copy, "复制此代码块的原始内容");
+        Avalonia.Automation.AutomationProperties.SetLiveSetting(copy, Avalonia.Automation.AutomationLiveSetting.Polite);
         copy.Click += async (_, _) =>
         {
             try
             {
-                if (TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard) throw new IOException("Clipboard unavailable.");
-                await clipboard.SetTextAsync(text);
+                if (ClipboardWriter is { } writer) await writer(text);
+                else
+                {
+                    if (TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard) throw new IOException("Clipboard unavailable.");
+                    await clipboard.SetTextAsync(text);
+                }
                 copy.Content = "已复制代码";
+                Avalonia.Automation.AutomationProperties.SetName(copy, "代码已复制");
             }
             catch (Exception error) when (error is not OutOfMemoryException)
-            { copy.Content = "复制失败，请重试"; System.Diagnostics.Trace.TraceWarning("MessageDocument copy: " + error.GetType().Name); }
+            {
+                copy.Content = "复制失败，请重试";
+                Avalonia.Automation.AutomationProperties.SetName(copy, "代码复制失败，请重试");
+                System.Diagnostics.Trace.TraceWarning("MessageDocument copy: " + error.GetType().Name);
+            }
         };
         bool knownLanguage = language.Length is > 0 and <= 24 && language.All(character => char.IsLetterOrDigit(character) || character is '#' or '+' or '-' or '_');
         var caption = new TextBlock { Text = knownLanguage ? language : "代码", FontSize = 12,

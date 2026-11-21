@@ -130,8 +130,6 @@ public sealed partial class MainWindow
                 return Task.FromResult<IReadOnlyList<CatalogProject>>(firstPage);
             };
             await ResourcesView.Search();
-            typeof(ResourceBrowserView).GetField("pageIndex", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-                .SetValue(ResourcesView, ResourceBrowserView.MaximumPageIndex - 1);
             typeof(ResourceBrowserView).GetField("displayedPage", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
                 .SetValue(ResourcesView, ResourceBrowserView.MaximumPageIndex - 1);
             next.IsEnabled = true;
@@ -144,6 +142,7 @@ public sealed partial class MainWindow
             next.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             if (boundaryOffset != PortableCatalog.MaximumSearchOffset - (PortableCatalog.MaximumSearchOffset % ResourceBrowserView.PageSize))
                 throw new IOException("The disabled resource pager attempted an out-of-range offset.");
+            await CheckResourceRetryAsync(firstPage, lastPage);
         }
         finally { ResourcesView.SearchFixture = null; ResourcesView.ReleasesFixture = null; ResourcesView.DetailsFixture = null; }
     }

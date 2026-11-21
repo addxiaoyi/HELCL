@@ -141,6 +141,26 @@ public sealed partial class MainWindow
                 || !failedItems.Any(task => task.Id == fixtureIdTask.Id)
                 || !failedItems.Any(task => task.Id == fixtureMessageTask.Id))
                 throw new InvalidOperationException("Task status filtering stopped working after reason/ID search.");
+            var progressTask = new Models.DesktopTask("Live task search fixture");
+            TasksView.Add(progressTask);
+            statePicker.SelectedIndex = 1;
+            searchBox.Text = "fixture-live-progress";
+            if (taskList.ItemCount != 0)
+                throw new InvalidOperationException("Live task search started with an unexpected match.");
+            progressTask.Report("fixture-live-progress", 10);
+            if (taskList.ItemCount != 1 || (taskList.SelectedItem as Models.DesktopTask)?.Id != progressTask.Id
+                || TasksView.FindControl<TextBlock>("EmptyNotice")!.IsVisible)
+                throw new InvalidOperationException("Task search did not include a running task whose updated message matches the query.");
+            progressTask.Report("fixture-no-longer-matching", 20);
+            if (taskList.ItemCount != 0 || !TasksView.FindControl<TextBlock>("EmptyNotice")!.IsVisible)
+                throw new InvalidOperationException("Task search retained a running task after its message stopped matching the query.");
+            progressTask.Finish(Models.DesktopTaskState.Failed, "fixture-live-progress");
+            if (taskList.ItemCount != 0)
+                throw new InvalidOperationException("Live message search bypassed the active-task filter after completion.");
+            statePicker.SelectedIndex = 2;
+            if (taskList.ItemCount != 1 || (taskList.SelectedItem as Models.DesktopTask)?.Id != progressTask.Id)
+                throw new InvalidOperationException("Failed-task search did not retain the matching final task message.");
+            searchBox.Clear();
             statePicker.SelectedIndex = 0;
             Task running = RunTask(async token =>
             {
@@ -243,7 +263,7 @@ public sealed partial class MainWindow
                 libraryNavigation = true, resourceTarget = true, unavailableDownloadDisabled = true,
                 corruptLibraryStartup = true,
                 imageDecodeBounds = true,
-                taskHistory = true, taskFiltering = true, taskSearchById = true, taskSearchByReason = true, taskCancellation = true,
+                taskHistory = true, taskFiltering = true, taskSearchById = true, taskSearchByReason = true, taskSearchLiveMessage = true, taskCancellation = true,
                 darkAndLightThemes = true, themePersistence = true,
                 launchOptions = true, loaderSelection = true, staleLoaderSelection = true
             }));

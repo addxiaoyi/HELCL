@@ -65,6 +65,8 @@ public partial class TasksView : UserControl
             }
             catch (Exception error) { host?.SetStatus("任务结果已完成，但历史保存失败。" ); System.Diagnostics.Trace.TraceWarning(error.GetType().Name); }
         }
+        else if (e.PropertyName == nameof(DesktopTask.Message) && !string.IsNullOrWhiteSpace(SearchBox.Text))
+            Refresh();
         if (ReferenceEquals(sender, selected)) UpdateDetails();
     }
 

@@ -16,7 +16,7 @@ public sealed partial class DesktopTask : INotifyPropertyChanged
     private bool cancellable = true;
 
     public event PropertyChangedEventHandler? PropertyChanged;
-    public Guid Id { get; } = Guid.NewGuid();
+    public Guid Id { get; }
     public string Title { get; }
     public DateTimeOffset StartedAt { get; }
     public string StartedLabel => StartedAt.ToString("HH:mm:ss");
@@ -38,8 +38,12 @@ public sealed partial class DesktopTask : INotifyPropertyChanged
     public bool CanCancel => cancellable && state == DesktopTaskState.Running;
 
     public DesktopTask(string title, DateTimeOffset? startedAt = null)
+        : this(title, startedAt, Guid.NewGuid()) { }
+
+    private DesktopTask(string title, DateTimeOffset? startedAt, Guid id)
     {
         if (string.IsNullOrWhiteSpace(title)) throw new ArgumentException("任务名称不能为空。", nameof(title));
+        Id = id;
         Title = title;
         StartedAt = startedAt ?? DateTimeOffset.Now;
     }
@@ -88,7 +92,16 @@ public sealed partial class DesktopTask : INotifyPropertyChanged
         Changed(nameof(FinishedAt));
     }
 
-    internal void RestoreFinishedAt(DateTimeOffset? finishedAt) => FinishedAt = finishedAt;
+    internal static DesktopTask RestoreTerminal(Guid id, string title, DesktopTaskState terminal, string message,
+        DateTimeOffset? startedAt, DateTimeOffset? finishedAt) =>
+        new(title, startedAt, id)
+        {
+            state = terminal,
+            message = message,
+            percent = terminal == DesktopTaskState.Completed ? 100 : 0,
+            indeterminate = false,
+            FinishedAt = finishedAt
+        };
 
     private void SetState(DesktopTaskState next)
     {

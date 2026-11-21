@@ -43,6 +43,9 @@ public sealed partial class MainWindow
         await CheckImportTarget(instance);
         await CheckResourceBinding();
         await CheckDocumentReleaseBinding();
+        await CheckLaunchLoaderRetriesAsync();
+        await CheckInstallerLoaderRetriesAsync();
+        await CheckLibraryRefreshRetryAsync();
         await CheckDesktopRecheckSafetyAsync();
         await CheckDesktopDetailsAsync();
         await CheckDesktopIconsAsync();

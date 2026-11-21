@@ -444,7 +444,7 @@ public sealed partial class MainWindow : Window
         task = cancellation;
         activeTask = new Models.DesktopTask(TaskTitle(operation));
         TasksView.Add(activeTask);
-        if (operation is "Search" or "LoadReleases" or "RefreshVersions" or "RefreshLoaderVersions" or "RefreshLibrary") TasksView.SetRetry(activeTask, action);
+        if (operation is "Search" or "LoadReleases" or "RefreshVersions" or "RefreshLoaderVersions" or "RefreshLibrary") TasksView.SetRetry(activeTask, operation, action);
         TaskState.Text = "进行中";
         TaskState.Classes.Set("error", false);
         Avalonia.Automation.AutomationProperties.SetHelpText(Status, "");

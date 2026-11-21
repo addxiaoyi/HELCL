@@ -37,6 +37,8 @@ public partial class VersionInstallerView : UserControl
     private bool fetchedRemote;
     private bool preparing;
     private string activeChannel = "release";
+    private int loaderSelectionRevision;
+    internal Func<string, string, CancellationToken, Task<IReadOnlyList<LoaderVersion>>>? LoaderBuildsFixture { get; set; }
 
     public VersionInstallerView()
     {
@@ -123,14 +125,12 @@ public partial class VersionInstallerView : UserControl
 
     private void ChooseVersion(object? sender, SelectionChangedEventArgs e)
     {
-        LoaderBuildCombo.ItemsSource = Array.Empty<LoaderVersion>();
         if (VersionList.SelectedItem is RemoteVersionRow row)
         {
             SelectedVersionLabel.Text = $"Minecraft {row.Id}";
             SelectedVersionHint.Text = $"{row.TypeLabel} · {row.ReleaseDate}";
-            if (SelectedLoader != "none") FetchLoaderBuilds(this, new RoutedEventArgs());
         }
-        UpdateInstallState();
+        LoaderSelectionChanged();
     }
 
     private void TargetInstanceChanged(object? sender, SelectionChangedEventArgs e) => UpdateInstallState();
@@ -138,31 +138,47 @@ public partial class VersionInstallerView : UserControl
     private void LoaderKindChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (LoaderBuildSection == null || LoaderBuildCombo == null) return;
-        bool hasLoader = SelectedLoader != "none";
-        LoaderBuildSection.IsVisible = hasLoader;
+        LoaderBuildSection.IsVisible = SelectedLoader != "none";
+        LoaderSelectionChanged();
+    }
+
+    private void LoaderSelectionChanged()
+    {
+        loaderSelectionRevision++;
         LoaderBuildCombo.ItemsSource = Array.Empty<LoaderVersion>();
-        if (hasLoader && VersionList.SelectedItem is RemoteVersionRow)
-            FetchLoaderBuilds(this, new RoutedEventArgs());
         UpdateInstallState();
+        if (host is { IsWorking: false }) FetchLoaderBuilds(this, new RoutedEventArgs());
     }
 
     private void LoaderBuildChanged(object? sender, SelectionChangedEventArgs e) => UpdateInstallState();
 
-    private async void FetchLoaderBuilds(object? sender, RoutedEventArgs e)
+    private async void FetchLoaderBuilds(object? sender, RoutedEventArgs e) => await LoadLoaderBuildsAsync();
+
+    internal async Task LoadLoaderBuildsAsync()
     {
-        if (host == null || VersionList.SelectedItem is not RemoteVersionRow row || SelectedLoader == "none") return;
+        if (host is not { } owner || VersionList.SelectedItem is not RemoteVersionRow row || SelectedLoader == "none") return;
         string loader = SelectedLoader;
-        await host.RunTask(async token =>
+        int revision = loaderSelectionRevision;
+        bool IsCurrent() => revision == loaderSelectionRevision && SelectedLoader == loader
+            && VersionList.SelectedItem is RemoteVersionRow current && current.Id == row.Id;
+        await owner.RunTask(async token =>
         {
-            host.SetStatus($"正在查询 {row.Id} 的 {loader} 构建…");
-            var builds = await Task.Run(() => host.GameLauncher.LoaderVersions(row.Id, loader, token), token);
+            if (!IsCurrent()) throw new InvalidOperationException("Minecraft 版本或加载器已改变，请在安装页刷新当前选项。");
+            owner.SetStatus($"正在查询 {row.Id} 的 {loader} 构建…");
+            LoaderBuildCombo.ItemsSource = Array.Empty<LoaderVersion>();
+            var builds = LoaderBuildsFixture is { } fetch ? await fetch(row.Id, loader, token)
+                : await Task.Run(() => owner.GameLauncher.LoaderVersions(row.Id, loader, token), token);
             token.ThrowIfCancellationRequested();
+            if (!IsCurrent())
+            {
+                owner.SetStatus("已忽略旧加载器结果。请在安装页刷新当前选项。");
+                return;
+            }
             LoaderBuildCombo.ItemsSource = builds;
             LoaderBuildCombo.SelectedIndex = builds.Count > 0 ? 0 : -1;
             InstallHintText.Text = builds.Count > 0 ? $"共 {builds.Count} 个兼容构建。" : $"此版本暂无可用的 {loader} 构建。";
-            host.SetStatus(InstallHintText.Text);
+            owner.SetStatus(InstallHintText.Text);
         }, "RefreshLoaderVersions");
-        UpdateInstallState();
     }
 
     private void UpdateInstallState()
@@ -180,12 +196,13 @@ public partial class VersionInstallerView : UserControl
     {
         if (host == null || InstancePicker.SelectedItem is not InstanceEntry instance || VersionList.SelectedItem is not RemoteVersionRow version) return;
         if (preparing) return;
+        string loader = SelectedLoader;
+        string? loaderBuild = (LoaderBuildCombo.SelectedItem as LoaderVersion)?.Id;
+        if (loader != "none" && string.IsNullOrEmpty(loaderBuild)) return;
         preparing = true;
         UpdateInstallState();
         try
         {
-        string loader = SelectedLoader;
-        string? loaderBuild = (LoaderBuildCombo.SelectedItem as LoaderVersion)?.Id;
         InstallationPlan? plan = null;
         using (var planning = new CancellationTokenSource(TimeSpan.FromSeconds(20)))
         {

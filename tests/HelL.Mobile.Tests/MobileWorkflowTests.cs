@@ -11,10 +11,25 @@ public sealed class MobileWorkflowTests
     public void TerminalTasksIgnoreLateProgressAndHistoryIsBounded()
     {
         var tasks = new MobileOperationHistory();
+        Assert.False(tasks.HasFinished);
+        Assert.Equal(0, tasks.ClearFinished());
         string first = tasks.Start("download", "instance");
+        Assert.False(tasks.HasFinished);
         tasks.Update(first, "failed", "checksum failed");
+        Assert.True(tasks.HasFinished);
+        IReadOnlyList<string> confirmedIds = tasks.FinishedIds;
         tasks.Update(first, "running", "late progress");
         Assert.Equal("checksum failed", tasks.Entries.Single().Message);
+        string second = tasks.Start("later task", "instance");
+        tasks.Update(second, "completed", "done");
+        string running = tasks.Start("still running", "instance");
+        Assert.Equal(2, tasks.FinishedCount);
+        Assert.Equal(1, tasks.ClearFinished(confirmedIds));
+        Assert.Equal(new[] { running, second }, tasks.Entries.Select(item => item.Id));
+        Assert.True(tasks.HasFinished);
+        Assert.Equal(1, tasks.ClearFinished());
+        Assert.False(tasks.HasFinished);
+        Assert.Equal(running, tasks.Entries.Single().Id);
         for (int index = 0; index < 110; index++) tasks.Start("task-" + index, "instance");
         Assert.Equal(100, tasks.Entries.Count);
         Assert.Equal("task-109", tasks.Entries[0].Title);

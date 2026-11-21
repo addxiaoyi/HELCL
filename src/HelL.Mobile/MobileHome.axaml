@@ -225,7 +225,7 @@
             </StackPanel>
 
             <StackPanel x:Name="DetailsPanel" IsVisible="False" Spacing="14">
-              <Button Content="‹ 返回" Classes="back" Click="BackToSearch"/>
+              <Button Classes="back" Click="BackToSearch" AutomationProperties.Name="返回资源搜索"><StackPanel Orientation="Horizontal" Spacing="6"><icons:LauncherIcon Kind="ChevronLeft" Width="16" Height="16"/><TextBlock Text="返回"/></StackPanel></Button>
               <Border Classes="glass">
                 <StackPanel Spacing="12">
                   <Grid ColumnDefinitions="56,*" ColumnSpacing="12"><pictures:ProjectPicture x:Name="ProjectIcon" Width="52" Height="52" CornerRadius="11"/><StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center"><TextBlock x:Name="ProjectTitle" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock x:Name="ProjectAuthor" Classes="caption" TextWrapping="Wrap"/></StackPanel></Grid>
@@ -246,7 +246,7 @@
 
         <!-- [4] 新建实例 -->
         <ScrollViewer x:Name="CreatePage" IsVisible="False"><StackPanel Margin="20,18" Spacing="14" MaxWidth="600">
-          <Button Classes="back" Tag="library" Click="Navigate" AutomationProperties.Name="返回版本管理"><TextBlock Text="‹ 实例"/></Button>
+          <Button Classes="back" Tag="library" Click="Navigate" AutomationProperties.Name="返回版本管理"><StackPanel Orientation="Horizontal" Spacing="6"><icons:LauncherIcon Kind="ChevronLeft" Width="16" Height="16"/><TextBlock Text="实例"/></StackPanel></Button>
           <TextBlock Text="新建实例" Classes="title" FontSize="22"/>
           <Border Classes="glass">
             <StackPanel Spacing="12">
@@ -259,7 +259,7 @@
 
         <!-- [5] 管理实例 -->
         <ScrollViewer x:Name="ManagePage" IsVisible="False"><StackPanel Margin="20,18" Spacing="14" MaxWidth="600">
-          <Button Classes="back" Tag="library" Click="Navigate" AutomationProperties.Name="返回版本管理"><TextBlock Text="‹ 实例"/></Button>
+          <Button Classes="back" Tag="library" Click="Navigate" AutomationProperties.Name="返回版本管理"><StackPanel Orientation="Horizontal" Spacing="6"><icons:LauncherIcon Kind="ChevronLeft" Width="16" Height="16"/><TextBlock Text="实例"/></StackPanel></Button>
           <TextBlock Text="实例设置" Classes="title" FontSize="22"/>
           <StackPanel x:Name="InstanceEditor" Spacing="14">
             <Border Classes="glass">
@@ -329,11 +329,12 @@
                 <TextBlock Text="模型名称" Classes="field-label"/><TextBox x:Name="AiModel" PlaceholderText="gpt-4o-mini" AutomationProperties.Name="AI 模型名称"/>
                 <StackPanel x:Name="AiKeyField" Spacing="5"><TextBlock Text="API 密钥" Classes="field-label"/><TextBox x:Name="AiKey" PasswordChar="●" AutomationProperties.Name="AI API 密钥"/></StackPanel>
                 <Button x:Name="AiSaveButton" Content="保存连接" Classes="primary" Click="SaveAiSettings" HorizontalAlignment="Stretch"/>
+                <TextBlock Text="聊天记录保存在本机 mobile-chat.json，最多保留最近 48 条，不包含 API 密钥；可清空并撤销。" Classes="caption" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel></Border>
               <Border x:Name="AiEmpty" Classes="glass"><StackPanel Spacing="6"><TextBlock Text="需要排查什么问题？" Classes="section"/><TextBlock Text="支持询问版本搭配、模组冲突与报错原因。" Classes="muted" FontSize="13" TextWrapping="Wrap"/></StackPanel></Border>
               <ItemsControl x:Name="AiMessages">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="10"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate><DataTemplate><Border Classes="glass"><StackPanel Spacing="6"><TextBlock Text="{Binding Speaker}" Classes="caption"/><chat:ChatContent Text="{Binding Content}"/><TextBlock Text="{Binding Notice}" Classes="caption"/></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate>
+                <ItemsControl.ItemTemplate><DataTemplate><Border Classes="chat-message"><StackPanel Spacing="8"><TextBlock Text="{Binding Speaker}" Classes="chat-role" FontSize="12"/><chat:ChatContent Text="{Binding Content}"/><TextBlock Text="{Binding Notice}" Classes="caption" FontSize="12" IsVisible="{Binding Notice.Length}"/></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate>
               </ItemsControl>
             </StackPanel></ScrollViewer>
           </Grid>

@@ -70,6 +70,10 @@
     <Style Selector="TextBlock.title"><Setter Property="FontSize" Value="22"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
     <Style Selector="TextBlock.section"><Setter Property="FontSize" Value="14"/><Setter Property="FontWeight" Value="Medium"/></Style>
     <Style Selector="TextBlock.caption"><Setter Property="FontSize" Value="12"/><Setter Property="Foreground" Value="{DynamicResource HelL.Mobile.Muted}"/></Style>
+    <Style Selector="Border.chat-message"><Setter Property="Padding" Value="16,13"/><Setter Property="Background" Value="{DynamicResource HelL.Mobile.Surface}"/><Setter Property="BorderBrush" Value="{DynamicResource HelL.Mobile.Border}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="12"/></Style>
+    <Style Selector="Border.code-surface"><Setter Property="Background" Value="{DynamicResource HelL.Mobile.Selection}"/><Setter Property="BorderBrush" Value="{DynamicResource HelL.Mobile.Border}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="9"/></Style>
+    <Style Selector="Border.task-reading-row"><Setter Property="BorderBrush" Value="{DynamicResource HelL.Mobile.Divider}"/><Setter Property="BorderThickness" Value="0,0,0,1"/></Style>
+    <Style Selector="TextBlock.chat-role"><Setter Property="FontSize" Value="12"/><Setter Property="Foreground" Value="{DynamicResource HelL.Mobile.Muted}"/></Style>
     <Style Selector="TextBlock.field-label"><Setter Property="FontSize" Value="12"/><Setter Property="Foreground" Value="{DynamicResource HelL.Mobile.Muted}"/></Style>
 
     <!-- A single quiet surface keeps grouped rows readable in either theme. -->
@@ -191,7 +195,7 @@
           <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
             <Grid ColumnDefinitions="*,Auto">
               <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center" HorizontalAlignment="Left"/>
-              <TextBlock Grid.Column="1" Text="›" FontSize="17" Foreground="{DynamicResource HelL.Muted}" VerticalAlignment="Center" Margin="8,0,2,0"/>
+              <icons:LauncherIcon Grid.Column="1" Kind="ChevronRight" Width="16" Height="16" Foreground="{DynamicResource HelL.Muted}" VerticalAlignment="Center" Margin="8,0,2,0"/>
             </Grid>
           </Border>
         </ControlTemplate>

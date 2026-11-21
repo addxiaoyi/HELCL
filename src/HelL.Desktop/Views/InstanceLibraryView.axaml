@@ -49,7 +49,7 @@
         <TextBlock x:Name="CountLabel" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
       </StackPanel>
       <Button x:Name="ViewButton" Grid.Column="1" Classes="ghost" Content="封面视图" Click="SwitchView" VerticalAlignment="Center" Margin="0,0,8,0" />
-      <Button Grid.Column="2" Classes="ghost" Content="刷新" Click="RefreshLibrary" VerticalAlignment="Center" Margin="0,0,8,0" />
+      <Button x:Name="LibraryRefreshButton" Grid.Column="2" Classes="ghost" Content="刷新" Click="RefreshLibrary" VerticalAlignment="Center" Margin="0,0,8,0" />
       <Button Grid.Column="3" Content="安装版本" Classes="accent" Click="JumpToInstaller" VerticalAlignment="Center" />
     </Grid>
 

@@ -110,6 +110,10 @@ internal static class WpfAestheticCheck
                         Point start = picture.TranslatePoint(default, fixture);
                         Check(start.X >= -1 && start.X + picture.ActualWidth <= fixture.ActualWidth + 1,
                             "news artwork stays inside its row at " + suffix);
+                        Check(!picture.Ready
+                            && CustomizationPreview.Walk(picture).OfType<VectorGlyph>().Any(glyph => glyph.Text == "\ue8a5" && glyph.IsVisible)
+                            && CustomizationPreview.Walk(picture).OfType<TextBlock>().Any(text => text.Text == "暂无封面" && text.IsVisible),
+                            "unavailable news artwork keeps a branded icon and readable label at " + suffix);
                     }
                     measurements.Add(new { view = suffix, installHeight = action.ActualHeight, headlineSize = title.FontSize, newsTop = fixture.TranslatePoint(default, window).Y });
                     Program.SaveSnapshot(window, Path.Combine(folder, "home-" + suffix + ".png"));

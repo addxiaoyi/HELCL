@@ -62,7 +62,9 @@ public partial class InstanceLibraryView : UserControl
         Reload();
     }
 
-    internal void Reload(string? selection = null)
+    internal void Reload(string? selection = null) => Reload(selection, throwOnFailure: false);
+
+    private void Reload(string? selection, bool throwOnFailure)
     {
         if (host == null) return;
         string? selected = selection ?? Selected?.Name ?? host.GameLauncher.SelectedInstance;
@@ -88,6 +90,7 @@ public partial class InstanceLibraryView : UserControl
             LibraryError.Text = "实例库读取失败：" + error.Message + "\n修复后点击刷新。仍可从左侧选择其他实例。";
             LibraryError.IsVisible = true;
             System.Diagnostics.Trace.TraceError("InstanceLibraryView.Reload: " + error);
+            if (throwOnFailure) throw;
             return;
         }
         finally { refreshing = false; }
@@ -132,7 +135,11 @@ public partial class InstanceLibraryView : UserControl
     private void FilterChanged(object? sender, TextChangedEventArgs e) => Filter();
     private void GroupChanged(object? sender, SelectionChangedEventArgs e) => Filter();
     private void PinnedChanged(object? sender, RoutedEventArgs e) => Filter();
-    private async void RefreshLibrary(object? sender, RoutedEventArgs e) => await Edit(() => Reload());
+    private async void RefreshLibrary(object? sender, RoutedEventArgs e) => await Edit(() =>
+    {
+        Reload(null, throwOnFailure: true);
+        host?.SetStatus("实例库已刷新。");
+    });
     private void OpenInstance(object? sender, RoutedEventArgs e) { if (Selected is { } entry) host?.OpenInstance(entry.Name); }
     private void JumpToInstaller(object? sender, RoutedEventArgs e) => host?.ShowPage("install");
 

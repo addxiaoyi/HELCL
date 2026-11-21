@@ -12,6 +12,10 @@ namespace HelL.Pages;
 
 public sealed partial class TasksPage : PageBase
 {
+	private const double LogLineHeight = 20;
+	private const double MinLogHeight = 44;
+	private const double MaxLogHeight = 220;
+
 	private sealed class Card
 	{
 		public bool Expanded;
@@ -27,6 +31,10 @@ public sealed partial class TasksPage : PageBase
 		public required TextBlock Status { get; init; }
 
 		public required TextBlock Speed { get; init; }
+
+        public required TextBlock State { get; init; }
+
+        public required Grid ProgressRow { get; init; }
 
 		public required ProgressBar Bar { get; init; }
 
@@ -176,10 +184,13 @@ public sealed partial class TasksPage : PageBase
 
 	private Card Build(TaskRow row)
 	{
-		TextBlock textBlock = Ui.Txt(row.Title, 13.5, bold: true).Trim();
+		TextBlock textBlock = Ui.Txt(row.Title, 14, bold: true).Trim();
 		textBlock.ToolTip = row.Title;
-		TextBlock textBlock2 = Ui.Muted("").Wrap();
+		TextBlock textBlock2 = Ui.Txt("", 13, fg: "B.InkMuted").Wrap();
+        textBlock2.LineHeight = 20;
 		TextBlock textBlock3 = Ui.Small("");
+		var state = Ui.Txt("", 12, true, "B.InkMuted");
+        var started = Ui.Txt(row.Started.ToString("HH:mm:ss"), 12, fg: "B.InkFaint");
 		ProgressBar progressBar = Ui.Prog();
 		Button cancel = Ui.Btn(I18n.L("取消"), BtnKind.Ghost);
 		Button retry = Ui.Btn(I18n.L("重试下载"), BtnKind.Chip); retry.Visibility = Visibility.Collapsed;
@@ -188,23 +199,29 @@ public sealed partial class TasksPage : PageBase
 		button2.Visibility = Visibility.Collapsed;
 		TextBox textBox = Ui.LogBox();
 		System.Windows.Automation.AutomationProperties.SetName(textBox, I18n.L("任务日志"));
-		textBox.Height = 160.0;
+		textBox.MinHeight = MinLogHeight;
+		textBox.MaxHeight = MaxLogHeight;
+        textBox.FontSize = 13;
+		textBox.SetValue(TextBlock.LineHeightProperty, LogLineHeight);
+		SetLogHeight(textBox, row.Log.ToString());
 		textBox.BorderThickness = new Thickness(0.0);
 		textBox.Background = Brushes.Transparent;
-		Border logWrap = Ui.Pane(textBox, "B.Paper2", 9.0, 10.0);
+		Border logWrap = Ui.Pane(Ui.V(8, Ui.Txt("执行日志", 12, fg: "B.InkMuted"), textBox), "B.Paper2", 9.0, 12.0);
 		logWrap.Visibility = Visibility.Collapsed;
 		var actions = Ui.H(6.0, retry, button2, button, cancel); actions.Wrap = true;
-		var grid = new PageHeader(Ui.V(3.0, textBlock, textBlock2).VCenter(), actions) { MinimumHeadingWidth = 240 };
+		var grid = new PageHeader(Ui.V(6, Ui.H(10, state, started), textBlock, textBlock2).VCenter(), actions) { MinimumHeadingWidth = 240 };
 		Grid grid2 = Ui.G(null, "*,Auto");
 		grid2.Add(progressBar.VCenter(), 0);
 		grid2.Add(textBlock3.M(10.0, 0.0, 0.0, 0.0).VCenter(), 0, 1);
-		Border border = Ui.Card(Ui.V(9.0, grid, grid2, logWrap), 14.0);
+		Border border = Ui.Card(Ui.V(12, grid, grid2, logWrap), 16);
 		Card card = new Card
 		{
 			Root = border,
 			Title = textBlock,
 			Status = textBlock2,
 			Speed = textBlock3,
+            State = state,
+            ProgressRow = grid2,
 			Bar = progressBar,
 			Cancel = cancel,
 			Toggle = button,
@@ -279,6 +296,7 @@ public sealed partial class TasksPage : PageBase
 			if (card.Expanded)
 			{
 				card.Log.Text = row.Log.ToString();
+				SetLogHeight(card.Log, card.Log.Text);
 				card.Log.ScrollToEnd();
 				logWrap.Visibility = Visibility.Visible;
 				Motion.FadeIn(logWrap, 200.0, 8.0);
@@ -291,6 +309,13 @@ public sealed partial class TasksPage : PageBase
 		return card;
 	}
 
+	private static void SetLogHeight(TextBox log, string text)
+	{
+		int lineBreaks = text.Count(character => character == '\n');
+		int lines = lineBreaks + (text.Length == 0 || text[text.Length - 1] != '\n' ? 1 : 0);
+		log.Height = Math.Max(MinLogHeight, Math.Min(MaxLogHeight, MinLogHeight + lines * LogLineHeight));
+	}
+
 	private void Sync(TaskRow row)
 	{
 		if (!_cards.TryGetValue(row.Id, out Card value))
@@ -301,6 +326,9 @@ public sealed partial class TasksPage : PageBase
 		value.Title.Text = row.Title;
 		value.Title.ToolTip = row.Title;
 		value.Status.Text = DisplayLabels.Of(row.Status);
+        value.State.Text = I18n.L(row.Cancelled ? "已取消" : row.Finished ? row.Success ? "已完成" : "未完成" : "进行中");
+        value.State.SetResourceReference(TextBlock.ForegroundProperty, row.Finished && !row.Success && !row.Cancelled ? "B.Danger" : "B.InkMuted");
+        value.ProgressRow.Visibility = row.Finished ? Visibility.Collapsed : Visibility.Visible;
 		value.Speed.Text = row.Speed;
 		value.Bar.IsIndeterminate = row.Indeterminate && !row.Finished;
 		if (!value.Bar.IsIndeterminate && value.Progress != row.Progress)
@@ -326,6 +354,7 @@ public sealed partial class TasksPage : PageBase
 				int selectionStart = value.Log.SelectionStart;
 				int selectionLength = value.Log.SelectionLength;
 				value.Log.Text = newLog;
+				SetLogHeight(value.Log, newLog);
 				value.Log.Select(Math.Min(selectionStart, newLog.Length), Math.Min(selectionLength, Math.Max(0, newLog.Length - selectionStart)));
 				if (num)
 				{

@@ -291,7 +291,7 @@
                   </UniformGrid>
 
                   <!-- [C] 双栏主工作区：左侧启动与账户配置单 / 右侧生态直达与环境遥测 -->
-                  <Grid ColumnDefinitions="1.22*,*" ColumnSpacing="14">
+                  <Grid x:Name="LaunchWorkspaceColumns" ColumnDefinitions="1.22*,*" RowDefinitions="Auto,Auto" ColumnSpacing="14" RowSpacing="14">
                     <!-- 左栏：macOS Inset Grouped 4 行核心参数单 -->
                     <Border Classes="inset-group">
                       <StackPanel>
@@ -306,8 +306,8 @@
                         </Border>
 
                         <Border Classes="group-row">
-                          <Grid x:Name="AccountPanel" ColumnDefinitions="112,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12">
-                            <TextBlock Text="游戏账户" FontWeight="Medium" VerticalAlignment="Center" />
+                          <Grid x:Name="AccountPanel" ColumnDefinitions="112,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="3">
+                            <TextBlock Text="游戏账户" Grid.RowSpan="3" FontWeight="Medium" VerticalAlignment="Center" />
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
                               <Border Width="28" Height="28" CornerRadius="99" Background="{DynamicResource HelL.Field}" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="1">
                                 <icons:LauncherIcon Kind="AccountOutline" Width="15" Height="15" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -317,28 +317,32 @@
                                 <TextBlock x:Name="AccountNotice" Text="未登录 · 可用试玩" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis" />
                               </StackPanel>
                             </StackPanel>
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                              <CheckBox x:Name="DemoMode" Content="试玩" IsChecked="True" FontSize="12" VerticalAlignment="Center" IsCheckedChanged="SwitchLaunchMode" />
-                              <Button x:Name="LoginButton" Content="登录" Classes="soft" Padding="11,4" Click="LoginMicrosoft" />
-                              <Button x:Name="RefreshAccountButton" Content="刷新" Classes="ghost" Padding="8,4" Click="RefreshAccount" IsVisible="False" />
-                              <Button x:Name="LogoutButton" Content="退出" Classes="ghost" Padding="8,4" Click="LogoutAccount" IsVisible="False" />
-                            </StackPanel>
-                            <CheckBox x:Name="RememberAccount" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Content="在本机凭据库加密保存登录状态" IsChecked="True" FontSize="11.5" Classes="muted" Margin="0,5,0,0" />
+                            <WrapPanel Grid.Column="1" Grid.Row="1" VerticalAlignment="Center">
+                              <CheckBox x:Name="DemoMode" Content="试玩" IsChecked="True" FontSize="12" VerticalAlignment="Center" IsCheckedChanged="SwitchLaunchMode" Margin="0,0,6,3" />
+                              <Button x:Name="LoginButton" Content="登录" Classes="soft" Padding="11,4" Click="LoginMicrosoft" Margin="0,0,6,3" />
+                              <Button x:Name="RefreshAccountButton" Content="刷新" Classes="ghost" Padding="8,4" Click="RefreshAccount" IsVisible="False" Margin="0,0,6,3" />
+                              <Button x:Name="LogoutButton" Content="退出" Classes="ghost" Padding="8,4" Click="LogoutAccount" IsVisible="False" Margin="0,0,6,3" />
+                            </WrapPanel>
+                            <CheckBox x:Name="RememberAccount" Grid.Row="2" Grid.Column="1" Content="在本机凭据库加密保存登录状态" IsChecked="True" FontSize="11.5" Classes="muted" Margin="0,5,0,0" />
                           </Grid>
                         </Border>
 
                         <Border Classes="group-row">
                           <StackPanel Spacing="5">
-                            <Grid ColumnDefinitions="112,*,Auto" ColumnSpacing="10">
-                              <TextBlock Text="内存与窗口" FontWeight="Medium" VerticalAlignment="Center" />
-                              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                <TextBox x:Name="MemoryBox" Width="76" Text="2048" AutomationProperties.Name="最大内存 MB" />
-                                <TextBlock Text="MB" Classes="muted" FontSize="11.5" VerticalAlignment="Center" Margin="0,0,4,0" />
-                                <TextBox x:Name="WindowWidthBox" Width="68" Text="854" AutomationProperties.Name="游戏窗口宽度" />
-                                <TextBlock Text="×" Classes="muted" VerticalAlignment="Center" />
-                                <TextBox x:Name="WindowHeightBox" Width="68" Text="480" AutomationProperties.Name="游戏窗口高度" />
+                            <Grid x:Name="LaunchOptionsPanel" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="6">
+                              <TextBlock Text="内存与窗口" Grid.ColumnSpan="2" FontWeight="Medium" />
+                              <StackPanel Grid.Row="1" Spacing="5">
+                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                  <TextBox x:Name="MemoryBox" Width="76" Text="2048" AutomationProperties.Name="最大内存 MB" />
+                                  <TextBlock Text="MB" Classes="muted" FontSize="11.5" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                  <TextBox x:Name="WindowWidthBox" Width="68" Text="854" AutomationProperties.Name="游戏窗口宽度" />
+                                  <TextBlock Text="×" Classes="muted" VerticalAlignment="Center" />
+                                  <TextBox x:Name="WindowHeightBox" Width="68" Text="480" AutomationProperties.Name="游戏窗口高度" />
+                                </StackPanel>
                               </StackPanel>
-                              <Button Grid.Column="2" Content="保存" Classes="soft" Padding="11,4" Click="SaveLaunchOptions" VerticalAlignment="Center" />
+                              <Button x:Name="SaveLaunchOptionsButton" Grid.Row="1" Grid.Column="1" Content="保存" Classes="soft" Padding="11,4" Click="SaveLaunchOptions" VerticalAlignment="Center" />
                             </Grid>
                             <TextBlock x:Name="LaunchOptionsNotice" Classes="muted" FontSize="11" IsVisible="False" />
                           </StackPanel>
@@ -346,11 +350,11 @@
 
                         <Border Classes="group-row-last">
                           <StackPanel Spacing="8">
-                            <Grid ColumnDefinitions="112,*,Auto,Auto" ColumnSpacing="6">
-                              <TextBlock Text="Java 运行时" FontWeight="Medium" VerticalAlignment="Center" />
-                              <TextBox x:Name="JavaPath" Grid.Column="1" PlaceholderText="自动匹配兼容版本" AutomationProperties.Name="Java 路径" />
-                              <Button Grid.Column="2" Content="检测" Classes="soft" Padding="10,4" Click="DetectJava" />
-                              <Button Grid.Column="3" Content="浏览" Classes="ghost" Padding="8,4" Click="BrowseJava" />
+                            <Grid x:Name="JavaSettingsPanel" ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="6" RowSpacing="6">
+                              <TextBlock Text="Java 运行时" Grid.ColumnSpan="3" FontWeight="Medium" />
+                              <TextBox x:Name="JavaPath" Grid.Row="1" PlaceholderText="自动匹配兼容版本" AutomationProperties.Name="Java 路径" />
+                              <Button x:Name="DetectJavaButton" Grid.Row="1" Grid.Column="1" Content="检测" Classes="soft" Padding="10,4" Click="DetectJava" />
+                              <Button x:Name="BrowseJavaButton" Grid.Row="1" Grid.Column="2" Content="浏览" Classes="ghost" Padding="8,4" Click="BrowseJava" />
                             </Grid>
                             <ListBox x:Name="JavaChoices" IsVisible="False" MaxHeight="90" SelectionChanged="SelectJava" />
                           </StackPanel>
@@ -359,7 +363,7 @@
                     </Border>
 
                     <!-- 右栏：社区资源快捷矩阵 + 环境概览 -->
-                    <StackPanel Grid.Column="1" Spacing="14">
+                    <StackPanel x:Name="LaunchQuickPanel" Grid.Row="0" Grid.Column="1" Spacing="14">
                       <Border Classes="surface" Padding="18,15">
                         <StackPanel Spacing="12">
                           <Grid ColumnDefinitions="*,Auto">

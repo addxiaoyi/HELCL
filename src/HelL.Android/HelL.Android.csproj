@@ -25,5 +25,6 @@
     <AndroidAsset Include="../../THIRD_PARTY_NOTICES.md" Link="THIRD_PARTY_NOTICES.md" />
     <AndroidAsset Include="../../docs/licenses/TipCL-MIT.txt" Link="licenses/TipCL-MIT.txt" />
     <AndroidAsset Include="../HelL.Mobile/Assets/NotoSansSC-OFL.txt" Link="licenses/NotoSansSC-OFL.txt" />
+    <AndroidAsset Include="../HelL.Mobile/Assets/Cousine-OFL.txt" Link="licenses/Cousine-OFL.txt" />
   </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Threading;
 
 namespace HelL.Desktop.Services;
 
@@ -7,9 +8,10 @@ internal static class DesktopDialogs
 {
     internal static Func<string, string, Task<bool>>? Confirmation { get; set; }
 
-    internal static async Task<bool> Confirm(Window owner, string title, string body, string accept = "确认")
+    internal static async Task<bool> Confirm(Window owner, string title, string body, string accept = "确认", CancellationToken cancellation = default)
     {
-        if (Confirmation is { } fixture) return await fixture(title, body);
+        cancellation.ThrowIfCancellationRequested();
+        if (Confirmation is { } fixture) return await fixture(title, body).WaitAsync(cancellation);
         var dialog = new Window { Title = title, Width = 560, MaxHeight = 640, MinWidth = 340,
             SizeToContent = SizeToContent.Height, CanResize = true, WindowStartupLocation = WindowStartupLocation.CenterOwner };
         var cancel = new Button { Content = "取消", MinWidth = 84 };
@@ -24,6 +26,13 @@ internal static class DesktopDialogs
         } };
         dialog.Opened += (_, _) => cancel.Focus();
         dialog.KeyDown += (_, key) => { if (key.Key == Avalonia.Input.Key.Escape) { key.Handled = true; dialog.Close(false); } };
-        return await dialog.ShowDialog<bool>(owner);
+        Task<bool> approval = dialog.ShowDialog<bool>(owner);
+        using var registration = cancellation.Register(() => Dispatcher.UIThread.Post(() =>
+        {
+            if (dialog.IsVisible) dialog.Close(false);
+        }));
+        bool approved = await approval;
+        cancellation.ThrowIfCancellationRequested();
+        return approved;
     }
 }

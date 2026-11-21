@@ -32,6 +32,7 @@ public sealed record CatalogRelease(string Id, string Title, string Filename, st
 /// <summary>Typed catalog boundary for the portable UI; downloads retain upstream checksums.</summary>
 public sealed partial class PortableCatalog
 {
+    public const int MaximumSearchOffset = 50_000;
     private static readonly Regex ProjectKey = new(@"\A[A-Za-z0-9_-]{1,128}\z");
 
     public CatalogTarget Target(string instance, string version)
@@ -56,7 +57,7 @@ public sealed partial class PortableCatalog
     {
         if (order is not ("relevance" or "downloads" or "newest" or "updated"))
             throw new ArgumentException("资源排序方式无效。", nameof(order));
-        if (offset < 0 || offset > 50000 || pageSize < 1 || pageSize > 50) throw new ArgumentOutOfRangeException(nameof(offset));
+        if (offset < 0 || offset > MaximumSearchOffset || pageSize < 1 || pageSize > 50) throw new ArgumentOutOfRangeException(nameof(offset));
         token.ThrowIfCancellationRequested();
         var filters = PyDict.Of("game_version", target?.GameVersion ?? "", "loader", target?.Loader ?? "", "offset", offset, "limit", pageSize);
         var rows = CatalogSearch.Search(kind, query, source, filters, request =>

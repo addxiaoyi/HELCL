@@ -14,13 +14,14 @@ namespace HelL.Mobile;
 public sealed partial class MobileHome
 {
     private const double TaskScrollBarClearance = 12;
-    private readonly StackPanel localTasks = new() { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Left };
+    private readonly StackPanel localTasks = new() { Spacing = 0, HorizontalAlignment = HorizontalAlignment.Left };
     private ScrollViewer? localTasksPage;
     private readonly TextBlock createError = WorkflowText("");
     private readonly TextBlock editError = WorkflowText("");
     private readonly Stack<string> pageHistory = new();
     private bool backNavigationPending;
     private bool resourceTypographyQueued;
+    private bool chatTypographyQueued;
     private string currentPage = "home";
     private int navigationRevision;
     private string? savedEditState;
@@ -62,6 +63,7 @@ public sealed partial class MobileHome
         AttachedToVisualTree += AttachMobileInsets;
         Projects.PropertyChanged += QueueResourceTypography;
         Projects.ContainerPrepared += ResourceContainerPrepared;
+        AiMessages.PropertyChanged += QueueChatTypography;
         if (MorePage.Content is StackPanel settings)
         {
             double savedScale = HelL.Core.Py.Float(HelL.Core.Launcher.Config.CONFIG.Get("mobile_text_scale", 1d));
@@ -113,11 +115,44 @@ public sealed partial class MobileHome
         }, Avalonia.Threading.DispatcherPriority.Background);
     }
 
-    private void ApplyTextScale() => ScaleText(this.GetLogicalDescendants().OfType<Control>());
+    private void QueueChatTypography(object? sender, AvaloniaPropertyChangedEventArgs change)
+    {
+        if (change.Property == ItemsControl.ItemsSourceProperty) ScheduleChatTypography();
+    }
+
+    private void ScheduleChatTypography()
+    {
+        if (chatTypographyQueued) return;
+        chatTypographyQueued = true;
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            try
+            {
+                if (disposed) return;
+                AiMessages.UpdateLayout();
+                ScaleChatText();
+            }
+            finally { chatTypographyQueued = false; }
+        }, Avalonia.Threading.DispatcherPriority.Background);
+    }
+
+    private void ScaleChatText()
+    {
+        ScaleText(AiMessages.GetVisualDescendants().OfType<Control>());
+        foreach (Controls.ChatContent document in AiMessages.GetVisualDescendants().OfType<Controls.ChatContent>())
+            document.TextScale = EffectiveTextScale;
+    }
+
+    private void ApplyTextScale()
+    {
+        ScaleText(this.GetLogicalDescendants().OfType<Control>());
+        ScaleChatText();
+    }
 
     private void ScaleText(IEnumerable<Control> content)
     {
-        Control[] controls = content.ToArray();
+        Control[] controls = content.Where(control => !control.GetLogicalAncestors().OfType<Controls.ChatContent>().Any()
+            && !control.GetVisualAncestors().OfType<Controls.ChatContent>().Any()).ToArray();
         // Restore parents before sampling new children so inherited sizes do not compound.
         foreach (Control control in controls)
             if (originalFontSizes.TryGetValue(control, out FontSizeSnapshot? saved)) SetFontSize(control, saved.Value);
@@ -229,32 +264,87 @@ public sealed partial class MobileHome
         throw new ArgumentException(notice.Text);
     }
 
-    private void PresentLocalTasks()
+    private void PresentLocalTasks(string? notice = null)
     {
         localTasks.Children.Clear();
-        localTasks.Children.Add(new TextBlock { Text = "本机任务", Classes = { "title" } });
-        localTasks.Children.Add(WorkflowText("本次启动最多保留 100 条任务。导出诊断包只包含脱敏摘要，不包含原始任务文本。"));
-        var clear = new Button { Content = "清除已结束任务", Classes = { "secondary" } };
-        clear.Click += (_, _) => { session.Tasks.ClearFinished(); PresentLocalTasks(); };
+        localTasks.Children.Add(new TextBlock { Text = "本机任务", FontSize = 22, Margin = new Thickness(0, 0, 0, 8), Classes = { "title" } });
+        var storage = WorkflowText("本次启动最多保留 100 条任务。导出诊断包只包含脱敏摘要，不包含原始任务文本。");
+        storage.Margin = new Thickness(0, 0, 0, 8);
+        localTasks.Children.Add(storage);
+        if (!string.IsNullOrWhiteSpace(notice))
+        {
+            var feedback = WorkflowText(notice);
+            feedback.FontSize = 12;
+            feedback.Margin = new Thickness(0, 0, 0, 8);
+            localTasks.Children.Add(feedback);
+        }
+        var clear = new Button { Name = "ClearFinishedTasksButton", Content = $"清除已结束（{session.Tasks.FinishedCount}）", Classes = { "secondary" },
+            HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 12), MinHeight = 44,
+            IsEnabled = session.Tasks.HasFinished };
+        AutomationProperties.SetName(clear, $"清除已结束任务，{session.Tasks.FinishedCount} 条");
+        clear.Click += ClearFinishedTasks;
         localTasks.Children.Add(clear);
+        if (!session.Tasks.HasFinished)
+        {
+            string clearHintText = session.Tasks.Entries.Count == 0
+                ? "暂无已结束任务可清除。"
+                : "运行中的任务结束后可清理历史记录。";
+            var clearHint = WorkflowText(clearHintText);
+            clearHint.FontSize = 12;
+            clearHint.Margin = new Thickness(0, -8, 0, 8);
+            localTasks.Children.Add(clearHint);
+        }
         if (session.Tasks.Entries.Count == 0) localTasks.Children.Add(WorkflowText("尚无任务。搜索、资源下载、账号和实例操作会显示在这里。"));
         foreach (MobileOperation item in session.Tasks.Entries)
         {
-            var row = new StackPanel { Spacing = 6 };
-            row.Children.Add(new TextBlock { Text = item.Title, Classes = { "section" }, TextWrapping = TextWrapping.Wrap });
-            row.Children.Add(WorkflowText(item.Caption));
-            row.Children.Add(WorkflowText(item.Message));
+            var row = new StackPanel { Spacing = 5 };
+            var heading = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
+            heading.Children.Add(new TextBlock { Text = item.Title, FontSize = 14, LineHeight = 22, FontWeight = FontWeight.Medium,
+                TextWrapping = TextWrapping.Wrap, Classes = { "task-title" } });
+            string state = item.State switch { "running" => "进行中", "completed" => "已完成", "cancelled" => "已取消", _ => "失败" };
+            var badge = new TextBlock { Text = state, FontSize = 12, LineHeight = 20, TextWrapping = TextWrapping.NoWrap,
+                Classes = { "caption", "task-state", "single-line" }, VerticalAlignment = VerticalAlignment.Center };
+            Grid.SetColumn(badge, 1);
+            heading.Children.Add(badge);
+            row.Children.Add(heading);
+            var caption = WorkflowText(string.Join(" · ", new[] { item.Target, item.Started.ToLocalTime().ToString("HH:mm:ss") }
+                .Where(part => !string.IsNullOrWhiteSpace(part))));
+            caption.FontSize = 12; caption.LineHeight = 19;
+            row.Children.Add(caption);
+            if (!string.IsNullOrWhiteSpace(item.Message))
+            {
+                var message = WorkflowText(item.Message);
+                message.FontSize = 13; message.LineHeight = 21;
+                row.Children.Add(message);
+            }
             if (item.State == "running")
             {
                 var cancel = new Button { Content = "取消当前任务", Classes = { "secondary" } };
                 cancel.Click += Cancel;
                 row.Children.Add(cancel);
             }
-            localTasks.Children.Add(new Border { Classes = { "glass" }, Child = row });
+            localTasks.Children.Add(new Border { Classes = { "task-reading-row" }, Child = row, Padding = new Thickness(0, 13, 12, 13) });
         }
+        ScaleText(localTasks.GetLogicalDescendants().OfType<Control>());
+        foreach (TextBlock label in localTasks.GetLogicalDescendants().OfType<TextBlock>())
+            label.LineHeight = label.FontSize * 1.5;
     }
 
-    private Task<bool> ConfirmAsync(string title, string message, string accept)
+    private async void ClearFinishedTasks(object? sender, RoutedEventArgs e)
+    {
+        IReadOnlyList<string> confirmedIds = session.Tasks.FinishedIds;
+        if (confirmedIds.Count == 0) return;
+        int requestedCount = confirmedIds.Count;
+        bool confirmed = await ConfirmAsync("清除已结束任务？",
+            $"将从本次启动的任务历史中移除 {requestedCount} 条已结束任务。运行中的任务不会受影响，此操作无法撤销。",
+            "清除历史", "取消");
+        if (!confirmed || disposed) return;
+
+        int removed = session.Tasks.ClearFinished(confirmedIds);
+        if (removed > 0) PresentLocalTasks($"已清除 {removed} 条已结束任务。");
+    }
+
+    private Task<bool> ConfirmAsync(string title, string message, string accept, string cancel = "取消 / 继续编辑")
     {
         if (confirmation is not null) return Task.FromResult(false);
         confirmation = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -263,7 +353,7 @@ public sealed partial class MobileHome
         content.Children.Add(new TextBlock { Text = title, Classes = { "section" }, TextWrapping = TextWrapping.Wrap });
         content.Children.Add(WorkflowText(message));
         var yes = new Button { Content = accept, Classes = { "primary" }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 44 };
-        var no = new Button { Content = "取消 / 继续编辑", Classes = { "secondary" }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 44 };
+        var no = new Button { Content = cancel, Classes = { "secondary" }, HorizontalAlignment = HorizontalAlignment.Stretch, MinHeight = 44 };
         yes.Click += (_, _) => CompleteConfirmation(true);
         no.Click += (_, _) => CompleteConfirmation(false);
         content.Children.Add(yes); content.Children.Add(no);

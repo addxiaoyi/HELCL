@@ -1,15 +1,16 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="using:HelL.Desktop.Controls"
+             xmlns:icons="using:HelL.Design"
              x:Class="HelL.Desktop.Views.AiAssistantView">
   <Grid Margin="48,10,48,22" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14" MaxWidth="760">
     <!-- 极简顶栏 -->
     <Grid ColumnDefinitions="*,Auto,Auto">
-      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+      <StackPanel Spacing="3" VerticalAlignment="Center">
         <TextBlock Text="助手" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
         <TextBlock x:Name="ProviderSubtitle" Classes="muted" FontSize="12" VerticalAlignment="Center" />
       </StackPanel>
-      <Button Grid.Column="1" Content="连接设置" Classes="soft" Click="ToggleConfig" Margin="0,0,8,0" />
-      <Button x:Name="ClearChatButton" Grid.Column="2" Content="清空" Classes="ghost" Click="ClearConversation" />
+      <Button Grid.Column="1" Classes="icon-btn" Click="ToggleConfig" Margin="0,0,8,0" ToolTip.Tip="连接设置" AutomationProperties.Name="连接设置"><icons:LauncherIcon Kind="CogOutline" Width="16" Height="16"/></Button>
+      <Button x:Name="ClearChatButton" Grid.Column="2" Classes="icon-btn" Click="ClearConversation" ToolTip.Tip="清空对话" AutomationProperties.Name="清空对话"><icons:LauncherIcon Kind="TrashCanOutline" Width="16" Height="16"/></Button>
     </Grid>
 
     <!-- 按需展开的 macOS 分组连接设置 -->
@@ -49,13 +50,13 @@
           <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="14" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border Background="{Binding BubbleBg}" CornerRadius="12" Padding="15,11" Margin="{Binding BubbleMargin}" HorizontalAlignment="{Binding BubbleAlign}" MaxWidth="620">
-                <StackPanel Spacing="6">
+              <Border Background="{Binding BubbleBg}" CornerRadius="10" Padding="15,12" Margin="{Binding BubbleMargin}" HorizontalAlignment="{Binding BubbleAlign}" MaxWidth="680">
+                <StackPanel Spacing="8">
                   <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsAssistant}">
-                    <TextBlock Text="{Binding Speaker}" FontSize="11.5" Classes="muted" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Speaker}" FontSize="12" Classes="muted" VerticalAlignment="Center" />
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                       <TextBlock Text="{Binding StateHint}" Classes="muted" FontSize="11" VerticalAlignment="Center" />
-                      <Button Content="复制" Classes="ghost" Tag="{Binding Content}" Click="CopyBubbleText" MinHeight="20" Padding="6,1" FontSize="11" />
+                      <Button Content="复制" Classes="ghost" Tag="{Binding Content}" Click="CopyBubbleText" MinHeight="28" Padding="8,2" FontSize="12" />
                     </StackPanel>
                   </Grid>
                   <local:MessageDocument Text="{Binding Content}" />

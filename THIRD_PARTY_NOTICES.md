@@ -20,6 +20,7 @@ The portable desktop dependency graph currently includes:
 | System.Management / System.CodeDom | 10.0.0 | MIT |
 | Material.Icons / Material.Icons.Avalonia | 3.0.2 | MIT; Material Design Icons upstream notices also apply |
 | Noto Sans SC | static Regular / Medium / Bold from notofonts/noto-cjk, 2026-11-14 | SIL Open Font License 1.1, see src/HelL.Mobile/Assets/NotoSansSC-OFL.txt |
+| Cousine | [Cousine-Regular.ttf from Google Fonts](https://github.com/google/fonts/blob/cc5661d43cd4f9aad5567033a8e15ca28dc35c86/ofl/cousine/Cousine-Regular.ttf) | SIL Open Font License 1.1, see src/HelL.Mobile/Assets/Cousine-OFL.txt |
 | .NET runtime | selected by .NET 10 SDK | Runtime LICENSE and ThirdPartyNotices |
 
 Versions/licenses were read from restored NuGet metadata on 2026-11-11. Build-only

@@ -8,6 +8,8 @@ namespace HelL.Desktop;
 public sealed partial class MainWindow
 {
     private bool launchOptionsReady = true;
+    private int loaderSelectionRevision;
+    internal Func<string, string, CancellationToken, Task<IReadOnlyList<LoaderVersion>>>? LaunchLoaderVersionsFixture { get; set; }
     private string SelectedLoader => (LoaderPicker.SelectedItem as ComboBoxItem)?.Tag as string ?? "none";
 
     private void LoadLaunchOptions(string name)
@@ -54,6 +56,7 @@ public sealed partial class MainWindow
 
     private void ResetLoaderVersions()
     {
+        loaderSelectionRevision++;
         LoaderVersionPicker.ItemsSource = Array.Empty<LoaderVersion>();
         LoaderNotice.Text = SelectedLoader == "none" ? "安装原版 Minecraft。"
             : "先获取与所选 Minecraft 版本兼容的加载器，再选择具体版本。";
@@ -71,27 +74,44 @@ public sealed partial class MainWindow
         InstallButton.IsEnabled = selected && (SelectedLoader == "none" || LoaderVersionPicker.SelectedItem is LoaderVersion);
     }
 
-    private async void RefreshLoaderVersions(object? sender, RoutedEventArgs e) => await RunTask(async token =>
+    private async void RefreshLoaderVersions(object? sender, RoutedEventArgs e)
     {
-        string version = RemoteVersions.SelectedItem as string ?? throw new InvalidOperationException("请先选择 Minecraft 版本。");
+        if (RemoteVersions.SelectedItem is not string version) return;
         string loader = SelectedLoader;
         if (loader == "none") return;
-        LoaderNotice.Text = "正在获取加载器版本…";
-        LoaderVersionPicker.ItemsSource = Array.Empty<LoaderVersion>();
-        try
+        int revision = loaderSelectionRevision;
+        bool IsCurrent() => revision == loaderSelectionRevision
+            && (RemoteVersions.SelectedItem as string) == version && SelectedLoader == loader;
+
+        await RunTask(async token =>
         {
-            var versions = await Task.Run(() => launcher.LoaderVersions(version, loader, token), token);
-            token.ThrowIfCancellationRequested();
-            LoaderVersionPicker.ItemsSource = versions;
-            LoaderVersionPicker.SelectedIndex = versions.Count == 0 ? -1 : 0;
-            LoaderNotice.Text = versions.Count == 0 ? "此版本没有可用的加载器。请选择其他游戏版本或加载器。"
-                : $"找到 {versions.Count} 个加载器版本。确认选择后安装。";
-        }
-        catch (Exception)
-        {
-            LoaderNotice.Text = token.IsCancellationRequested ? "获取已取消，可重新获取。" : "加载器版本获取失败，请检查网络后重试。";
-            throw;
-        }
-        finally { UpdateInstallSelection(); }
-    });
+            if (!IsCurrent()) throw new InvalidOperationException("Minecraft 版本或加载器已改变，请按当前选项重新查询。");
+            LoaderNotice.Text = "正在获取加载器版本…";
+            SetStatus(LoaderNotice.Text);
+            LoaderVersionPicker.ItemsSource = Array.Empty<LoaderVersion>();
+            try
+            {
+                var versions = LaunchLoaderVersionsFixture is { } fetch ? await fetch(version, loader, token)
+                    : await Task.Run(() => launcher.LoaderVersions(version, loader, token), token);
+                token.ThrowIfCancellationRequested();
+                if (!IsCurrent())
+                {
+                    SetStatus("已忽略旧加载器结果，请按当前选项重新查询。");
+                    return;
+                }
+                LoaderVersionPicker.ItemsSource = versions;
+                LoaderVersionPicker.SelectedIndex = versions.Count == 0 ? -1 : 0;
+                LoaderNotice.Text = versions.Count == 0 ? "此版本没有可用的加载器。请选择其他游戏版本或加载器。"
+                    : $"找到 {versions.Count} 个加载器版本。确认选择后安装。";
+                SetStatus(LoaderNotice.Text);
+            }
+            catch
+            {
+                if (IsCurrent())
+                    LoaderNotice.Text = token.IsCancellationRequested ? "获取已取消，可重新获取。" : "加载器版本获取失败，请检查网络后重试。";
+                throw;
+            }
+            finally { UpdateInstallSelection(); }
+        });
+    }
 }

@@ -72,6 +72,16 @@ public sealed partial class MobileHome
                 "the primary add icon keeps its " + name + " action contrast");
         }
         ThemePicker.SelectedIndex = originalTheme;
+        var backButtons = new Control[] { DetailsPanel, CreatePage, ManagePage }
+            .SelectMany(page => page.GetLogicalDescendants().OfType<Button>().Where(button => button.Classes.Contains("back")))
+            .ToArray();
+        Check(backButtons.Length == 3, "mobile detail and instance pages keep one back action each");
+        Check(backButtons.Length == 3 && backButtons.All(button => Symbol(button) == "ChevronLeft"),
+            "mobile back actions use the shared left-chevron drawing");
+        Check(backButtons.Length == 3
+            && AutomationProperties.GetName(backButtons[0]) == "返回资源搜索"
+            && backButtons.Skip(1).All(button => AutomationProperties.GetName(button) == "返回版本管理"),
+            "mobile back actions expose destination-specific accessible names");
         ShowPage("home");
         await Capture("icons-home");
         File.WriteAllText(Path.Combine(EvidenceRoot, "mobile-icons.json"), JsonSerializer.Serialize(new

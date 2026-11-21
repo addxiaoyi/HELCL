@@ -156,7 +156,7 @@ public sealed partial class MainWindow : Window
             HeroCover.IsVisible = false;
         }
         ResourcesView.SetTarget(InstanceList.SelectedItem as InstanceEntry);
-        InstallerView.RefreshInstances(SelectedName);
+        InstallerView.RefreshInstances();
     }
 
     private void SelectInstance(object? sender, SelectionChangedEventArgs e)
@@ -348,19 +348,19 @@ public sealed partial class MainWindow : Window
         finally { RefreshButton.Content = "刷新列表"; }
     });
 
-    private async void InstallVersion(object? sender, RoutedEventArgs e) => await RunTask(async token =>
+    private async void InstallVersion(object? sender, RoutedEventArgs e)
     {
-        string name = SelectedName ?? throw new InvalidOperationException("请先选择实例。");
-        string version = RemoteVersions.SelectedItem as string ?? throw new InvalidOperationException("请选择要安装的版本。");
-        var progress = CreateProgress();
+        if (SelectedName is not { } name || RemoteVersions.SelectedItem is not string version) return;
         string loader = SelectedLoader;
-        string? loaderVersion = (LoaderVersionPicker.SelectedItem as LoaderVersion)?.Id;
-        string installed = await Task.Run(() => launcher.Install(name, version, loader, loaderVersion, progress, token), token);
-        ReloadInstances(name);
-        InstalledVersions.SelectedItem = installed;
-        InstallerSheet.IsVisible = false;
-        Status.Text = $"{installed} 安装完成。";
-    });
+        string? build = (LoaderVersionPicker.SelectedItem as LoaderVersion)?.Id;
+        int revision = loaderSelectionRevision;
+        await InstallWithConfirmationAsync(name, version, loader, build, () => SelectedName == name
+            && revision == loaderSelectionRevision && (LoaderVersionPicker.SelectedItem as LoaderVersion)?.Id == build, installed =>
+        {
+            InstalledVersions.SelectedItem = installed;
+            InstallerSheet.IsVisible = false;
+        });
+    }
 
     private async void DetectJava(object? sender, RoutedEventArgs e) => await RunTask(async token =>
     {
@@ -546,6 +546,7 @@ public sealed partial class MainWindow : Window
 
     internal void ShowPage(string page)
     {
+        bool enteringInstaller = page == "install" && currentPage != page;
         currentPage = page;
         if (task == null)
         {
@@ -555,7 +556,7 @@ public sealed partial class MainWindow : Window
                 {
                     case "launch": if (SelectedName != null) UpdateEnvironmentSummary(SelectedName); break;
                     case "library": LibraryView.Reload(SelectedName); break;
-                    case "install": InstallerView.RefreshInstances(SelectedName); break;
+                    case "install": InstallerView.RefreshInstances(enteringInstaller ? SelectedName : null); break;
                     case "mods": ModsView.Reload(SelectedName); break;
                     case "saves": SavesView.Reload(SelectedName); break;
                     case "servers": ServersView.Reload(SelectedName); break;
@@ -585,6 +586,7 @@ public sealed partial class MainWindow : Window
         LaunchView.IsVisible = page == "launch";
         LibraryView.IsVisible = page == "library";
         InstallerView.IsVisible = page == "install";
+        if (!closing) InstallerView.ResumeLoaderLookup();
         ModsView.IsVisible = page == "mods";
         SavesView.IsVisible = page == "saves";
         ResourcesView.IsVisible = page == "resources";

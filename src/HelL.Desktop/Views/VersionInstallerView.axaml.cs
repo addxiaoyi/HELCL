@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using HelL.Core;
 using HelL.Core.Launcher;
 using HelL.Portable;
@@ -35,9 +36,11 @@ public partial class VersionInstallerView : UserControl
     ];
     private IReadOnlyList<RemoteVersionRow> allVersions = DefaultPresets;
     private bool fetchedRemote;
-    private bool preparing;
     private string activeChannel = "release";
     private int loaderSelectionRevision;
+    private int installSelectionRevision;
+    private bool loaderLookupPending;
+    private bool loaderLookupQueued;
     internal Func<string, string, CancellationToken, Task<IReadOnlyList<LoaderVersion>>>? LoaderBuildsFixture { get; set; }
 
     public VersionInstallerView()
@@ -133,7 +136,11 @@ public partial class VersionInstallerView : UserControl
         LoaderSelectionChanged();
     }
 
-    private void TargetInstanceChanged(object? sender, SelectionChangedEventArgs e) => UpdateInstallState();
+    private void TargetInstanceChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        installSelectionRevision++;
+        UpdateInstallState();
+    }
 
     private void LoaderKindChanged(object? sender, SelectionChangedEventArgs e)
     {
@@ -147,10 +154,28 @@ public partial class VersionInstallerView : UserControl
         loaderSelectionRevision++;
         LoaderBuildCombo.ItemsSource = Array.Empty<LoaderVersion>();
         UpdateInstallState();
-        if (host is { IsWorking: false }) FetchLoaderBuilds(this, new RoutedEventArgs());
+        loaderLookupPending = VersionList.SelectedItem is RemoteVersionRow && SelectedLoader != "none";
+        ResumeLoaderLookup();
     }
 
-    private void LoaderBuildChanged(object? sender, SelectionChangedEventArgs e) => UpdateInstallState();
+    internal void ResumeLoaderLookup()
+    {
+        if (loaderLookupQueued || !CanResumeLoaderLookup()) return;
+        loaderLookupQueued = true;
+        Dispatcher.UIThread.Post(async () =>
+        {
+            loaderLookupQueued = false;
+            if (CanResumeLoaderLookup()) await LoadLoaderBuildsAsync();
+        });
+    }
+
+    private bool CanResumeLoaderLookup() => loaderLookupPending && IsVisible && host is { IsWorking: false, IsVisible: true };
+
+    private void LoaderBuildChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        installSelectionRevision++;
+        UpdateInstallState();
+    }
 
     private async void FetchLoaderBuilds(object? sender, RoutedEventArgs e) => await LoadLoaderBuildsAsync();
 
@@ -164,6 +189,7 @@ public partial class VersionInstallerView : UserControl
         await owner.RunTask(async token =>
         {
             if (!IsCurrent()) throw new InvalidOperationException("Minecraft 版本或加载器已改变，请在安装页刷新当前选项。");
+            loaderLookupPending = false;
             owner.SetStatus($"正在查询 {row.Id} 的 {loader} 构建…");
             LoaderBuildCombo.ItemsSource = Array.Empty<LoaderVersion>();
             var builds = LoaderBuildsFixture is { } fetch ? await fetch(row.Id, loader, token)
@@ -171,7 +197,7 @@ public partial class VersionInstallerView : UserControl
             token.ThrowIfCancellationRequested();
             if (!IsCurrent())
             {
-                owner.SetStatus("已忽略旧加载器结果。请在安装页刷新当前选项。");
+                owner.SetStatus("已忽略旧加载器结果。");
                 return;
             }
             LoaderBuildCombo.ItemsSource = builds;
@@ -187,44 +213,21 @@ public partial class VersionInstallerView : UserControl
         bool hasInstance = InstancePicker.SelectedItem is InstanceEntry;
         bool hasVersion = VersionList.SelectedItem is RemoteVersionRow;
         bool loaderReady = SelectedLoader == "none" || LoaderBuildCombo.SelectedItem is LoaderVersion;
-        StartInstallButton.IsEnabled = !preparing && hasInstance && hasVersion && loaderReady;
+        StartInstallButton.IsEnabled = hasInstance && hasVersion && loaderReady;
         if (InstancePicker.SelectedItem is InstanceEntry target && VersionList.SelectedItem is RemoteVersionRow selected)
             InstallHintText.Text = BuildInstallSummary(target.Name, selected.Id, SelectedLoader);
     }
 
     private async void StartInstall(object? sender, RoutedEventArgs e)
     {
-        if (host == null || InstancePicker.SelectedItem is not InstanceEntry instance || VersionList.SelectedItem is not RemoteVersionRow version) return;
-        if (preparing) return;
+        if (host is not { } owner || InstancePicker.SelectedItem is not InstanceEntry instance
+            || VersionList.SelectedItem is not RemoteVersionRow version) return;
         string loader = SelectedLoader;
         string? loaderBuild = (LoaderBuildCombo.SelectedItem as LoaderVersion)?.Id;
-        if (loader != "none" && string.IsNullOrEmpty(loaderBuild)) return;
-        preparing = true;
-        UpdateInstallState();
-        try
-        {
-        InstallationPlan? plan = null;
-        using (var planning = new CancellationTokenSource(TimeSpan.FromSeconds(20)))
-        {
-            try { plan = await Task.Run(() => InstallationPlan.ForVersion(new Instance(instance.Name), version.Id, loader, planning.Token), planning.Token); }
-            catch (Exception error) when (error is not OutOfMemoryException)
-            {
-                System.Diagnostics.Trace.TraceWarning("Installation plan: " + error.GetType().Name);
-                if (!await host.ConfirmAction("无法读取下载量", BuildInstallSummary(instance.Name, version.Id, loader) + "\n清单读取失败。取消后可重试；继续会按实际下载校验。", "明确继续")) return;
-            }
-        }
-        if (plan?.SpaceKnownInsufficient == true) { host.SetStatus(plan.Summary); return; }
-        if (!await host.ConfirmAction("确认安装计划", plan?.Summary ?? BuildInstallSummary(instance.Name, version.Id, loader), "开始安装")) return;
-        await host.RunTask(async token =>
-        {
-            var progress = host.TaskProgress();
-            string installed = await Task.Run(() => host.GameLauncher.Install(instance.Name, version.Id, loader, loaderBuild, progress, token), token);
-            host.InstancesChanged(instance.Name);
-            RefreshInstances(instance.Name);
-            host.SetStatus($"已安装 {installed}。");
-        }, "InstallVersion");
-        }
-        finally { preparing = false; UpdateInstallState(); }
+        int loaderRevision = loaderSelectionRevision;
+        int installRevision = installSelectionRevision;
+        await owner.InstallWithConfirmationAsync(instance.Name, version.Id, loader, loaderBuild,
+            () => loaderRevision == loaderSelectionRevision && installRevision == installSelectionRevision);
     }
 
     private static string BuildInstallSummary(string instance, string version, string loader)

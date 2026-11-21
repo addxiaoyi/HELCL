@@ -46,6 +46,7 @@ public sealed partial class MainWindow
         await CheckLaunchLoaderRetriesAsync();
         await CheckInstallerLoaderRetriesAsync();
         await CheckInstallConfirmationAsync();
+        await CheckInstallCancellationAsync();
         await CheckLibraryRefreshRetryAsync();
         await CheckDesktopRecheckSafetyAsync();
         await CheckDesktopDetailsAsync();

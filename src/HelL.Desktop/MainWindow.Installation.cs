@@ -29,8 +29,10 @@ public sealed partial class MainWindow
                 planning.CancelAfter(TimeSpan.FromSeconds(20));
                 try
                 {
-                    plan = InstallationPlanFixture is { } prepare ? await prepare(instance, version, loader, planning.Token)
-                        : await Task.Run(() => InstallationPlan.ForVersion(new Instance(instance), version, loader, planning.Token), planning.Token);
+                    Task<InstallationPlan> preparing = InstallationPlanFixture is { } prepare
+                        ? prepare(instance, version, loader, planning.Token)
+                        : Task.Run(() => InstallationPlan.ForVersion(new Instance(instance), version, loader, planning.Token), planning.Token);
+                    plan = await preparing.WaitAsync(planning.Token);
                 }
                 catch (Exception error) when (error is not OutOfMemoryException && !token.IsCancellationRequested)
                 {
@@ -48,7 +50,7 @@ public sealed partial class MainWindow
             if (plan?.SpaceKnownInsufficient == true)
                 throw new IOException(summary);
 
-            if (!await ConfirmAction("确认安装计划", summary, "开始安装"))
+            if (!await ConfirmAction("确认安装计划", summary, "开始安装", token))
             {
                 task?.Cancel();
                 token.ThrowIfCancellationRequested();

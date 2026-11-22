@@ -1,7 +1,9 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using HelL.Desktop.Models;
 using HelL.Desktop.Services;
+using HelL.Portable;
 
 namespace HelL.Desktop;
 
@@ -14,8 +16,12 @@ public sealed partial class MainWindow
         string metadata = Path.Combine(launcher.InstanceFolder(instance), ".instance.json");
         byte[] original = File.ReadAllBytes(metadata);
         var originalConfirmation = DesktopDialogs.Confirmation;
+        var originalSearch = ResourcesView.SearchFixture;
         try
         {
+            ResourcesView.SearchFixture = (_, _) => Task.FromResult<IReadOnlyList<CatalogProject>>([]);
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+            await WaitForRefreshAsync();
             ShowPage("library");
             var refresh = LibraryView.FindControl<Button>("LibraryRefreshButton")!;
             var error = LibraryView.FindControl<TextBlock>("LibraryError")!;
@@ -45,6 +51,7 @@ public sealed partial class MainWindow
         finally
         {
             DesktopDialogs.Confirmation = originalConfirmation;
+            ResourcesView.SearchFixture = originalSearch;
             File.WriteAllBytes(metadata, original);
             ShowPage("library");
         }

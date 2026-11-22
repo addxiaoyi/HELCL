@@ -5,6 +5,7 @@ using Avalonia.Threading;
 using HelL.Core.Launcher;
 using HelL.Desktop.Models;
 using HelL.Desktop.Services;
+using HelL.Portable;
 
 namespace HelL.Desktop;
 
@@ -16,6 +17,7 @@ public sealed partial class MainWindow
         var originalPlan = InstallationPlanFixture;
         var originalInstall = InstallFixture;
         var originalConfirmation = DesktopDialogs.Confirmation;
+        var originalSearch = ResourcesView.SearchFixture;
         string originalPage = currentPage;
         bool wasClosing = closing;
         var failures = new List<string>();
@@ -23,6 +25,7 @@ public sealed partial class MainWindow
         try
         {
             ShowPage("launch");
+            ResourcesView.SearchFixture = (_, _) => Task.FromResult<IReadOnlyList<CatalogProject>>([]);
             InstallFixture = (_, _, _, _, _) => { installs++; return Task.FromResult("unexpected-install"); };
             Closing += KeepSmokeOpen;
             foreach (var (duringPlanning, closeWindow) in new[] { (true, false), (false, false), (true, true), (false, true) })
@@ -97,12 +100,23 @@ public sealed partial class MainWindow
         }
         finally
         {
-            InstallationPlanFixture = originalPlan;
-            InstallFixture = originalInstall;
-            DesktopDialogs.Confirmation = originalConfirmation;
-            Closing -= KeepSmokeOpen;
-            closing = wasClosing;
-            ShowPage(originalPage);
+            try
+            {
+                await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+                DateTime deadline = DateTime.UtcNow.AddSeconds(3);
+                while (IsWorking && DateTime.UtcNow < deadline) await Task.Delay(20);
+                if (IsWorking) throw new TimeoutException("Queued fixture work did not settle after the cancellation checks.");
+            }
+            finally
+            {
+                InstallationPlanFixture = originalPlan;
+                InstallFixture = originalInstall;
+                DesktopDialogs.Confirmation = originalConfirmation;
+                ResourcesView.SearchFixture = originalSearch;
+                Closing -= KeepSmokeOpen;
+                closing = wasClosing;
+                ShowPage(originalPage);
+            }
         }
 
         static void KeepSmokeOpen(object? sender, WindowClosingEventArgs args) => args.Cancel = true;

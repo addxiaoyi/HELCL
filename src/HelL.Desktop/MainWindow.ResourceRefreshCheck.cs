@@ -7,6 +7,65 @@ namespace HelL.Desktop;
 
 public sealed partial class MainWindow
 {
+    private async Task CheckInitialResourceRefreshAsync()
+    {
+        var source = ResourcesView.FindControl<ComboBox>("SourcePicker")!;
+        var results = ResourcesView.FindControl<ListBox>("Results")!;
+        var originalSearch = ResourcesView.SearchFixture;
+        int originalSource = source.SelectedIndex;
+        var heldSearch = new TaskCompletionSource<IReadOnlyList<CatalogProject>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CatalogProject[] rows = [new("initial-refresh", "Initial refresh", "modrinth", "resourcepack", "", "", "", "", "", "", 0)];
+        int requests = 0;
+        try
+        {
+            ResourcesView.SearchFixture = (_, _) => ++requests switch
+            {
+                1 => Task.FromException<IReadOnlyList<CatalogProject>>(new IOException("Controlled first search failure.")),
+                2 => heldSearch.Task,
+                _ => Task.FromResult<IReadOnlyList<CatalogProject>>(rows)
+            };
+            source.SelectedIndex = source.SelectedIndex == 0 ? 1 : 0;
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+            if (requests != 0) throw new IOException("Changing filters before any explicit search queried resources.");
+
+            await ResourcesView.Search();
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+            if (requests != 1 || IsWorking) throw new IOException("The initial failed search retried without a filter change.");
+            source.SelectedIndex = source.SelectedIndex == 0 ? 1 : 0;
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+            if (requests != 2 || !IsWorking) throw new IOException("Changing the source after the first failed search did not start a fresh request.");
+            source.SelectedIndex = source.SelectedIndex == 0 ? 1 : 0;
+            heldSearch.SetResult([rows[0] with { Id = "initial-stale" }]);
+            DateTime deadline = DateTime.UtcNow.AddSeconds(3);
+            do
+            {
+                await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+                if (!IsWorking) break;
+                await Task.Delay(20);
+            } while (DateTime.UtcNow < deadline);
+            if (IsWorking || requests != 3 || results.Items.OfType<CatalogProject>().SingleOrDefault()?.Id != rows[0].Id)
+                throw new IOException("Changing filters before the first successful search did not load the latest results.");
+            File.WriteAllText(Path.Combine(Program.DataRoot, "desktop-resource-initial-refresh.json"), JsonSerializer.Serialize(new
+            {
+                ok = true, unopenedSearchStaysIdle = true, failedSearchDoesNotLoop = true,
+                filtersRecoverFirstFailure = true, filtersResumeBeforeFirstSuccess = true
+            }));
+        }
+        finally
+        {
+            heldSearch.TrySetResult([]);
+            source.SelectedIndex = originalSource;
+            try
+            {
+                await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+                DateTime deadline = DateTime.UtcNow.AddSeconds(3);
+                while (IsWorking && DateTime.UtcNow < deadline) await Task.Delay(20);
+                if (IsWorking) throw new TimeoutException("The initial resource search fixture did not settle.");
+            }
+            finally { ResourcesView.SearchFixture = originalSearch; }
+        }
+    }
+
     private async Task CheckResourceRefreshAsync()
     {
         var source = ResourcesView.FindControl<ComboBox>("SourcePicker")!;

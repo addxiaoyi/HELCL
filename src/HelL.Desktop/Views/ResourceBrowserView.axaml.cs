@@ -19,6 +19,7 @@ public partial class ResourceBrowserView : UserControl
     internal const int PageSize = 30;
     internal const int MaximumPageIndex = PortableCatalog.MaximumSearchOffset / PageSize;
     private bool hasSearched;
+    private bool searchStarted;
     private bool searchPending;
     private bool searchQueued;
     private int generation;
@@ -155,7 +156,7 @@ public partial class ResourceBrowserView : UserControl
         DetailPanel.IsVisible = false;
         DetailsButton.IsEnabled = false;
         DownloadButton.IsEnabled = false;
-        searchPending = hasSearched;
+        searchPending = searchStarted;
         ResumeSearch();
     }
 
@@ -199,6 +200,7 @@ public partial class ResourceBrowserView : UserControl
             if (revision != generation || binding != BindingKey)
                 throw new InvalidOperationException("搜索条件或结果已更新，请从资源页重新搜索或翻页。");
 
+            searchStarted = true;
             searchPending = false;
             string kind = Kind, source = Source, query = QueryBox.Text?.Trim() ?? "", order = Order;
             revision = ++generation;

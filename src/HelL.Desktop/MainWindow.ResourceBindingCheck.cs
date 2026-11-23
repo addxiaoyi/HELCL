@@ -21,12 +21,16 @@ public sealed partial class MainWindow
         await Task.Delay(50);
         try
         {
+            await CheckInitialResourceRefreshAsync();
             var search = new TaskCompletionSource<IReadOnlyList<CatalogProject>>(TaskCreationOptions.RunContinuationsAsynchronously);
-            ResourcesView.SearchFixture = (_, _) => search.Task;
+            int bindingSearches = 0;
+            ResourcesView.SearchFixture = (_, _) => ++bindingSearches == 1 ? search.Task
+                : Task.FromResult<IReadOnlyList<CatalogProject>>([]);
             Task pendingSearch = ResourcesView.Search();
             source.SelectedIndex = 1;
             search.SetResult([project]);
             await pendingSearch;
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => { }, Avalonia.Threading.DispatcherPriority.Background);
             if ((results.ItemsSource as IEnumerable<CatalogProject>)?.Any(row => row.Id == project.Id) == true)
                 throw new IOException("Old search results crossed a changed target binding.");
 

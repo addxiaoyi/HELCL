@@ -27,6 +27,8 @@
 
 新增 `MainWindow.ResourceRefreshCheck.cs` 接入完整 Desktop UI smoke，覆盖隐藏页实例刷新、连续筛选、忙碌恢复、旧响应丢弃、搜索词草稿、显式搜索去重、离页再入与关闭窗口。`TestResults/resource-refresh-red-20261123b/desktop-resource-refresh.json` 在修复前失败；`TestResults/resource-refresh-green-20261123/` 的新回归、安装确认/取消和完整 UI smoke 均通过。Desktop 服务测试为 29 通过、1 个 Unix 权限检查在 Windows 跳过，回执位于 `TestResults/resource-refresh-tests-20261123/desktop.trx`。
 
+独立复核补出首次请求的边界：首次失败或尚未成功返回时，筛选变化也需补查。现在单独记录“已发起查询”，保留“已有显示结果”用于旧页提示；未搜索过的页面仍保持空闲，失败后不自动循环重试。固定回归在 `TestResults/resource-initial-red-20261123/ui-smoke-error.txt` 先失败，最终 `TestResults/resource-initial-green-20261123b/` 的首次请求、完整资源刷新与全量 Desktop smoke 回执全部通过。
+
 同轮 Mobile 服务测试 57/57 通过，320×720、390×844、844×390 桌面宿主预览的 `mobile-smoke.json` 和 `mobile-reading.json` 均为 `ok: true`，回执位于 `TestResults/resource-refresh-mobile-<尺寸>-20261123/`。这些本地预览不代表原生 Android 或读屏验收。
 
 此前检查点 `40d7a2e` 的 [前端验收](https://github.com/addxiaoyi/HELCL/actions/runs/44986791930) 与 [标准 CI](https://github.com/addxiaoyi/HELCL/actions/runs/44986791941) 已全部通过，包括 Android 模拟器键盘、返回键、边距和系统字号检查。最新提交的 CI 以 [PR #11](https://github.com/addxiaoyi/HELCL/pull/11) 当前 HEAD 为准。受控资源 fixture 不证明 Modrinth/CurseForge 实际末页；原生读屏和真机仍未验收。所有运行产物留在未跟踪的 `TestResults/`，不提交到仓库。

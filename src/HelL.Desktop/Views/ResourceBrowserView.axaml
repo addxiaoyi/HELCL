@@ -37,7 +37,7 @@
           <ComboBoxItem Content="综合推荐" Tag="relevance" /><ComboBoxItem Content="下载最多" Tag="downloads" />
           <ComboBoxItem Content="最新发布" Tag="newest" /><ComboBoxItem Content="最近更新" Tag="updated" />
         </ComboBox>
-        <Button Grid.Column="3" Content="搜索" Classes="accent" Click="SearchResources" />
+        <Button x:Name="SearchButton" Grid.Column="3" Content="搜索" Classes="accent" Click="SearchResources" />
       </Grid>
     </StackPanel>
 
@@ -129,7 +129,7 @@
             </StackPanel>
           </ScrollViewer>
         </Grid>
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12" Margin="0,10,0,0">
+        <StackPanel x:Name="Pagination" Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12" Margin="0,10,0,0" IsVisible="False">
           <Button x:Name="PreviousPageButton" Content="上一页" Click="PreviousPage" IsEnabled="False" />
           <TextBlock x:Name="PageLabel" Text="第 1 页" VerticalAlignment="Center" />
           <Button x:Name="NextPageButton" Content="下一页" Click="NextPage" IsEnabled="False" />

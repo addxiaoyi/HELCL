@@ -16,6 +16,18 @@ public sealed partial class MainWindow
     {
         if (ShellColumns is null) return;
         ShellColumns.ColumnDefinitions[0].Width = new GridLength(Bounds.Width < 1000 ? 164 : 208);
+        if (LaunchWorkspaceColumns is not null && LaunchQuickPanel is not null)
+        {
+            bool stackLaunchColumns = Bounds.Width <= 900;
+            LaunchWorkspaceColumns.ColumnDefinitions[0].Width = stackLaunchColumns
+                ? new GridLength(1, GridUnitType.Star)
+                : new GridLength(1.22, GridUnitType.Star);
+            LaunchWorkspaceColumns.ColumnDefinitions[1].Width = stackLaunchColumns
+                ? new GridLength(0)
+                : new GridLength(1, GridUnitType.Star);
+            Grid.SetRow(LaunchQuickPanel, stackLaunchColumns ? 1 : 0);
+            Grid.SetColumn(LaunchQuickPanel, stackLaunchColumns ? 0 : 1);
+        }
         foreach (TextBlock text in this.GetVisualDescendants().OfType<TextBlock>())
         {
             double size = textSizes.GetValue(text, control => new TextSize(control.FontSize)).Value;
@@ -23,6 +35,8 @@ public sealed partial class MainWindow
         }
     }
     internal bool IsWorking => task is not null;
-    internal Task<bool> ConfirmAction(string title, string body, string accept = "确认") => DesktopDialogs.Confirm(this, title, body, accept);
+    internal bool IsClosing => closing;
+    internal Task<bool> ConfirmAction(string title, string body, string accept = "确认", CancellationToken cancellation = default)
+        => DesktopDialogs.Confirm(this, title, body, accept, cancellation);
     internal string DataRoot => DataDirectory.Text ?? "";
 }

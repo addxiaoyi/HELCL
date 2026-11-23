@@ -25,6 +25,7 @@ public sealed partial class MainWindow
     internal void SelectTheme(string theme, bool persist = true)
     {
         if (theme is not ("dark" or "light" or "system")) theme = "dark";
+        if (persist && !CommitAppearance("portable_theme", theme)) return;
         CurrentTheme = theme;
         if (Application.Current != null)
         {
@@ -38,33 +39,32 @@ public sealed partial class MainWindow
         ApplyGlassBackdrop();
         SettingsView?.SyncThemeSelection(theme);
         SettingsView?.SyncGlassSelection(CurrentGlass);
-        if (!persist) return;
-        try
-        {
-            Config.CONFIG.Set("portable_theme", theme);
-            Config.CONFIG.Save();
-        }
-        catch (Exception error)
-        {
-            SetStatus("外观偏好保存失败：" + error.Message);
-        }
     }
 
     internal void SelectGlassOpacity(string glass, bool persist = true)
     {
         if (glass is not ("ultra" or "standard" or "deep" or "solid")) glass = "standard";
+        if (persist && !CommitAppearance("portable_glass", glass)) return;
         CurrentGlass = glass;
         ApplyGlassBackdrop();
         SettingsView?.SyncGlassSelection(glass);
-        if (!persist) return;
+    }
+
+    private bool CommitAppearance(string key, string value)
+    {
         try
         {
-            Config.CONFIG.Set("portable_glass", glass);
-            Config.CONFIG.Save();
+            Config.CONFIG.Commit(PyDict.Of(key, value));
+            SettingsView?.SetAppearanceNotice("外观已保存，下次启动会继续使用。", false);
+            return true;
         }
-        catch (Exception error)
+        catch (Exception error) when (error is not OutOfMemoryException)
         {
-            SetStatus("通透度保存失败：" + error.Message);
+            System.Diagnostics.Trace.TraceWarning("MainWindow.CommitAppearance: " + error.GetType().Name);
+            const string message = "外观保存失败，已保留原设置。请检查数据目录后重试。";
+            SettingsView?.SetAppearanceNotice(message, true);
+            SetStatus(message);
+            return false;
         }
     }
 
@@ -74,19 +74,18 @@ public sealed partial class MainWindow
         bool isLight = Application.Current?.ActualThemeVariant == ThemeVariant.Light || CurrentTheme == "light";
         string hex = (isLight, CurrentGlass) switch
         {
-            (false, "ultra") => "#6B0C0E13",
-            (false, "standard") => "#940D0F14",
-            (false, "deep") => "#BD0E1015",
-            (false, "solid") => "#F6111318",
-            (true, "ultra") => "#80EEF1F6",
-            (true, "standard") => "#ADEEF1F6",
-            (true, "deep") => "#D6EFF2F7",
-            _ => "#F8F2F4F8"
+            (false, "ultra") => "#3D0C0E13",
+            (false, "standard") => "#660D0F14",
+            (false, "deep") => "#990E1015",
+            (false, "solid") => "#FF111318",
+            (true, "ultra") => "#4DEEF1F6",
+            (true, "standard") => "#73EEF1F6",
+            (true, "deep") => "#B3EFF2F7",
+            _ => "#FFF2F4F8"
         };
-        bool hasBlur = ActualTransparencyLevel == WindowTransparencyLevel.AcrylicBlur
-            || ActualTransparencyLevel == WindowTransparencyLevel.Blur || ActualTransparencyLevel == WindowTransparencyLevel.Mica;
         Color tint = Color.Parse(hex);
-        if (!hasBlur || CurrentGlass == "solid") tint = Color.FromRgb(tint.R, tint.G, tint.B);
+        if (ActualTransparencyLevel == WindowTransparencyLevel.None || CurrentGlass == "solid")
+            tint = Color.FromRgb(tint.R, tint.G, tint.B);
         WindowShell.Background = new SolidColorBrush(tint);
     }
 }

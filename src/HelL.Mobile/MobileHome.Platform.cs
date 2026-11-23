@@ -73,6 +73,9 @@ public sealed partial class MobileHome
                 safeAreaEvents = nativeSafeAreaEvents, safeArea = new { left = Padding.Left, top = Padding.Top, right = Padding.Right, bottom = Padding.Bottom },
                 systemTextScale = MobileRuntime.SystemTextScale, page = currentPage,
                 instanceNameTap = NativeAuditTap(InstanceName),
+                aiSettingsOpen = AiSettingsPanel.IsVisible,
+                aiAddressTap = NativeAuditTap(AiAddress),
+                aiComposerVisible = AiComposer.IsEffectivelyVisible,
                 keyboardOpen = inputPane?.State == InputPaneState.Open, backHook = platformTop is not null,
                 insetsHook = insets is not null, inputPaneHook = inputPane is not null
             }));

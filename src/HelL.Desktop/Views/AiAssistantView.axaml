@@ -1,34 +1,47 @@
 <UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="using:HelL.Desktop.Controls"
+             xmlns:icons="using:HelL.Design"
              x:Class="HelL.Desktop.Views.AiAssistantView">
   <Grid Margin="48,10,48,22" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14" MaxWidth="760">
     <!-- 极简顶栏 -->
     <Grid ColumnDefinitions="*,Auto,Auto">
-      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+      <StackPanel Spacing="3" VerticalAlignment="Center">
         <TextBlock Text="助手" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
         <TextBlock x:Name="ProviderSubtitle" Classes="muted" FontSize="12" VerticalAlignment="Center" />
       </StackPanel>
-      <Button Grid.Column="1" Content="连接设置" Classes="soft" Click="ToggleConfig" Margin="0,0,8,0" />
-      <Button x:Name="ClearChatButton" Grid.Column="2" Content="清空" Classes="ghost" Click="ClearConversation" />
+      <Button Grid.Column="1" Classes="icon-btn" Click="ToggleConfig" Margin="0,0,8,0" ToolTip.Tip="连接设置" AutomationProperties.Name="连接设置"><icons:LauncherIcon Kind="CogOutline" Width="16" Height="16"/></Button>
+      <Button x:Name="ClearChatButton" Grid.Column="2" Classes="icon-btn" Click="ClearConversation" ToolTip.Tip="清空对话" AutomationProperties.Name="清空对话"><icons:LauncherIcon Kind="TrashCanOutline" Width="16" Height="16"/></Button>
     </Grid>
 
     <!-- 按需展开的 macOS 分组连接设置 -->
     <Border x:Name="ConfigPanel" Grid.Row="1" Classes="inset-group" Padding="18,14" IsVisible="False">
       <StackPanel Spacing="10">
-        <Grid ColumnDefinitions="180,*,160" ColumnSpacing="8">
-          <ComboBox x:Name="ModePicker" SelectedIndex="0" HorizontalAlignment="Stretch" SelectionChanged="ModeChanged">
+        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" RowSpacing="10" ColumnSpacing="12">
+          <StackPanel Spacing="5">
+          <TextBlock Text="服务类型" Classes="group-header" />
+          <ComboBox x:Name="ModePicker" SelectedIndex="0" HorizontalAlignment="Stretch" SelectionChanged="ModeChanged" AutomationProperties.Name="AI 服务类型">
             <ComboBoxItem Content="本地 Ollama" Tag="ollama" />
             <ComboBoxItem Content="OpenAI 兼容云端" Tag="custom" />
             <ComboBoxItem Content="公共网关" Tag="public" />
           </ComboBox>
-          <TextBox x:Name="EndpointBox" Grid.Column="1" Text="http://127.0.0.1:11434/v1" PlaceholderText="https://api.openai.com/v1" />
-          <TextBox x:Name="ModelBox" Grid.Column="2" Text="qwen2.5:7b" PlaceholderText="模型名称" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Spacing="5">
+            <TextBlock Text="模型名称" Classes="group-header" />
+            <TextBox x:Name="ModelBox" Text="qwen2.5:7b" PlaceholderText="填写服务支持的模型名称" AutomationProperties.Name="AI 模型名称" />
+          </StackPanel>
+          <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Spacing="5">
+            <TextBlock Text="服务地址" Classes="group-header" />
+            <TextBox x:Name="EndpointBox" Text="http://127.0.0.1:11434/v1" PlaceholderText="https://api.openai.com/v1" AutomationProperties.Name="AI 服务地址" />
+          </StackPanel>
         </Grid>
-        <Grid x:Name="ApiKeyRow" ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="False">
-          <TextBox x:Name="ApiKeyBox" PasswordChar="●" PlaceholderText="API 密钥（留空保留已保存密钥）" />
-          <Button Grid.Column="1" Content="保存" Classes="accent" Click="SaveConfig" />
+        <Grid x:Name="ApiKeyRow" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="5" ColumnSpacing="8" IsVisible="False">
+          <TextBlock Text="API 密钥" Classes="group-header" />
+          <TextBox x:Name="ApiKeyBox" Grid.Row="1" PasswordChar="●" PlaceholderText="留空可保留此服务已保存的密钥" AutomationProperties.Name="AI API 密钥" />
+          <Button Grid.Column="1" Grid.Row="1" Content="保存连接" Classes="accent" Click="SaveConfig" />
         </Grid>
-        <Button x:Name="SaveLocalButton" Content="保存" Classes="accent" HorizontalAlignment="Left" Click="SaveConfig" />
+        <TextBlock x:Name="ConfigError" Classes="error" TextWrapping="Wrap" IsVisible="False" AutomationProperties.LiveSetting="Polite" />
+        <TextBlock x:Name="ConnectionHint" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+        <Button x:Name="SaveLocalButton" Content="保存连接" Classes="accent" HorizontalAlignment="Left" Click="SaveConfig" />
       </StackPanel>
     </Border>
 
@@ -37,6 +50,7 @@
       <StackPanel Spacing="16">
         <StackPanel x:Name="StarterPanel" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16" Margin="0,68,0,24">
           <TextBlock Text="需要排查什么问题？" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" />
+          <TextBlock Text="点击建议填入问题，编辑后再发送。" Classes="muted" FontSize="12" HorizontalAlignment="Center" />
           <WrapPanel HorizontalAlignment="Center" MaxWidth="540">
             <Button Content="分析当前实例日志" Classes="tag-chip" Click="DiagnoseLatestLog" Margin="4" />
             <Button Content="1.21.1 性能优化模组" Classes="tag-chip" Tag="请列出适合 Minecraft 1.21.1 Fabric 的简洁帧率优化模组建议。" Click="UseStarterPrompt" Margin="4" />
@@ -49,13 +63,13 @@
           <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="14" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border Background="{Binding BubbleBg}" CornerRadius="12" Padding="15,11" Margin="{Binding BubbleMargin}" HorizontalAlignment="{Binding BubbleAlign}" MaxWidth="620">
-                <StackPanel Spacing="6">
+              <Border Background="{Binding BubbleBg}" CornerRadius="10" Padding="15,12" Margin="{Binding BubbleMargin}" HorizontalAlignment="{Binding BubbleAlign}" MaxWidth="680">
+                <StackPanel Spacing="8">
                   <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsAssistant}">
-                    <TextBlock Text="{Binding Speaker}" FontSize="11.5" Classes="muted" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Speaker}" FontSize="12" Classes="muted" VerticalAlignment="Center" />
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                       <TextBlock Text="{Binding StateHint}" Classes="muted" FontSize="11" VerticalAlignment="Center" />
-                      <Button Content="复制" Classes="ghost" Tag="{Binding Content}" Click="CopyBubbleText" MinHeight="20" Padding="6,1" FontSize="11" />
+                      <Button Content="复制" Classes="ghost" Tag="{Binding Content}" Click="CopyBubbleText" MinHeight="28" Padding="8,2" FontSize="12" />
                     </StackPanel>
                   </Grid>
                   <local:MessageDocument Text="{Binding Content}" />

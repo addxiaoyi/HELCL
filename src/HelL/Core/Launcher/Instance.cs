@@ -83,6 +83,7 @@ public class Instance
 		{
 			throw new FileNotFoundError("[Errno 2] No such file or directory: " + Py.Repr(path) + " -> " + Py.Repr(instancePath));
 		}
+        ReadMetaForUpdate();
 		if (LocalFs.IsDir(path))
 		{
 			Directory.Move(PPath.Abs(path), PPath.Abs(instancePath));
@@ -139,12 +140,35 @@ public class Instance
 		return (obj as PyDict) ?? new PyDict();
 	}
 
-	public void SetMeta(string key, object value)
-	{
-		PyDict pyDict = Meta();
-		pyDict[key] = value;
-		Utils.WriteJson(Meta_Path, pyDict);
-	}
+    public void SetMeta(string key, object value) => UpdateMeta(PyDict.Of(key, value));
+
+    public void UpdateMeta(PyDict patch)
+    {
+        if (patch == null) throw new System.ArgumentNullException(nameof(patch));
+        lock (Utils.JsonFileLock(Meta_Path))
+        {
+            var metadata = ReadMetaForUpdate();
+            metadata.Update(patch);
+            Utils.WriteJson(Meta_Path, metadata);
+        }
+    }
+
+    internal PyDict ReadMetaForUpdate()
+    {
+        lock (Utils.JsonFileLock(Meta_Path))
+        {
+            // Legacy instances may have no metadata; existing unreadable metadata must survive edits.
+            try
+            {
+                return PyJson.Loads(Utils.DecodeUtf8Sig(File.ReadAllBytes(Meta_Path))) as PyDict
+                    ?? throw new InvalidDataException("实例元数据格式损坏，请从备份恢复后重试。");
+            }
+            catch (FileNotFoundException) { return new PyDict(); }
+            catch (DirectoryNotFoundException) { return new PyDict(); }
+            catch (System.Exception error) when (error is JSONDecodeError or UnicodeDecodeError)
+            { throw new InvalidDataException("实例元数据格式损坏，请从备份恢复后重试。", error); }
+        }
+    }
 
 	public string JavaPref()
 	{

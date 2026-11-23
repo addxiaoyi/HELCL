@@ -15,6 +15,7 @@ namespace HelL.Mobile.Tests;
 
 public sealed class MobileChatTests : IDisposable
 {
+    private const int ErrorConnectionInvalid = 1229;
     private readonly string root = Path.Combine(Path.GetTempPath(), "hell-mobile-chat-" + Guid.NewGuid().ToString("N"));
     private readonly string? previousReplay = Environment.GetEnvironmentVariable("TIPCL_HTTP_REPLAY");
     private readonly HttpListener listener = new();
@@ -24,6 +25,7 @@ public sealed class MobileChatTests : IDisposable
     private int status = 200;
     private bool stall;
     private readonly TaskCompletionSource releaseResponse = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private CancellationToken stalledRequestCancellation;
     private bool responseFinished;
     private static MobileAiProfile Profile => new("custom", "https://fixture.invalid/v1", "fixture-model", "fictional-key");
 
@@ -67,6 +69,8 @@ public sealed class MobileChatTests : IDisposable
             finally
             {
                 try { context.Response.Close(); }
+                // A canceled SSE request can lose its HTTP.sys connection before the stalled response closes.
+                catch (HttpListenerException error) when (stall && stalledRequestCancellation.IsCancellationRequested && error.NativeErrorCode == ErrorConnectionInvalid) { }
                 catch (ObjectDisposedException) when (!listener.IsListening) { }
             }
         }
@@ -110,6 +114,7 @@ public sealed class MobileChatTests : IDisposable
         response = "data: {\"choices\":[{\"delta\":{\"content\":\"部分回复\"}}]}\n\n";
         stall = true;
         using var cancel = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        stalledRequestCancellation = cancel.Token;
         var chat = new MobileChat();
         try
         {

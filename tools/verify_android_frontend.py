@@ -126,6 +126,7 @@ def verify(apk: Path, output: Path) -> None:
         require_receipt(evidence, "mobile-details-preview.json")
         require_receipt(evidence, "mobile-icons.json")
         require_receipt(evidence, "mobile-refinement.json")
+        require_receipt(evidence, "mobile-reading.json")
         screenshot(output / "01-home.png")
         tap_match(("管理当前实例", "管理实例"))
         time.sleep(0.5)
@@ -153,6 +154,37 @@ def verify(apk: Path, output: Path) -> None:
             raise RuntimeError("An Android platform adaptation hook is missing.")
         if any(value < 0 for value in returned["safeArea"].values()):
             raise RuntimeError("Android safe-area padding is invalid.")
+
+        tap_match(("AI 助手",))
+        wait_for(lambda: (v if (v := read_json(evidence + "/mobile-platform-events.json")) and v.get("page") == "ai" else None),
+                 "The AI conversation was not opened.")
+        tap_match(("AI 连接设置",))
+        ai_settings = wait_for(lambda: (v if (v := read_json(evidence + "/mobile-platform-events.json"))
+                                       and v.get("aiSettingsOpen") and v.get("aiAddressTap") else None),
+                               "The AI settings address did not become visible.")
+        address = ai_settings["aiAddressTap"]
+        adb("shell", "input", "tap", str(address["x"]), str(address["y"]))
+        wait_for(lambda: (v if (v := read_json(evidence + "/mobile-platform-events.json")) and v.get("keyboardOpen") else None),
+                 "AI address editing did not open the native keyboard.")
+        screenshot(output / "03a-ai-keyboard.png")
+        adb("shell", "input", "keyevent", "4")
+        ai_keyboard_closed = wait_for(lambda: (v if (v := read_json(evidence + "/mobile-platform-events.json"))
+                                               and not v.get("keyboardOpen") else None), "AI keyboard did not close.")
+        if ai_keyboard_closed.get("page") != "ai" or not ai_keyboard_closed.get("aiSettingsOpen"):
+            raise RuntimeError("First AI back must close only the keyboard.")
+        adb("shell", "input", "keyevent", "4")
+        wait_for(lambda: (v if (v := read_json(evidence + "/mobile-platform-events.json"))
+                             and v.get("page") == "ai" and not v.get("aiSettingsOpen")
+                             and not v.get("keyboardOpen") and v.get("aiComposerVisible") else None),
+                 "Second AI back must return from settings to the conversation.")
+        screenshot(output / "03b-ai-return.png")
+        talkback_installed = "com.google.android.marvin.talkback" in adb("shell", "pm", "list", "packages", "com.google.android.marvin.talkback")
+        (output / "ai-native-acceptance.json").write_text(json.dumps({
+            "ok": True, "nativeKeyboard": True, "backClosesKeyboardFirst": True,
+            "backReturnsToConversation": True, "talkbackInstalled": talkback_installed,
+            "talkbackSpeechVerified": False,
+            "talkbackLimit": "No TalkBack speech capture in this emulator acceptance."
+        }, ensure_ascii=False, indent=2), encoding="utf-8")
         adb("shell", "settings", "put", "system", "font_scale", "1.5")
         adb("shell", "am", "force-stop", PACKAGE)
         adb("shell", "am", "start", "-W", "-n", ACTIVITY, "--ez", "hell_verify_restart", "true",
@@ -176,6 +208,7 @@ def verify(apk: Path, output: Path) -> None:
         details_200 = require_receipt(evidence_200, "mobile-details-preview.json")
         icons_200 = require_receipt(evidence_200, "mobile-icons.json")
         refinement_200 = require_receipt(evidence_200, "mobile-refinement.json")
+        reading_200 = require_receipt(evidence_200, "mobile-reading.json")
         layout_200 = require_receipt(evidence_200, "mobile-system-font-200.json")
         if layout_200.get("systemTextScale", 0) < 1.99 or any(layout_200.get(key) is not True for key in
                 ("primaryActionVisible", "dynamicInheritedTextStable", "bottomLabelsSingleLine")):
@@ -220,6 +253,7 @@ def verify(apk: Path, output: Path) -> None:
                       "frontendDetails": True, "font200Details": details_200["ok"],
                       "vectorIcons": True, "font200VectorIcons": icons_200["ok"],
                       "visualRefinement": True, "font200VisualRefinement": refinement_200["ok"],
+                      "readingRefinement": True, "font200ReadingRefinement": reading_200["ok"],
                       "fontHome200Rendered": True, "font200ProcessRestarted": restarted_process_200 != smoke_process_200,
                       "font200Session": session_200, "font200Smoke": smoke_200["ok"],
                       "font200Remediation": remediation_200["ok"], "font200Recheck": recheck_200["ok"],

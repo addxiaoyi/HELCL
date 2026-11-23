@@ -93,6 +93,51 @@ public sealed class FrontendRecoveryTests : IDisposable
     }
 
     [Fact]
+    public void RepeatedRestartsPreserveTaskIdentityAndOriginalLog()
+    {
+        var finished = new DesktopTask("download resources", DateTimeOffset.UnixEpoch);
+        finished.Report("Connecting to catalog");
+        finished.Finish(DesktopTaskState.Failed, "network request failed");
+        string[] originalLog = finished.Log.ToArray();
+        DesktopTaskHistory.Save(root, [finished]);
+
+        for (int restart = 0; restart < 2; restart++)
+        {
+            DesktopTask restored = Assert.Single(DesktopTaskHistory.Read(root));
+            Assert.Equal(finished.Id, restored.Id);
+            Assert.Equal(finished.StartedAt, restored.StartedAt);
+            Assert.Equal(finished.FinishedAt, restored.FinishedAt);
+            Assert.Equal(finished.Message, restored.Message);
+            Assert.Equal(originalLog, restored.Log.ToArray());
+            Assert.False(restored.IsActive);
+            Assert.False(restored.CanCancel);
+            DesktopTaskHistory.Save(root, [restored]);
+        }
+    }
+
+    [Fact]
+    public void HistoryFromBeforeTaskIdsGetsDistinctStableIds()
+    {
+        string path = Path.Combine(root, "desktop-task-history.json");
+        const string saved = """
+            [
+              {"Title":"Catalog search","State":3,"Message":"Timeout","Lines":["Original line"]},
+              {"Title":"Catalog search","State":3,"Message":"Timeout","Lines":["Original line"]}
+            ]
+            """;
+        File.WriteAllText(path, saved);
+
+        DesktopTask[] firstRead = DesktopTaskHistory.Read(root);
+        Guid[] ids = firstRead.Select(task => task.Id).ToArray();
+        Assert.NotEqual(ids[0], ids[1]);
+        Assert.Equal(ids, DesktopTaskHistory.Read(root).Select(task => task.Id).ToArray());
+        Assert.All(firstRead, task => Assert.Equal("Original line", Assert.Single(task.Log)));
+
+        DesktopTaskHistory.Save(root, firstRead);
+        Assert.Equal(ids, DesktopTaskHistory.Read(root).Select(task => task.Id).ToArray());
+    }
+
+    [Fact]
     public void CorruptHistoryIsReportedWithoutOverwritingEvidence()
     {
         string path = Path.Combine(root, "desktop-task-history.json");

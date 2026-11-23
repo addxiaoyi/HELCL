@@ -1,4 +1,5 @@
 using System.Text.Json;
+using HelL.Core.Launcher;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -132,6 +133,21 @@ public sealed partial class MobileHome
             }
             ShowPage("more");
             await Capture("more");
+            string configBackup = Config.CONFIG_FILE + ".appearance-fixture";
+            long configRevision = Config.CONFIG.revision;
+            var savedTheme = Application.Current!.RequestedThemeVariant;
+            int savedThemeIndex = ThemePicker.SelectedIndex;
+            File.Move(Config.CONFIG_FILE, configBackup);
+            Directory.CreateDirectory(Config.CONFIG_FILE);
+            bool appearancePreserved;
+            try
+            {
+                ThemePicker.SelectedIndex = savedThemeIndex == 0 ? 1 : 0;
+                appearancePreserved = ThemePicker.SelectedIndex == savedThemeIndex && Application.Current.RequestedThemeVariant == savedTheme
+                    && Config.CONFIG.revision == configRevision;
+            }
+            finally { Directory.Delete(Config.CONFIG_FILE); File.Move(configBackup, Config.CONFIG_FILE); }
+            if (!appearancePreserved) throw new IOException("Failed mobile theme save changed the visible or persisted preference.");
             ThemePicker.SelectedIndex = 1;
             if (Application.Current?.RequestedThemeVariant != Avalonia.Styling.ThemeVariant.Light
                 || Py.S(HelL.Core.Launcher.Config.CONFIG.Get("mobile_theme", "")) != "light")
@@ -145,6 +161,12 @@ public sealed partial class MobileHome
             await Capture("ai-empty");
             if (!AiPage.IsVisible || !AiSettingsPanel.IsVisible || BottomNavigation.Children.OfType<Button>().Count() != 5)
                 throw new IOException("The AI page did not expose configuration and its real navigation entry.");
+            AiPrompt.Text = "返回后保留的草稿";
+            RequestBack();
+            await Task.Delay(100);
+            if (!AiPage.IsVisible || AiSettingsPanel.IsVisible || AiPrompt.Text != "返回后保留的草稿")
+                throw new IOException("System back must close AI settings before leaving the conversation and preserve its draft.");
+            AiPrompt.Clear();
             AiSettingsPanel.IsVisible = false;
             AiMessages.ItemsSource = new[]
             {
@@ -308,12 +330,37 @@ public sealed partial class MobileHome
         await WaitAiOperation();
         if (AiKey.Text?.Length > 0 || File.ReadAllText(HelL.Core.Launcher.Config.CONFIG_FILE).Contains("fictional-preview-key"))
             throw new IOException("The AI connection exposed its API key in the form or configuration file.");
+        AiSettingsPanel.IsVisible = true;
+        AiAddress.Text = "https://different-provider.invalid/v1";
+        AiSaveButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await WaitAiOperation();
+        bool changedProviderRejected = aiProfile?.Endpoint == "https://fixture.invalid/v1" && AiSettingsPanel.IsVisible;
+        if (changedProviderRejected)
+        {
+            await Capture("ai-provider-change-blocked");
+            var errorPosition = AiSettingsError.TranslatePoint(default, AiMessagesScroll);
+            if (errorPosition == null || errorPosition.Value.Y < 0 || errorPosition.Value.Y + AiSettingsError.Bounds.Height > AiMessagesScroll.Bounds.Height)
+                throw new IOException("The AI settings error is outside the visible phone form.");
+            var savePosition = AiSaveButton.TranslatePoint(default, AiMessagesScroll);
+            if (AiComposer.IsVisible || savePosition == null || savePosition.Value.Y + AiSaveButton.Bounds.Height > AiMessagesScroll.Bounds.Height)
+                throw new IOException("Connection settings did not expose the save action above the keyboard/composer area.");
+        }
+        AiKey.Text = "fictional-preview-key";
+        AiAddress.Text = "https://fixture.invalid/v1/";
+        AiSaveButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await WaitAiOperation();
+        AiSettingsPanel.IsVisible = true;
+        AiSaveButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await WaitAiOperation();
+        bool sameProviderRetained = !AiSettingsPanel.IsVisible && aiProfile?.ApiKey == "fictional-preview-key";
         AiPrompt.Text = "这组模组应该如何排查兼容性？";
         AiSendButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await WaitAiOperation();
         var reply = session.Chat.Entries.LastOrDefault();
         if (reply?.State != "complete" || !reply.Text.Contains("本机隔离 HTTP 回放") || !string.IsNullOrEmpty(AiPrompt.Text))
             throw new IOException("The AI send button did not complete its isolated streamed response: " + AiChatNotice.Text);
+        if (!changedProviderRejected) throw new IOException("Changing the AI endpoint reused the previous provider's secret.");
+        if (!sameProviderRetained) throw new IOException("Saving the same AI endpoint did not retain its existing secret.");
         await Capture("ai-replay");
         ClearAiChat(this, new RoutedEventArgs());
         CompleteConfirmation(true);

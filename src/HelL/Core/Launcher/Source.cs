@@ -18,6 +18,11 @@ public static class Source
 
 	public const string CF_OFFICIAL = "https://api.curseforge.com/v1";
 
+    internal static bool IsOfficialCurseForgeApi(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps &&
+        uri.Host.Equals("api.curseforge.com", StringComparison.OrdinalIgnoreCase) && uri.IsDefaultPort &&
+        uri.UserInfo.Length == 0 && uri.AbsolutePath.StartsWith("/v1/", StringComparison.Ordinal);
+
 	public const double PROBE_LIMIT = 4.0;
 
 	public const double PROBE_TTL = 600.0;

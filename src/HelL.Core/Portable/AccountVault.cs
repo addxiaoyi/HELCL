@@ -16,6 +16,7 @@ public sealed class AccountVault
     private readonly string path;
     private readonly ISecretStore store;
     public string? CleanupWarning { get; private set; }
+    public bool HasSavedAccount => File.Exists(path);
     private sealed record Envelope(int Schema, string KeyId, string Nonce, string Ciphertext, string Tag);
 
     public AccountVault(string root, ISecretStore store)

@@ -36,8 +36,10 @@ public static class InstanceArtwork
         double scale = Math.Min(1, 1280d / Math.Max(decoded.Width, decoded.Height));
         using var preview = decoded.Resize(Math.Max(1, (int)(decoded.Width * scale)), Math.Max(1, (int)(decoded.Height * scale)));
         lock (CoverLock)
+        lock (Utils.JsonFileLock(Path.Combine(instance.path, ".instance.json")))
         {
             RequireDirectory(instance.path);
+            instance.ReadMetaForUpdate();
             string target = Path.Combine(instance.path, CoverName);
             if (File.Exists(target) && (File.GetAttributes(target) & FileAttributes.ReparsePoint) != 0) throw new IOException("封面文件不能是链接。");
             string pending = Path.Combine(instance.path, ".hell-cover-" + Guid.NewGuid().ToString("N") + ".tmp");
@@ -45,10 +47,35 @@ public static class InstanceArtwork
             {
                 using (var file = new FileStream(pending, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                 { byte[] encoded = preview.EncodePng(); file.Write(encoded, 0, encoded.Length); file.Flush(true); }
-                if (File.Exists(target)) File.Replace(pending, target, null); else File.Move(pending, target);
-                instance.SetMeta("custom_cover", true);
+                CommitCover(instance, pending, target);
             }
             finally { if (File.Exists(pending)) File.Delete(pending); }
+        }
+    }
+
+    private static void CommitCover(Instance instance, string pending, string target)
+    {
+        string backup = Path.Combine(instance.path, ".hell-cover-" + Guid.NewGuid().ToString("N") + ".bak");
+        bool hadCover = File.Exists(target);
+        if (hadCover) File.Replace(pending, target, backup); else File.Move(pending, target);
+        try { instance.SetMeta("custom_cover", true); }
+        catch (Exception saveError)
+        {
+            try
+            {
+                if (hadCover) Utils.OsReplace(backup, target); else File.Delete(target);
+            }
+            catch (Exception rollbackError)
+            {
+                throw new AggregateException("封面保存失败，恢复原封面也失败，请保留备份：" + backup, saveError, rollbackError);
+            }
+            throw;
+        }
+        if (hadCover)
+        {
+            try { File.Delete(backup); }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            { System.Diagnostics.Trace.TraceWarning("InstanceArtwork.CommitCover backup cleanup: " + error.Message); }
         }
     }
 

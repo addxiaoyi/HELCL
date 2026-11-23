@@ -278,6 +278,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
         if (page == "remote") InitializeRemote();
         SetRemotePageActive(page == "remote");
         if (page == "ai") InitializeAi();
+        if (page == "ai") ScheduleChatTypography();
         string tab = page is "create" or "manage" ? "library" : page is "about" or "account" or "remote" or "diagnostics" ? "more" : page;
         foreach (var button in RailNavigation.Children.OfType<Button>().Concat(BottomNavigation.Children.OfType<Button>()))
         {
@@ -370,6 +371,7 @@ public sealed partial class MobileHome : UserControl, IDisposable
         AttachedToVisualTree -= RunSmoke;
         Projects.PropertyChanged -= QueueResourceTypography;
         Projects.ContainerPrepared -= ResourceContainerPrepared;
+        AiMessages.PropertyChanged -= QueueChatTypography;
         DetachRemote();
     }
 }

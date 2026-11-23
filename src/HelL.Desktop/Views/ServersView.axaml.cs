@@ -45,11 +45,12 @@ public partial class ServersView : UserControl
     private MainWindow? host;
     private string currentInstance = "";
     private ServerRow[] currentRows = [];
-    private (string Instance, ServerRow Server)? removed;
+    private (Instance Target, ServerRow Server)? removed;
 
     public ServersView() => InitializeComponent();
 
     internal void Initialize(MainWindow window) => host = window;
+    private void ChooseVersion(object? sender, RoutedEventArgs e) => host?.ChooseContentVersion();
 
     internal void Reload(string? instanceName = null)
     {
@@ -70,8 +71,8 @@ public partial class ServersView : UserControl
             return;
         }
 
-        SubtitleText.Text = $"当前实例：{currentInstance} · 与游戏内多人游戏列表自动互通";
-        var inst = new Instance(currentInstance);
+        SubtitleText.Text = host.ContentLabel(currentInstance) + " · 游戏内服务器列表";
+        var inst = host.ContentInstance(currentInstance);
         var rows = Servers.ListServers(inst).OfType<PyDict>().Select((dict, idx) =>
         {
             string ip = Py.S(dict.Get("ip"));
@@ -137,7 +138,7 @@ public partial class ServersView : UserControl
         await host.RunTask(_ =>
         {
             var (addr, port) = Servers._split_addr(rawHost);
-            Servers.AddServer(new Instance(currentInstance), name, addr, port, note);
+            Servers.AddServer(host.ContentInstance(currentInstance), name, addr, port, note);
             ServerNameInput.Clear();
             ServerHostInput.Clear();
             ServerNoteInput.Clear();
@@ -151,12 +152,13 @@ public partial class ServersView : UserControl
     {
         if (host == null || string.IsNullOrEmpty(currentInstance) || sender is not Button { Tag: long index }) return;
         string target = currentInstance;
+        var content = host.ContentInstance(target);
         ServerRow? server = currentRows.FirstOrDefault(row => row.Index == index);
         if (server is null || !await host.ConfirmAction("移除服务器", $"实例：{target}\n服务器：{server.Name}\n地址：{server.FullAddress}\n仅移除本机列表记录，不影响服务器。", "移除")) return;
         await host.RunTask(_ =>
         {
-            Servers.DeleteServer(new Instance(target), index);
-            removed = (target, server);
+            Servers.DeleteServer(content, index);
+            removed = (content, server);
             UndoRemoveButton.IsVisible = true;
             Reload(currentInstance);
             host.SetStatus("已移除所选服务器。");
@@ -169,9 +171,11 @@ public partial class ServersView : UserControl
         if (host == null || removed is not { } undo) return;
         await host.RunTask(_ =>
         {
-            Servers.AddServer(new Instance(undo.Instance), undo.Server.Name, undo.Server.Host, undo.Server.Port, undo.Server.Description);
+            if (!host.GameLauncher.InstancesList().Any(instance => instance.Name == undo.Target.name) || !Directory.Exists(undo.Target.path))
+                throw new InvalidOperationException("原实例或版本目录已改变，无法撤销。请在当前实例重新添加服务器。");
+            Servers.AddServer(undo.Target, undo.Server.Name, undo.Server.Host, undo.Server.Port, undo.Server.Description);
             removed = null; UndoRemoveButton.IsVisible = false;
-            Reload(undo.Instance); host.SetStatus("已恢复服务器列表记录。");
+            Reload(currentInstance); host.SetStatus("已恢复服务器列表记录到「" + undo.Target.name + "」。");
             return Task.CompletedTask;
         });
     }

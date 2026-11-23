@@ -1,4 +1,5 @@
 using System.Reflection;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using HelL.Desktop.Controls;
@@ -42,10 +43,22 @@ public sealed partial class MainWindow
         await CheckImportTarget(instance);
         await CheckResourceBinding();
         await CheckDocumentReleaseBinding();
+        await CheckLaunchLoaderRetriesAsync();
+        await CheckInstallerLoaderRetriesAsync();
+        await CheckInstallConfirmationAsync();
+        await CheckInstallCancellationAsync();
+        await CheckLibraryRefreshRetryAsync();
+        await CheckResourceRefreshAsync();
+        var settingsAndBadgeFailures = new List<Exception>();
+        try { await CheckSettingsDraftAsync(); } catch (IOException error) { settingsAndBadgeFailures.Add(error); }
+        try { await CheckTaskBadgeContrastAsync(); } catch (IOException error) { settingsAndBadgeFailures.Add(error); }
+        if (settingsAndBadgeFailures.Count > 0) throw new AggregateException(settingsAndBadgeFailures);
+        await CheckLaunchEntryAsync();
         await CheckDesktopRecheckSafetyAsync();
         await CheckDesktopDetailsAsync();
         await CheckDesktopIconsAsync();
         await CheckDesktopRefinementAsync();
+        await CheckDesktopReadingAsync();
 
         var document = new MessageDocument { Text = "# Heading\ntext\n```sh\necho fixture\n```" };
         if (document.Content is not StackPanel { Children.Count: > 2 }) throw new IOException("Structured AI document did not render its code block.");
@@ -54,12 +67,55 @@ public sealed partial class MainWindow
         ApplyFrontendLayout();
         if (ShellColumns.ColumnDefinitions[0].Width.Value > 164 || !Navigation.IsEnabled)
             throw new IOException("Narrow desktop navigation did not reflow.");
+        ShowPage("launch");
+        Width = 800; Height = 760;
+        ApplyFrontendLayout();
+        await Task.Delay(120);
+        static Rect BoundsIn(Control control, Control parent)
+        {
+            Point position = control.TranslatePoint(default, parent) ?? default;
+            return new Rect(position, control.Bounds.Size);
+        }
+        static bool Overlaps(Rect left, Rect right) =>
+            left.Left < right.Right - 1 && left.Right > right.Left + 1 &&
+            left.Top < right.Bottom - 1 && left.Bottom > right.Top + 1;
+        bool narrowWorkspaceStacked = LaunchWorkspaceColumns.ColumnDefinitions[1].Width.Value == 0
+            && Grid.GetRow(LaunchQuickPanel) == 1 && Grid.GetColumn(LaunchQuickPanel) == 0;
+        if (!narrowWorkspaceStacked)
+            throw new IOException("At 800px, launcher environment cards must move below the settings form.");
+
+        Rect accountName = BoundsIn(AccountName, AccountPanel);
+        Rect accountNotice = BoundsIn(AccountNotice, AccountPanel);
+        Rect demoMode = BoundsIn(DemoMode, AccountPanel);
+        Rect loginButton = BoundsIn(LoginButton, AccountPanel);
+        Rect rememberAccount = BoundsIn(RememberAccount, AccountPanel);
+        bool accountFits = demoMode.Right <= AccountPanel.Bounds.Width + 1
+            && loginButton.Right <= AccountPanel.Bounds.Width + 1
+            && demoMode.Top >= Math.Max(accountName.Bottom, accountNotice.Bottom) - 1
+            && loginButton.Top >= Math.Max(accountName.Bottom, accountNotice.Bottom) - 1
+            && rememberAccount.Top >= Math.Max(demoMode.Bottom, loginButton.Bottom) - 1;
+        if (!accountFits)
+            throw new IOException("At 800px, account actions or the remember option overlap account identity text.");
+
+        Rect memory = BoundsIn(MemoryBox, LaunchOptionsPanel);
+        Rect widthField = BoundsIn(WindowWidthBox, LaunchOptionsPanel);
+        Rect heightField = BoundsIn(WindowHeightBox, LaunchOptionsPanel);
+        Rect saveOptions = BoundsIn(SaveLaunchOptionsButton, LaunchOptionsPanel);
+        Rect javaPath = BoundsIn(JavaPath, JavaSettingsPanel);
+        Rect detectJava = BoundsIn(DetectJavaButton, JavaSettingsPanel);
+        Rect browseJava = BoundsIn(BrowseJavaButton, JavaSettingsPanel);
+        bool launchOptionsFit = !Overlaps(memory, widthField) && !Overlaps(widthField, heightField)
+            && saveOptions.Left >= Math.Max(memory.Right, Math.Max(widthField.Right, heightField.Right)) - 1
+            && detectJava.Left >= javaPath.Right - 1 && browseJava.Left >= detectJava.Right - 1;
+        if (!launchOptionsFit)
+            throw new IOException("At 800px, memory, game dimensions, save and Java controls must not overlap.");
         File.WriteAllText(Path.Combine(Program.DataRoot, "frontend-recovery.json"), System.Text.Json.JsonSerializer.Serialize(new
         {
             ok = true, filteredBatch = true, cancelledDeletePreservesFile = true,
             structuredCodeBlock = true, narrowNavigation = true, persistentTaskHistory = File.Exists(Path.Combine(Program.DataRoot, "desktop-task-history.json")),
             logRotationPreservesDraft = true, fixedImportTarget = true, declinedOverwritePreservesFile = true,
-            invalidImportTargetNotRecreated = true, staleSearchRejected = true, staleReleasesRejected = true, staleDocumentsRejected = true,
+            invalidImportTargetNotRecreated = true, narrowLaunchReflow = true, narrowAccountNoOverlap = true,
+            narrowLaunchOptionsNoOverlap = true, staleSearchRejected = true, staleReleasesRejected = true, staleDocumentsRejected = true,
             nativeScreenReaderVerified = false
         }));
     }

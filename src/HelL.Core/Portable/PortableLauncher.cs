@@ -60,8 +60,7 @@ public sealed partial class PortableLauncher
     public void SelectInstance(string name)
     {
         RequireInstance(name);
-        Config.CONFIG.Set("default_instance", name);
-        Config.CONFIG.Save();
+        Config.CONFIG.Commit(PyDict.Of("default_instance", name));
     }
 
     public string SelectedInstance => Py.S(Config.CONFIG.Get("default_instance"));

@@ -11,6 +11,7 @@ internal static class Program
     internal static bool UiSmoke { get; private set; }
     internal static bool AuthUiSmoke { get; private set; }
     internal static bool CatalogSmoke { get; private set; }
+    internal static bool UserJourneyCheck { get; private set; }
 
     [STAThread]
     public static int Main(string[] args)
@@ -20,22 +21,23 @@ internal static class Program
         AuthUiSmoke = args.Contains("--auth-ui-smoke", StringComparer.Ordinal);
         UiSmoke = AuthUiSmoke || args.Contains("--ui-smoke", StringComparer.Ordinal);
         CatalogSmoke = args.Contains("--catalog-ui-smoke", StringComparer.Ordinal);
+        UserJourneyCheck = args.Contains("--user-journey-check", StringComparer.Ordinal);
         PortableHome? home = null;
         try
         {
             int homeIndex = Array.IndexOf(args, "--home");
             string? argHome = homeIndex >= 0 && homeIndex + 1 < args.Length ? args[homeIndex + 1] : null;
             string requested = !string.IsNullOrWhiteSpace(argHome) ? argHome : (Environment.GetEnvironmentVariable("TIPCL_HOME") ?? "");
-            if ((selfTest || UiSmoke || CatalogSmoke) && string.IsNullOrWhiteSpace(requested))
+            if ((selfTest || UiSmoke || CatalogSmoke || UserJourneyCheck) && string.IsNullOrWhiteSpace(requested))
                 throw new ArgumentException("自检需要独立的 TIPCL_HOME，避免改动日常数据。");
-            if (new[] { selfTest, UiSmoke, CatalogSmoke }.Count(enabled => enabled) > 1)
+            if (new[] { selfTest, UiSmoke, CatalogSmoke, UserJourneyCheck }.Count(enabled => enabled) > 1)
                 throw new ArgumentException("请一次运行一种自检模式。");
             if (AuthUiSmoke && (!Uri.TryCreate(Environment.GetEnvironmentVariable("TIPCL_HTTP_REPLAY"), UriKind.Absolute, out var replay)
                 || replay.Scheme != "http" || !replay.IsLoopback))
                 throw new ArgumentException("账号界面自检只能使用本机回放服务器。");
             DataRoot = PortableHome.Resolve(AppContext.BaseDirectory, requested, OperatingSystem.IsMacOS());
             home = PortableHome.Open(DataRoot);
-            if (seedPreview && !selfTest && !UiSmoke && !CatalogSmoke)
+            if (seedPreview && !selfTest && !UiSmoke && !CatalogSmoke && !UserJourneyCheck)
             {
                 var seed = new PortableLauncher(DataRoot);
                 if (seed.InstancesList().Count == 0)
@@ -109,12 +111,20 @@ internal static class Program
         {
             home?.Dispose();
             home = null;
-            if (selfTest || UiSmoke || CatalogSmoke) { Console.Error.WriteLine(ex); return 1; }
+            if (selfTest || UiSmoke || CatalogSmoke || UserJourneyCheck) { Console.Error.WriteLine(ex); return 1; }
             StartupError = ex.Message;
         }
 
         using (home) return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
-    public static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<App>().UsePlatformDetect().LogToTrace();
+    public static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<App>().UsePlatformDetect()
+        .With(new Avalonia.Media.FontManagerOptions
+        {
+            FontFallbacks = [new Avalonia.Media.FontFallback
+            {
+                FontFamily = new Avalonia.Media.FontFamily("avares://HelL.Desktop/Assets/Fonts#Noto Sans SC"),
+                UnicodeRange = Avalonia.Media.UnicodeRange.Parse("U+3000-30FF,U+3400-9FFF,U+FF00-FFEF")
+            }]
+        }).LogToTrace();
 }

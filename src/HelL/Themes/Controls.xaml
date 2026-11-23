@@ -251,7 +251,7 @@
     <ControlTemplate.Triggers>
       <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Ov" Property="Opacity" Value="0.06" /></Trigger>
       <Trigger Property="IsPressed" Value="True"><Setter TargetName="Ov" Property="Opacity" Value="0.13" /></Trigger>
-      <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Root" Property="Opacity" Value="0.42" /></Trigger>
+      <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Root" Property="Opacity" Value="0.42" /><Setter Property="FrameworkElement.Cursor" Value="Arrow" /></Trigger>
     </ControlTemplate.Triggers>
   </ControlTemplate>
   <Style x:Key="Btn.Base" TargetType="{x:Type ButtonBase}">
@@ -910,7 +910,11 @@
     <Setter Property="FontFamily" Value="{DynamicResource F.Ui}" />
     <Setter Property="FontSize" Value="{x:Static ui:UiMetrics.BodySize}" />
     <Setter Property="Foreground" Value="{DynamicResource B.Ink}" />
+    <Setter Property="Background" Value="{DynamicResource B.ControlFill}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
     <Setter Property="PasswordBox.CaretBrush" Value="{DynamicResource B.Accent}" />
+    <Setter Property="PasswordBox.SelectionBrush" Value="{DynamicResource B.Accent}" />
     <Setter Property="Padding" Value="10,6" />
     <Setter Property="MinHeight" Value="{x:Static ui:UiMetrics.ControlHeight}" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -919,13 +923,23 @@
       <Setter.Value>
         <ControlTemplate TargetType="{x:Type PasswordBox}">
           <Grid>
-            <Border Name="Bd" Background="{DynamicResource B.ControlFill}" BorderThickness="0" CornerRadius="{StaticResource CR.Ctl}" />
+            <Border Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{StaticResource CR.Ctl}" />
             <Border Name="Fx" BorderBrush="{DynamicResource B.AccentText}" BorderThickness="1.5" Opacity="0" CornerRadius="{StaticResource CR.Ctl}" IsHitTestVisible="False" />
             <ScrollViewer Name="PART_ContentHost" Focusable="False" VerticalAlignment="Center" />
           </Grid>
           <ControlTemplate.Triggers>
+            <Trigger Property="UIElement.IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource B.ScrollHover}" />
+            </Trigger>
             <Trigger Property="UIElement.IsKeyboardFocusWithin" Value="True">
               <Setter TargetName="Fx" Property="UIElement.Opacity" Value="1" />
+            </Trigger>
+            <Trigger Property="Validation.HasError" Value="True">
+              <Setter TargetName="Fx" Property="UIElement.Opacity" Value="1" />
+              <Setter TargetName="Fx" Property="BorderBrush" Value="{DynamicResource B.Danger}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Bd" Property="UIElement.Opacity" Value="0.45" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -1364,11 +1378,11 @@
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
-      <TextBlock Grid.Column="0" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding Version}" />
+      <TextBlock Grid.Column="0" FontSize="13.5" FontWeight="Medium" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding Version}" />
       <Border Grid.Column="1" Background="{DynamicResource B.LineSoft}" CornerRadius="5" Padding="6,1,6,2" VerticalAlignment="Center">
         <TextBlock FontSize="11" Foreground="{DynamicResource B.InkMuted}" Text="{Binding TypeLabel}" />
       </Border>
-      <TextBlock Grid.Column="2" FontSize="11" Margin="10,0,0,0" Foreground="{DynamicResource B.InkFaint}" VerticalAlignment="Center" MinWidth="72" TextAlignment="Right" Text="{Binding Date}" />
+      <TextBlock Grid.Column="2" FontSize="12" Margin="10,0,0,0" Foreground="{DynamicResource B.InkMuted}" VerticalAlignment="Center" MinWidth="72" TextAlignment="Right" Text="{Binding Date}" />
     </Grid>
   </DataTemplate>
   <DataTemplate x:Key="Tpl.Installed">

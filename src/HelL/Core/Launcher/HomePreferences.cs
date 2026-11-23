@@ -32,8 +32,7 @@ public static class HomePreferences
             var pins = Pins(previous, Instances.ListInstances().Select(Py.S));
             var next = pinned ? pins.Concat(selected).Distinct(StringComparer.Ordinal).ToList() : pins.Except(selected, StringComparer.Ordinal).ToList();
             if (next.Count > 24) throw new ArgumentException("最多固定 24 个实例；本次未修改，请减少选择或先取消固定。");
-            try { config.Set("ui_pinned_instances", next.Cast<object>().ToList()); config.Save(); }
-            catch { config.Set("ui_pinned_instances", previous); throw; }
+            config.Commit(PyDict.Of("ui_pinned_instances", next.Cast<object>().ToList()));
         }
     }
 }

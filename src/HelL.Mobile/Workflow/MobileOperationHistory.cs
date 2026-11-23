@@ -9,6 +9,9 @@ internal sealed class MobileOperationHistory
 {
     private readonly List<MobileOperation> entries = [];
     internal IReadOnlyList<MobileOperation> Entries => entries.ToArray();
+    internal IReadOnlyList<string> FinishedIds => entries.Where(item => item.State != "running").Select(item => item.Id).ToArray();
+    internal int FinishedCount => entries.Count(item => item.State != "running");
+    internal bool HasFinished => FinishedCount > 0;
     internal string Start(string title, string target)
     {
         string id = Guid.NewGuid().ToString("N");
@@ -22,5 +25,10 @@ internal sealed class MobileOperationHistory
         if (index < 0 || entries[index].State != "running") return;
         entries[index] = entries[index] with { State = state, Message = message.Length <= 800 ? message : message[..800] };
     }
-    internal void ClearFinished() => entries.RemoveAll(item => item.State != "running");
+    internal int ClearFinished() => entries.RemoveAll(item => item.State != "running");
+    internal int ClearFinished(IReadOnlyCollection<string> ids)
+    {
+        var targets = ids.ToHashSet(StringComparer.Ordinal);
+        return entries.RemoveAll(item => item.State != "running" && targets.Contains(item.Id));
+    }
 }

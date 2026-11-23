@@ -24,6 +24,7 @@ public partial class SavesManagerView : UserControl
     public SavesManagerView() => InitializeComponent();
 
     internal void Initialize(MainWindow window) => host = window;
+    private void ChooseVersion(object? sender, RoutedEventArgs e) => host?.ChooseContentVersion();
 
     internal void Reload(string? instanceName = null)
     {
@@ -44,8 +45,8 @@ public partial class SavesManagerView : UserControl
             DiagnoseLogButton.IsEnabled = false;
             return;
         }
-        SubtitleText.Text = $"当前实例：{currentInstance} · 支持世界快照备份、还原与崩溃堆栈读取";
-        var inst = new Instance(currentInstance);
+        SubtitleText.Text = host.ContentLabel(currentInstance) + " · 存档、备份与日志";
+        var inst = host.ContentInstance(currentInstance, "saves");
 
         var worlds = Saves.ListSaves(inst).OfType<PyDict>().Select(row =>
         {
@@ -70,9 +71,10 @@ public partial class SavesManagerView : UserControl
         BackupsList.ItemsSource = backups;
         BackupsEmpty.IsVisible = backups.Length == 0;
 
-        var logs = Saves.ListMedia(inst, "crash-reports").OfType<PyDict>()
+        var logContext = host.ContentInstance(currentInstance);
+        var logs = Saves.ListMedia(logContext, "crash-reports").OfType<PyDict>()
             .Select(r => new LogEntryItem("[崩溃报告] " + Py.S(r.Get("name")), Py.S(r.Get("path"))))
-            .Concat(Saves.ListMedia(inst, "logs").OfType<PyDict>()
+            .Concat(Saves.ListMedia(logContext, "logs").OfType<PyDict>()
                 .Where(r => !Py.S(r.Get("name")).EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
                 .Select(r => new LogEntryItem("[运行日志] " + Py.S(r.Get("name")), Py.S(r.Get("path")))))
             .ToArray();
@@ -114,13 +116,13 @@ public partial class SavesManagerView : UserControl
     private async void BackupWorldRow(object? sender, RoutedEventArgs e)
     {
         if (host == null || string.IsNullOrEmpty(currentInstance) || sender is not Button { Tag: string worldName }) return;
+        var content = host.ContentInstance(currentInstance, "saves");
         await host.RunTask(async token =>
         {
             var progress = host.TaskProgress();
             await Task.Run(() =>
             {
-                var inst = new Instance(currentInstance);
-                Saves.BackupSave(inst, worldName, on_progress: (msg, done, total) => progress.Report(new(msg, done, total)));
+                Saves.BackupSave(content, worldName, on_progress: (msg, done, total) => progress.Report(new(msg, done, total)));
             }, token);
             Reload(currentInstance);
             host.SetStatus($"存档「{worldName}」已完成 ZIP 安全备份。");
@@ -131,10 +133,11 @@ public partial class SavesManagerView : UserControl
     {
         if (host == null || string.IsNullOrEmpty(currentInstance) || sender is not Button { Tag: string worldName }) return;
         string target = currentInstance;
+        var content = host.ContentInstance(target, "saves");
         if (!await host.ConfirmAction("删除世界存档", $"实例：{target}\n世界：{worldName}\n删除后不能从游戏内恢复。请先确认已有可用备份。", "删除存档")) return;
         await host.RunTask(_ =>
         {
-            Saves.DeleteSave(new Instance(target), worldName);
+            Saves.DeleteSave(content, worldName);
             Reload(currentInstance);
             host.SetStatus($"已删除存档：{worldName}");
             return Task.CompletedTask;
@@ -145,11 +148,12 @@ public partial class SavesManagerView : UserControl
     {
         if (host == null || string.IsNullOrEmpty(currentInstance) || sender is not Button { Tag: string backupName }) return;
         string target = currentInstance;
-        var worlds = Saves.ListSaves(new Instance(target)).OfType<PyDict>().Select(row => $"{Py.S(row.Get("name"))} · {Py.Int(row.Get("mtime", 0L))}");
+        var content = host.ContentInstance(target, "saves");
+        var worlds = Saves.ListSaves(content).OfType<PyDict>().Select(row => $"{Py.S(row.Get("name"))} · {Py.Int(row.Get("mtime", 0L))}");
         if (!await host.ConfirmAction("还原备份", $"目标实例：{target}\n备份：{backupName}\n当前世界（最后修改 Unix 时间）：\n{string.Join("\n", worlds)}\n同名世界会被覆盖；请先备份当前进度。", "确认还原")) return;
         await host.RunTask(async token =>
         {
-            await Task.Run(() => Saves.RestoreBackup(new Instance(target), backupName, overwrite: true), token);
+            await Task.Run(() => Saves.RestoreBackup(content, backupName, overwrite: true), token);
             Reload(currentInstance);
             host.SetStatus($"备份「{backupName}」已还原到存档目录。");
         });
@@ -159,11 +163,12 @@ public partial class SavesManagerView : UserControl
     {
         if (host == null || string.IsNullOrEmpty(currentInstance) || sender is not Button { Tag: string backupName }) return;
         string target = currentInstance;
+        var content = host.ContentInstance(target, "saves");
         string detail = (BackupsList.ItemsSource as IEnumerable<BackupItemRow>)?.FirstOrDefault(row => row.BackupName == backupName)?.Detail ?? "";
         if (!await host.ConfirmAction("删除备份", $"实例：{target}\n备份：{backupName}\n{detail}\n删除可能移除唯一恢复点。", "删除备份")) return;
         await host.RunTask(_ =>
         {
-            Saves.DeleteBackup(new Instance(target), backupName);
+            Saves.DeleteBackup(content, backupName);
             Reload(currentInstance);
             host.SetStatus($"已删除备份：{backupName}");
             return Task.CompletedTask;
@@ -179,7 +184,7 @@ public partial class SavesManagerView : UserControl
     private async void OpenSavesFolder(object? sender, RoutedEventArgs e)
     {
         if (host == null || string.IsNullOrEmpty(currentInstance)) return;
-        string dir = Path.Combine(new Instance(currentInstance).path, "saves");
+        string dir = Path.Combine(host.ContentInstance(currentInstance, "saves").path, "saves");
         Directory.CreateDirectory(dir);
         await host.Launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(dir));
     }

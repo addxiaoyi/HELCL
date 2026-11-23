@@ -1,6 +1,8 @@
 using System.Text.Json;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.LogicalTree;
 using Avalonia;
 using Avalonia.VisualTree;
 
@@ -15,6 +17,7 @@ public sealed partial class MobileHome
         await CheckMobileDetailsAsync();
         await CheckMobileIconsAsync();
         await CheckMobileRefinementAsync();
+        await CheckMobileReadingAsync();
         ShowPage("manage");
         string originalName = InstanceName.Text ?? "";
         InstanceName.Text = originalName + " draft";
@@ -27,14 +30,24 @@ public sealed partial class MobileHome
 
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        session.Tasks.ClearFinished();
+        ShowPage("tasks");
+        var emptyClear = localTasks.Children.OfType<Button>().Single(button => button.Name == "ClearFinishedTasksButton");
+        if (emptyClear.IsEnabled || !localTasks.Children.OfType<TextBlock>().Any(label => label.Text == "暂无已结束任务可清除。"))
+            throw new IOException("An empty task history did not explain why clearing is unavailable.");
         Task working = Run(async token => { entered.SetResult(); await release.Task.WaitAsync(token); }, actionName: "DownloadResource");
         await entered.Task;
         ShowPage("tasks");
         if (!Pages.IsEnabled || !BottomNavigation.IsEnabled || localTasks.Children.Count == 0)
             throw new IOException("A local task disabled navigation or its task history.");
+        var runningClear = localTasks.Children.OfType<Button>().Single(button => button.Name == "ClearFinishedTasksButton");
+        if (runningClear.IsEnabled || !localTasks.Children.OfType<TextBlock>().Any(label => label.Text == "运行中的任务结束后可清理历史记录。"))
+            throw new IOException("An active task did not explain why clearing is unavailable.");
         release.SetResult();
         await working;
         if (session.Tasks.Entries[0].State != "completed") throw new IOException("A completed operation did not reach task history.");
+        var finishedClear = localTasks.Children.OfType<Button>().Single(button => button.Name == "ClearFinishedTasksButton");
+        if (!finishedClear.IsEnabled) throw new IOException("A finished task could not be cleared from its history.");
         await Capture("task-center");
         double safeTaskWidth = Math.Max(0, (localTasksPage?.Viewport.Width ?? 0) - TaskScrollBarClearance);
         foreach (TextBlock label in localTasks.GetVisualDescendants().OfType<TextBlock>().Where(label => label.IsEffectivelyVisible))
@@ -42,8 +55,49 @@ public sealed partial class MobileHome
             Point position = label.TranslatePoint(default, localTasksPage!) ?? default;
             double textRight = position.X + label.TextLayout.WidthIncludingTrailingWhitespace + Math.Max(0, label.TextLayout.OverhangTrailing);
             if (position.X < -1 || textRight > safeTaskWidth + 1)
-                throw new IOException($"Task text exceeds its safe viewport beside the overlay scrollbar (x={position.X:0.0}, glyphRight={textRight:0.0}, safeWidth={safeTaskWidth:0.0}).");
+                throw new IOException($"Task text exceeds its safe viewport beside the overlay scrollbar (text={label.Text}, x={position.X:0.0}, width={label.Bounds.Width:0.0}, size={label.FontSize:0.0}, glyphRight={textRight:0.0}, safeWidth={safeTaskWidth:0.0}).");
         }
+        finishedClear.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        string[] confirmationCopy = confirmationOverlay?.GetLogicalDescendants().OfType<TextBlock>()
+            .Select(label => label.Text ?? "").ToArray() ?? [];
+        string[] confirmationActions = confirmationOverlay?.GetLogicalDescendants().OfType<Button>()
+            .Select(button => button.Content?.ToString() ?? "").ToArray() ?? [];
+        if (confirmation is null || session.Tasks.Entries.Count != 1
+            || !confirmationCopy.Any(copy => copy.Contains("移除 1 条已结束任务", StringComparison.Ordinal))
+            || !confirmationActions.Contains("清除历史") || !confirmationActions.Contains("取消"))
+            throw new IOException("Clearing finished tasks did not show the count and clear-specific confirmation actions.");
+        CompleteConfirmation(false);
+        await Task.Delay(30);
+        if (session.Tasks.Entries.Count != 1)
+            throw new IOException("Declining the task-history confirmation removed finished records.");
+        finishedClear = localTasks.Children.OfType<Button>().Single(button => button.Name == "ClearFinishedTasksButton");
+        finishedClear.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if (confirmation is null) throw new IOException("Task-history clearing could not be confirmed.");
+        string laterTask = session.Tasks.Start("Finishes while confirmation is open", "Mobile preview");
+        session.Tasks.Update(laterTask, "completed", "Finished during confirmation.");
+        CompleteConfirmation(true);
+        await Task.Delay(30);
+        bool clearFeedbackVisible = session.Tasks.Entries.Count == 1 && session.Tasks.Entries[0].Id == laterTask
+            && localTasks.Children.OfType<TextBlock>().Any(label => label.Text == "已清除 1 条已结束任务。")
+            && localTasks.Children.OfType<Button>().Single(button => button.Name == "ClearFinishedTasksButton") is { IsEnabled: true } remainingButton
+            && remainingButton.Content?.ToString() == "清除已结束（1）"
+            && AutomationProperties.GetName(remainingButton) == "清除已结束任务，1 条";
+        if (!clearFeedbackVisible)
+            throw new IOException("Task clearing did not report its removal or preserve tasks that ended after confirmation opened.");
+        var clearedButton = localTasks.Children.OfType<Button>().Single(button => button.Name == "ClearFinishedTasksButton");
+        clearedButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        if (confirmation is null) throw new IOException("A remaining finished task could not be confirmed for clearing.");
+        CompleteConfirmation(true);
+        await Task.Delay(30);
+        bool emptyHistoryFeedbackVisible = session.Tasks.Entries.Count == 0
+            && localTasks.Children.OfType<TextBlock>().Any(label => label.Text == "已清除 1 条已结束任务。")
+            && localTasks.Children.OfType<TextBlock>().Any(label => label.Text == "暂无已结束任务可清除。")
+            && localTasks.Children.OfType<Button>().Single(button => button.Name == "ClearFinishedTasksButton") is { IsEnabled: false };
+        if (!emptyHistoryFeedbackVisible)
+            throw new IOException("Clearing the remaining finished task did not update its count, state, and empty history hint.");
+        clearedButton = localTasks.Children.OfType<Button>().Single(button => button.Name == "ClearFinishedTasksButton");
+        if (clearedButton.IsEnabled) throw new IOException("Task clearing stayed enabled after the finished history was removed.");
+        await Capture("task-center-cleared");
 
         ShowPage("resources");
         SearchFilters.IsVisible = false;
@@ -63,6 +117,7 @@ public sealed partial class MobileHome
         File.WriteAllText(Path.Combine(EvidenceRoot, "mobile-frontend-remediation.json"), JsonSerializer.Serialize(new
         {
             ok = true, draftNavigationGuard = true, localTaskHistory = true, nonBlockingTaskNavigation = true,
+            clearFinishedTaskAvailability = true, clearFinishedTaskFeedback = clearFeedbackVisible && emptyHistoryFeedbackVisible,
             searchFocus = true, visibleCompatibilityTarget = true, textScalePreview = 1.5, pageBackStack = true,
             codeBlocksCopy = true, chatHistoryPersistence = true, destructiveChatConfirmation = true,
             weakTypographyTracking = true, clearConfirmationRechecksOperation = true, modalBackgroundBlocked = true,

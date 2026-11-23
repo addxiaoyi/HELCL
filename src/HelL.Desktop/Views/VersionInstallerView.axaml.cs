@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using HelL.Core;
 using HelL.Core.Launcher;
 using HelL.Portable;
@@ -35,8 +36,12 @@ public partial class VersionInstallerView : UserControl
     ];
     private IReadOnlyList<RemoteVersionRow> allVersions = DefaultPresets;
     private bool fetchedRemote;
-    private bool preparing;
     private string activeChannel = "release";
+    private int loaderSelectionRevision;
+    private int installSelectionRevision;
+    private bool loaderLookupPending;
+    private bool loaderLookupQueued;
+    internal Func<string, string, CancellationToken, Task<IReadOnlyList<LoaderVersion>>>? LoaderBuildsFixture { get; set; }
 
     public VersionInstallerView()
     {
@@ -61,6 +66,7 @@ public partial class VersionInstallerView : UserControl
     }
 
     private string SelectedLoader => (LoaderCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "none";
+    private void CreateTarget(object? sender, RoutedEventArgs e) => host?.BeginInstanceCreation();
 
     private async void FetchManifest(object? sender, RoutedEventArgs e)
     {
@@ -113,7 +119,7 @@ public partial class VersionInstallerView : UserControl
             (query.Length == 0 || row.Id.Contains(query, StringComparison.OrdinalIgnoreCase))).ToArray();
         VersionList.ItemsSource = filtered;
         if (VersionList.SelectedItem == null && filtered.Length > 0) VersionList.SelectedIndex = 0;
-        VersionCountLabel.Text = !fetchedRemote ? $"常用 {filtered.Length} 版" : $"{filtered.Length} 个版本";
+        VersionCountLabel.Text = !fetchedRemote ? "内置常用版本 · 刷新获取完整清单" : $"{filtered.Length} 个版本";
         EmptyState.IsVisible = filtered.Length == 0;
         EmptyText.Text = !fetchedRemote && activeChannel != "release"
             ? "点击右上角「刷新清单」获取快照与远古版本"
@@ -123,46 +129,83 @@ public partial class VersionInstallerView : UserControl
 
     private void ChooseVersion(object? sender, SelectionChangedEventArgs e)
     {
-        LoaderBuildCombo.ItemsSource = Array.Empty<LoaderVersion>();
         if (VersionList.SelectedItem is RemoteVersionRow row)
         {
             SelectedVersionLabel.Text = $"Minecraft {row.Id}";
             SelectedVersionHint.Text = $"{row.TypeLabel} · {row.ReleaseDate}";
-            if (SelectedLoader != "none") FetchLoaderBuilds(this, new RoutedEventArgs());
         }
-        UpdateInstallState();
+        LoaderSelectionChanged();
     }
 
-    private void TargetInstanceChanged(object? sender, SelectionChangedEventArgs e) => UpdateInstallState();
+    private void TargetInstanceChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        installSelectionRevision++;
+        UpdateInstallState();
+    }
 
     private void LoaderKindChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (LoaderBuildSection == null || LoaderBuildCombo == null) return;
-        bool hasLoader = SelectedLoader != "none";
-        LoaderBuildSection.IsVisible = hasLoader;
+        LoaderBuildSection.IsVisible = SelectedLoader != "none";
+        LoaderSelectionChanged();
+    }
+
+    private void LoaderSelectionChanged()
+    {
+        loaderSelectionRevision++;
         LoaderBuildCombo.ItemsSource = Array.Empty<LoaderVersion>();
-        if (hasLoader && VersionList.SelectedItem is RemoteVersionRow)
-            FetchLoaderBuilds(this, new RoutedEventArgs());
+        UpdateInstallState();
+        loaderLookupPending = VersionList.SelectedItem is RemoteVersionRow && SelectedLoader != "none";
+        ResumeLoaderLookup();
+    }
+
+    internal void ResumeLoaderLookup()
+    {
+        if (loaderLookupQueued || !CanResumeLoaderLookup()) return;
+        loaderLookupQueued = true;
+        Dispatcher.UIThread.Post(async () =>
+        {
+            loaderLookupQueued = false;
+            if (CanResumeLoaderLookup()) await LoadLoaderBuildsAsync();
+        });
+    }
+
+    private bool CanResumeLoaderLookup() => loaderLookupPending && IsVisible && host is { IsWorking: false, IsVisible: true };
+
+    private void LoaderBuildChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        installSelectionRevision++;
         UpdateInstallState();
     }
 
-    private void LoaderBuildChanged(object? sender, SelectionChangedEventArgs e) => UpdateInstallState();
+    private async void FetchLoaderBuilds(object? sender, RoutedEventArgs e) => await LoadLoaderBuildsAsync();
 
-    private async void FetchLoaderBuilds(object? sender, RoutedEventArgs e)
+    internal async Task LoadLoaderBuildsAsync()
     {
-        if (host == null || VersionList.SelectedItem is not RemoteVersionRow row || SelectedLoader == "none") return;
+        if (host is not { } owner || VersionList.SelectedItem is not RemoteVersionRow row || SelectedLoader == "none") return;
         string loader = SelectedLoader;
-        await host.RunTask(async token =>
+        int revision = loaderSelectionRevision;
+        bool IsCurrent() => revision == loaderSelectionRevision && SelectedLoader == loader
+            && VersionList.SelectedItem is RemoteVersionRow current && current.Id == row.Id;
+        await owner.RunTask(async token =>
         {
-            host.SetStatus($"正在查询 {row.Id} 的 {loader} 构建…");
-            var builds = await Task.Run(() => host.GameLauncher.LoaderVersions(row.Id, loader, token), token);
+            if (!IsCurrent()) throw new InvalidOperationException("Minecraft 版本或加载器已改变，请在安装页刷新当前选项。");
+            loaderLookupPending = false;
+            owner.SetStatus($"正在查询 {row.Id} 的 {loader} 构建…");
+            LoaderBuildCombo.ItemsSource = Array.Empty<LoaderVersion>();
+            var builds = LoaderBuildsFixture is { } fetch ? await fetch(row.Id, loader, token)
+                : await Task.Run(() => owner.GameLauncher.LoaderVersions(row.Id, loader, token), token);
             token.ThrowIfCancellationRequested();
+            if (!IsCurrent())
+            {
+                owner.SetStatus("已忽略旧加载器结果。");
+                return;
+            }
             LoaderBuildCombo.ItemsSource = builds;
             LoaderBuildCombo.SelectedIndex = builds.Count > 0 ? 0 : -1;
             InstallHintText.Text = builds.Count > 0 ? $"共 {builds.Count} 个兼容构建。" : $"此版本暂无可用的 {loader} 构建。";
-            host.SetStatus(InstallHintText.Text);
+            owner.SetStatus(InstallHintText.Text);
         }, "RefreshLoaderVersions");
-        UpdateInstallState();
     }
 
     private void UpdateInstallState()
@@ -171,43 +214,26 @@ public partial class VersionInstallerView : UserControl
         bool hasInstance = InstancePicker.SelectedItem is InstanceEntry;
         bool hasVersion = VersionList.SelectedItem is RemoteVersionRow;
         bool loaderReady = SelectedLoader == "none" || LoaderBuildCombo.SelectedItem is LoaderVersion;
-        StartInstallButton.IsEnabled = !preparing && hasInstance && hasVersion && loaderReady;
-        if (InstancePicker.SelectedItem is InstanceEntry target && VersionList.SelectedItem is RemoteVersionRow selected)
+        StartInstallButton.IsEnabled = hasInstance && hasVersion && loaderReady;
+        CreateTargetButton.IsVisible = InstancePicker.ItemCount == 0;
+        InstancePicker.IsEnabled = InstancePicker.ItemCount > 0;
+        if (!hasInstance) InstallHintText.Text = "先创建一个实例，安装的游戏和存档会保存在其中。";
+        else if (!hasVersion) InstallHintText.Text = "请选择左侧的 Minecraft 版本。";
+        else if (!loaderReady) InstallHintText.Text = "请选择兼容的加载器构建；没有结果时可更换游戏版本或加载器。";
+        else if (InstancePicker.SelectedItem is InstanceEntry target && VersionList.SelectedItem is RemoteVersionRow selected)
             InstallHintText.Text = BuildInstallSummary(target.Name, selected.Id, SelectedLoader);
     }
 
     private async void StartInstall(object? sender, RoutedEventArgs e)
     {
-        if (host == null || InstancePicker.SelectedItem is not InstanceEntry instance || VersionList.SelectedItem is not RemoteVersionRow version) return;
-        if (preparing) return;
-        preparing = true;
-        UpdateInstallState();
-        try
-        {
+        if (host is not { } owner || InstancePicker.SelectedItem is not InstanceEntry instance
+            || VersionList.SelectedItem is not RemoteVersionRow version) return;
         string loader = SelectedLoader;
         string? loaderBuild = (LoaderBuildCombo.SelectedItem as LoaderVersion)?.Id;
-        InstallationPlan? plan = null;
-        using (var planning = new CancellationTokenSource(TimeSpan.FromSeconds(20)))
-        {
-            try { plan = await Task.Run(() => InstallationPlan.ForVersion(new Instance(instance.Name), version.Id, loader, planning.Token), planning.Token); }
-            catch (Exception error) when (error is not OutOfMemoryException)
-            {
-                System.Diagnostics.Trace.TraceWarning("Installation plan: " + error.GetType().Name);
-                if (!await host.ConfirmAction("无法读取下载量", BuildInstallSummary(instance.Name, version.Id, loader) + "\n清单读取失败。取消后可重试；继续会按实际下载校验。", "明确继续")) return;
-            }
-        }
-        if (plan?.SpaceKnownInsufficient == true) { host.SetStatus(plan.Summary); return; }
-        if (!await host.ConfirmAction("确认安装计划", plan?.Summary ?? BuildInstallSummary(instance.Name, version.Id, loader), "开始安装")) return;
-        await host.RunTask(async token =>
-        {
-            var progress = host.TaskProgress();
-            string installed = await Task.Run(() => host.GameLauncher.Install(instance.Name, version.Id, loader, loaderBuild, progress, token), token);
-            host.InstancesChanged(instance.Name);
-            RefreshInstances(instance.Name);
-            host.SetStatus($"已安装 {installed}。");
-        }, "InstallVersion");
-        }
-        finally { preparing = false; UpdateInstallState(); }
+        int loaderRevision = loaderSelectionRevision;
+        int installRevision = installSelectionRevision;
+        await owner.InstallWithConfirmationAsync(instance.Name, version.Id, loader, loaderBuild,
+            () => loaderRevision == loaderSelectionRevision && installRevision == installSelectionRevision);
     }
 
     private static string BuildInstallSummary(string instance, string version, string loader)
@@ -217,7 +243,7 @@ public partial class VersionInstallerView : UserControl
         try { free = $"{new DriveInfo(Path.GetPathRoot(path)!).AvailableFreeSpace / 1073741824d:F1} GB"; }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException) { free = "无法读取"; }
         bool installed = File.Exists(Path.Combine(path, "versions", version, version + ".json"));
-        return $"目标实例：{instance}\n目标目录：{path}\n版本：{version} · 加载器：{loader}\n磁盘可用：{free}\n下载量与额外占用：清单解析前未知，不显示估算值。\n已有版本：{(installed ? "已存在，将校验并复用可用文件，修复缺失内容" : "新安装，已有其它版本保留")}";
+        return $"磁盘可用：{free}\n{(installed ? "此版本已存在，将校验并修复缺失文件。" : "将添加所选版本，已有版本和存档保留。")}\n下一步会显示目标目录、加载器和下载计划，确认后开始。";
     }
 
     private async void ImportModpack(object? sender, RoutedEventArgs e)

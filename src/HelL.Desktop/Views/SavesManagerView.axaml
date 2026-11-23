@@ -7,6 +7,7 @@
       <StackPanel Spacing="4" VerticalAlignment="Center">
         <TextBlock Text="存档与日志" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
         <TextBlock x:Name="SubtitleText" IsVisible="True" TextWrapping="Wrap" FontSize="12" />
+        <Button Content="更换游戏版本" Classes="ghost" Click="ChooseVersion" HorizontalAlignment="Left" Padding="0,2" MinHeight="24" FontSize="12" />
         <TextBlock x:Name="CountBadge" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
       </StackPanel>
       <Button Grid.Column="1" Content="打开存档目录" Classes="soft" Click="OpenSavesFolder" Margin="0,0,8,0" />

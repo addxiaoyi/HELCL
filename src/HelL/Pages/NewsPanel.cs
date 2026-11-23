@@ -181,7 +181,7 @@ public sealed class NewsPanel : UserControl
 public sealed class NewsImage : Grid
 {
     private readonly Image _image = new Image { Stretch = Stretch.UniformToFill };
-    private readonly TextBlock _placeholder = Ui.Txt(I18n.L("正在加载封面…"), 11, false, "B.InkMuted");
+    private readonly TextBlock _placeholder = Ui.Txt(I18n.L("正在加载封面…"), 12, false, "B.InkMuted").Wrap();
     public Task Loading { get; }
     public bool Ready => _image.Source != null;
 
@@ -191,8 +191,12 @@ public sealed class NewsImage : Grid
         ClipToBounds = true;
         SetResourceReference(BackgroundProperty, "B.Paper2");
         _placeholder.VerticalAlignment = VerticalAlignment.Center;
-        _placeholder.HorizontalAlignment = HorizontalAlignment.Center;
-        Children.Add(_placeholder); Children.Add(_image);
+        _placeholder.TextAlignment = TextAlignment.Center;
+        _placeholder.MaxWidth = 104;
+        var fallback = Ui.V(6, Ui.Glyph("\ue8a5", 28, "B.InkFaint"), _placeholder);
+        fallback.HorizontalAlignment = HorizontalAlignment.Center;
+        fallback.VerticalAlignment = VerticalAlignment.Center;
+        Children.Add(fallback); Children.Add(_image);
         AutomationProperties.SetName(this, title);
         SizeChanged += (_, _) => Clip = new RectangleGeometry(new Rect(0, 0, ActualWidth, ActualHeight), 8, 8);
         Loading = Load(url);

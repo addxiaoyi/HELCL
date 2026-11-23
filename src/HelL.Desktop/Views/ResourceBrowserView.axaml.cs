@@ -14,10 +14,14 @@ public partial class ResourceBrowserView : UserControl
     private string instance = "";
     private bool settingTarget;
     private bool original;
-    private int pageIndex;
     private int displayedPage;
-    private const int PageSize = 30;
+    private int? lastPageIndex;
+    internal const int PageSize = 30;
+    internal const int MaximumPageIndex = PortableCatalog.MaximumSearchOffset / PageSize;
     private bool hasSearched;
+    private bool searchStarted;
+    private bool searchPending;
+    private bool searchQueued;
     private int generation;
     private int projectGeneration;
     private string projectTarget = "";
@@ -28,7 +32,7 @@ public partial class ResourceBrowserView : UserControl
     private bool documentsPending;
     private bool documentsQueued;
     private IReadOnlyList<CatalogProject> lastResults = [];
-    internal Func<CancellationToken, Task<IReadOnlyList<CatalogProject>>>? SearchFixture { get; set; }
+    internal Func<int, CancellationToken, Task<IReadOnlyList<CatalogProject>>>? SearchFixture { get; set; }
     internal Func<CancellationToken, Task<IReadOnlyList<CatalogRelease>>>? ReleasesFixture { get; set; }
     internal Func<CancellationToken, Task<CatalogProjectDetails>>? DetailsFixture { get; set; }
     private string Kind => (KindPicker.SelectedItem as ComboBoxItem)?.Tag as string ?? "resourcepack";
@@ -40,10 +44,17 @@ public partial class ResourceBrowserView : UserControl
     {
         InitializeComponent();
         SizeChanged += (_, _) => Reflow();
-        QueryBox.TextChanged += (_, _) =>
+        QueryBox.PropertyChanged += (_, change) =>
         {
+            if (change.Property != TextBox.TextProperty) return;
+            searchPending = false;
             generation++; resultsCurrent = false; DetailsButton.IsEnabled = false; DownloadButton.IsEnabled = false;
-            if (host?.IsWorking == true) ResultNotice.Text = "条件已改变，正在进行的旧搜索不会覆盖当前列表；请完成后重新搜索。";
+            MarkResultsStale();
+            ResultNotice.Text = hasSearched
+                ? host?.IsWorking == true
+                    ? $"搜索条件已改变，仍显示上一条件的第 {displayedPage + 1} 页；当前请求结束后请重新搜索。"
+                    : $"搜索条件已改变，仍显示上一条件的第 {displayedPage + 1} 页；点击搜索后更新。"
+                : "搜索条件已改变，点击搜索后显示匹配的资源。";
         };
     }
     private void Reflow()
@@ -71,7 +82,9 @@ public partial class ResourceBrowserView : UserControl
             if (VersionPicker.SelectedIndex < 0 && selected?.Versions.Length > 0) VersionPicker.SelectedIndex = 0;
         }
         finally { settingTarget = false; }
-        InvalidateResults("目标已更新，请搜索匹配此实例的资源。");
+        InvalidateResults(selected == null ? "可以先浏览全部资源；下载前请创建实例并安装游戏版本。"
+            : selected.Versions.Length == 0 ? "此实例尚未安装游戏，可先浏览资源；安装版本后可筛选兼容文件。"
+            : "目标已更新，请搜索匹配此实例的资源。");
     }
 
     private CatalogTarget? Target() => Version.Length == 0 || instance.Length == 0 ? null : catalog.Target(instance, Version);
@@ -135,7 +148,7 @@ public partial class ResourceBrowserView : UserControl
         generation++; resultsCurrent = false;
         ResetDocuments();
         project = null;
-        pageIndex = 0;
+        MarkResultsStale();
         if (!hasSearched) Results.ItemsSource = Array.Empty<CatalogProject>();
         ReleasePicker.ItemsSource = Array.Empty<CatalogRelease>();
         ResultNotice.Text = notice;
@@ -145,55 +158,122 @@ public partial class ResourceBrowserView : UserControl
         DetailPanel.IsVisible = false;
         DetailsButton.IsEnabled = false;
         DownloadButton.IsEnabled = false;
-        if (hasSearched && host is { IsWorking: false }) Avalonia.Threading.Dispatcher.UIThread.Post(async () => await Search());
+        searchPending = searchStarted;
+        ResumeSearch();
     }
 
-    private async void SearchResources(object? sender, RoutedEventArgs e) { pageIndex = 0; await Search(); }
-    private async void PreviousPage(object? sender, RoutedEventArgs e) { if (pageIndex == 0 || host?.IsWorking == true) return; pageIndex--; await Search(true); }
-    private async void NextPage(object? sender, RoutedEventArgs e) { if (host?.IsWorking == true) return; pageIndex++; await Search(true); }
-    private async void SearchKey(object? sender, KeyEventArgs e)
-    { if (e.Key == Key.Enter) { e.Handled = true; pageIndex = 0; await Search(); } }
+    internal void ResumeSearch()
+    {
+        if (searchQueued || !CanResumeSearch()) return;
+        searchQueued = true;
+        Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+        {
+            searchQueued = false;
+            if (CanResumeSearch()) await Search();
+        });
+    }
 
-    internal async Task Search(bool paging = false)
+    private bool CanResumeSearch() => searchPending && IsVisible
+        && host is { IsWorking: false, IsVisible: true, IsClosing: false };
+
+    private async void SearchResources(object? sender, RoutedEventArgs e) => await Search();
+    private async void PreviousPage(object? sender, RoutedEventArgs e)
+    {
+        if (!resultsCurrent || !PreviousPageButton.IsEnabled || host?.IsWorking == true) return;
+        await Search(displayedPage - 1);
+    }
+
+    private async void NextPage(object? sender, RoutedEventArgs e)
+    {
+        if (!resultsCurrent || !NextPageButton.IsEnabled || host?.IsWorking == true) return;
+        await Search(displayedPage + 1);
+    }
+    private async void SearchKey(object? sender, KeyEventArgs e)
+    { if (e.Key == Key.Enter) { e.Handled = true; await Search(); } }
+
+    internal async Task Search(int? requestedPage = null)
     {
         if (host == null) return;
+        int page = requestedPage ?? 0;
+        string binding = BindingKey;
+        int revision = generation;
         await host.RunTask(async token =>
         {
+            if (revision != generation || binding != BindingKey)
+                throw new InvalidOperationException("搜索条件或结果已更新，请从资源页重新搜索或翻页。");
+
+            searchStarted = true;
+            searchPending = false;
             string kind = Kind, source = Source, query = QueryBox.Text?.Trim() ?? "", order = Order;
-            int revision = ++generation;
-            string binding = BindingKey;
+            revision = ++generation;
             if (kind == "world" && source == "modrinth") throw new InvalidOperationException("世界资源请切换到 CurseForge。");
             var target = Target();
-            if (!paging) pageIndex = 0;
             ResultNotice.Text = "正在搜索，保留上次结果，可从底部取消。";
             DetailPanel.IsVisible = false; BrowsePanel.IsVisible = SearchControls.IsVisible = true;
             DiscoveryPanel.IsVisible = false;
             try
             {
-                var rows = SearchFixture is { } fixture ? await fixture(token)
-                    : await Task.Run(() => catalog.Search(kind, query, source, target, token, order, pageIndex * PageSize, PageSize), token);
+                int offset = page * PageSize;
+                var rows = SearchFixture is { } fixture ? await fixture(offset, token)
+                    : await Task.Run(() => catalog.Search(kind, query, source, target, token, order, offset, PageSize), token);
+                token.ThrowIfCancellationRequested();
                 if (revision != generation || BindingKey != binding) { ResultNotice.Text = "搜索条件已改变，已丢弃旧结果，请重新搜索。"; return; }
+                if (requestedPage != null && rows.Count == 0 && lastResults.Count > 0)
+                {
+                    if (page < displayedPage)
+                    {
+                        ResultNotice.Text = $"上一页目前没有结果，仍显示第 {displayedPage + 1} 页。可重新搜索更新列表。";
+                        host.SetStatus(ResultNotice.Text);
+                        return;
+                    }
+                    lastPageIndex = displayedPage;
+                    resultsCurrent = true;
+                    PageLabel.Text = $"第 {displayedPage + 1} 页 · 每页最多 {PageSize} 项";
+                    NextPageButton.IsEnabled = false;
+                    DiscoveryPanel.IsVisible = false;
+                    ResultNotice.Text = $"已到末页，保留第 {displayedPage + 1} 页的 {lastResults.Count} 个结果。";
+                    host.SetStatus("资源列表已到末页。");
+                    return;
+                }
+                if (requestedPage == null) lastPageIndex = null;
                 resultsCurrent = true;
                 hasSearched = true;
                 lastResults = rows;
-                displayedPage = pageIndex;
+                displayedPage = page;
                 Results.ItemsSource = rows;
-                PageLabel.Text = $"第 {pageIndex + 1} 页 · 每页最多 {PageSize} 项";
-                PreviousPageButton.IsEnabled = pageIndex > 0;
+                PageLabel.Text = $"第 {page + 1} 页 · 每页最多 {PageSize} 项";
+                Pagination.IsVisible = rows.Count > 0;
+                PreviousPageButton.IsEnabled = page > 0;
                 // Aliases and source deduplication can shorten a page without exhausting the upstream feed.
-                NextPageButton.IsEnabled = rows.Count > 0;
+                NextPageButton.IsEnabled = rows.Count > 0 && page < MaximumPageIndex
+                    && (!lastPageIndex.HasValue || page < lastPageIndex.Value);
                 DiscoveryPanel.IsVisible = rows.Count == 0;
-                ResultNotice.Text = rows.Count == 0 ? "没有匹配结果。可换关键词、来源或目标版本后重试。" : $"{rows.Count} 个项目 · 选择项目查看兼容版本";
+                ResultNotice.Text = lastPageIndex == page
+                    ? $"已到末页，当前第 {page + 1} 页有 {rows.Count} 个结果。"
+                    : rows.Count == 0 ? "没有匹配结果。可换关键词、来源或目标版本后重试。"
+                    : page == MaximumPageIndex
+                        ? $"已达到可翻页范围上限，最多可浏览前 {MaximumPageIndex * PageSize + PageSize:N0} 项。"
+                        : $"{rows.Count} 个项目 · 选择项目查看兼容版本";
                 host.SetStatus("资源搜索完成。");
             }
             catch
             {
                 if (revision != generation || BindingKey != binding) return;
-                pageIndex = displayedPage;
                 ResultNotice.Text = token.IsCancellationRequested ? "搜索已取消，可以重新搜索。" : "搜索未完成，请检查网络或切换来源，再点搜索重试。";
                 throw;
             }
         });
+    }
+
+    private void MarkResultsStale()
+    {
+        lastPageIndex = null;
+        PreviousPageButton.IsEnabled = false;
+        NextPageButton.IsEnabled = false;
+        PageLabel.Text = hasSearched
+            ? $"上次结果：第 {displayedPage + 1} 页 · 每页最多 {PageSize} 项"
+            : "";
+        Pagination.IsVisible = hasSearched && lastResults.Count > 0;
     }
 
     private void SelectProject(object? sender, SelectionChangedEventArgs e) => DetailsButton.IsEnabled = resultsCurrent && Results.SelectedItem is CatalogProject;
@@ -222,13 +302,13 @@ public partial class ResourceBrowserView : UserControl
     private async void RefreshReleases(object? sender, RoutedEventArgs e) => await LoadReleases();
     internal async Task LoadReleases()
     {
-        if (project == null || host == null) return;
+        if (project is not { } selected || host == null) return;
+        int revision = projectGeneration;
+        string binding = projectTarget;
         await host.RunTask(async token =>
         {
-            var selected = project;
-            int revision = projectGeneration;
-            string binding = projectTarget;
-            if (revision != generation || binding != BindingKey) { InstallNotice.Text = "目标或筛选已改变，请重新搜索并选择项目。"; return; }
+            if (!ReferenceEquals(project, selected) || revision != generation || binding != BindingKey)
+                throw new InvalidOperationException("资源项目或目标已改变，请在资源页重新选择项目后读取版本。");
             var target = Target();
             ReleasePicker.ItemsSource = Array.Empty<CatalogRelease>();
             WorldPicker.IsVisible = selected.Kind == "datapack";
@@ -248,7 +328,8 @@ public partial class ResourceBrowserView : UserControl
             {
                 var releases = ReleasesFixture is { } fixture ? await fixture(token)
                     : await Task.Run(() => catalog.Releases(selected, target, token), token);
-                if (project != selected || revision != generation || BindingKey != binding) return;
+                token.ThrowIfCancellationRequested();
+                if (!ReferenceEquals(project, selected) || revision != generation || BindingKey != binding) return;
                 ReleasePicker.ItemsSource = releases;
                 if (releases.Count > 0) ReleasePicker.SelectedIndex = 0;
                 else ReleaseNotice.Text = "没有与当前目标兼容的文件，请更换目标版本后重新搜索。";
@@ -256,7 +337,7 @@ public partial class ResourceBrowserView : UserControl
             }
             catch
             {
-                if (project != selected || revision != generation || BindingKey != binding) return;
+                if (!ReferenceEquals(project, selected) || revision != generation || BindingKey != binding) return;
                 ReleaseNotice.Text = token.IsCancellationRequested ? "版本读取已取消。" : "版本读取失败，可点击“刷新版本”重试。";
                 throw;
             }
@@ -329,7 +410,15 @@ public partial class ResourceBrowserView : UserControl
             if (!CanLoadDocuments()) return;
             var selected = project!;
             var release = ReleasePicker.SelectedItem as CatalogRelease;
-            await host!.RunTask(token => LoadDocuments(selected, release, token), "LoadReleases");
+            int revision = projectGeneration;
+            string binding = projectTarget;
+            await host!.RunTask(token =>
+            {
+                if (!ReferenceEquals(project, selected) || generation != revision || BindingKey != binding
+                    || (ReleasePicker.SelectedItem as CatalogRelease)?.Id != release?.Id)
+                    throw new InvalidOperationException("资源文件或目标已改变，请在资源页重新选择文件后读取详情。");
+                return LoadDocuments(selected, release, token);
+            }, "LoadReleases");
         });
     }
 

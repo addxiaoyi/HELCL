@@ -32,20 +32,24 @@ public sealed record CatalogRelease(string Id, string Title, string Filename, st
 /// <summary>Typed catalog boundary for the portable UI; downloads retain upstream checksums.</summary>
 public sealed partial class PortableCatalog
 {
+    public const int MaximumSearchOffset = 50_000;
     private static readonly Regex ProjectKey = new(@"\A[A-Za-z0-9_-]{1,128}\z");
 
     public CatalogTarget Target(string instance, string version)
     {
         var game = ExistingInstance(instance);
-        if (Py.S(game.Meta().Get("portable_reference_version")) == version &&
+        string safeVersion = Utils.SafeVersionId(version);
+        bool hasInstallation = Directory.Exists(Path.Combine(game.VersionsDir(), safeVersion)) ||
+            File.Exists(Path.Combine(game.path, ".portable-install.json"));
+        if (!hasInstallation && Py.S(game.Meta().Get("portable_reference_version")) == version &&
             Regex.IsMatch(version, @"\A(?:1|[2-9]\d)\.\d+(?:\.\d+)?\z"))
         {
             string loader = CatalogLoader.Normalize(Py.S(game.Meta().Get("portable_reference_loader", "vanilla")));
             return new CatalogTarget { Version = version, GameVersion = version, Loader = loader.Length == 0 ? "vanilla" : loader };
         }
-        if (!game.InstalledIds().Contains(version) || !File.Exists(Path.Combine(game.VersionsDir(), version, version + ".jar")) ||
-            File.Exists(Path.Combine(game.VersionsDir(), version, ".portable-install-pending")))
-            throw new InvalidOperationException("请先为目标实例安装完整的 Minecraft 版本。");
+        try { PortableLauncher.ResolveLaunchMetadata(game, version); }
+        catch (InvalidDataException error)
+        { throw new InvalidOperationException("请先为目标实例安装完整的 Minecraft 版本。", error); }
         var target = CatalogTarget.Inspect(game, version);
         if (target.Error.Length > 0 || target.GameVersion.Length == 0)
             throw new InvalidDataException("目标版本信息不可用，请修复游戏安装后重试。");
@@ -56,7 +60,7 @@ public sealed partial class PortableCatalog
     {
         if (order is not ("relevance" or "downloads" or "newest" or "updated"))
             throw new ArgumentException("资源排序方式无效。", nameof(order));
-        if (offset < 0 || offset > 50000 || pageSize < 1 || pageSize > 50) throw new ArgumentOutOfRangeException(nameof(offset));
+        if (offset < 0 || offset > MaximumSearchOffset || pageSize < 1 || pageSize > 50) throw new ArgumentOutOfRangeException(nameof(offset));
         token.ThrowIfCancellationRequested();
         var filters = PyDict.Of("game_version", target?.GameVersion ?? "", "loader", target?.Loader ?? "", "offset", offset, "limit", pageSize);
         var rows = CatalogSearch.Search(kind, query, source, filters, request =>

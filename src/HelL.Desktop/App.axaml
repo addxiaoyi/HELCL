@@ -4,14 +4,27 @@
     <ResourceDictionary>
       <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
-          <SolidColorBrush x:Key="HelL.DesktopPanel">#EBFFFFFF</SolidColorBrush>
-          <SolidColorBrush x:Key="HelL.DesktopPanelBorder">#160F172A</SolidColorBrush>
-          <SolidColorBrush x:Key="HelL.Muted">#56647B</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.DesktopPanel">#40FFFFFF</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Chrome">#40FFFFFF</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Surface">#40FFFFFF</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.SurfaceRaised">#80FFFFFF</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Muted">#334155</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.TaskStateBackground">#E2E8F0</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.TaskStateForeground">#334155</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.TaskFailedBackground">#FEE2E2</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.TaskFailedForeground">#991B1B</SolidColorBrush>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
-          <SolidColorBrush x:Key="HelL.DesktopPanel">#DE1B1F27</SolidColorBrush>
-          <SolidColorBrush x:Key="HelL.DesktopPanelBorder">#22FFFFFF</SolidColorBrush>
-          <SolidColorBrush x:Key="HelL.Muted">#A6B1C0</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.DesktopPanel">#700D0F14</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Chrome">#70090B10</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Surface">#700D0F14</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.SurfaceRaised">#99101620</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Field">#40090B10</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.Muted">#D2DBE8</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.TaskStateBackground">#303946</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.TaskStateForeground">#DCE2EC</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.TaskFailedBackground">#522B30</SolidColorBrush>
+          <SolidColorBrush x:Key="HelL.TaskFailedForeground">#FFB4AB</SolidColorBrush>
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>
       <FontFamily x:Key="DefaultFontFamily">avares://HelL.Desktop/Assets/Fonts#Noto Sans SC</FontFamily>

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using HelL.Desktop.Models;
@@ -9,17 +10,22 @@ namespace HelL.Desktop.Views;
 
 public partial class TasksView : UserControl
 {
+    private sealed record RetryRequest(string Operation, Func<CancellationToken, Task> Run);
+
     private readonly ObservableCollection<DesktopTask> tasks = [];
     private Action? cancelCurrent;
     private bool filtering;
     private DesktopTask? selected;
     private MainWindow? host;
-    private readonly Dictionary<Guid, Func<CancellationToken, Task>> retries = [];
+    private readonly Dictionary<Guid, RetryRequest> retries = [];
     private string historyRoot = "";
 
     public TasksView()
     {
         InitializeComponent();
+        UpdateLogToggle();
+        SearchBox.PlaceholderText = "名称、状态、原因或任务 ID";
+        SizeChanged += (_, _) => TaskList.MaxHeight = Math.Clamp(Bounds.Height * 0.4, 140, 300);
         SearchBox.PropertyChanged += (_, change) =>
         {
             if (change.Property == TextBox.TextProperty) Refresh();
@@ -33,7 +39,7 @@ public partial class TasksView : UserControl
         try { foreach (DesktopTask task in Services.DesktopTaskHistory.Read(historyRoot)) { task.PropertyChanged += TaskChanged; tasks.Add(task); } Refresh(); }
         catch (Exception error) { owner?.SetStatus("任务历史读取失败，请检查诊断信息后重试。" ); System.Diagnostics.Trace.TraceWarning("Desktop task history: " + error.GetType().Name); }
     }
-    internal void SetRetry(DesktopTask task, Func<CancellationToken, Task> retry) => retries[task.Id] = retry;
+    internal void SetRetry(DesktopTask task, string operation, Func<CancellationToken, Task> retry) => retries[task.Id] = new(operation, retry);
     internal IReadOnlyCollection<DesktopTask> History => tasks;
 
     internal void Add(DesktopTask task)
@@ -61,6 +67,8 @@ public partial class TasksView : UserControl
             }
             catch (Exception error) { host?.SetStatus("任务结果已完成，但历史保存失败。" ); System.Diagnostics.Trace.TraceWarning(error.GetType().Name); }
         }
+        else if (e.PropertyName == nameof(DesktopTask.Message) && !string.IsNullOrWhiteSpace(SearchBox.Text))
+            Refresh();
         if (ReferenceEquals(sender, selected)) UpdateDetails();
     }
 
@@ -90,7 +98,9 @@ public partial class TasksView : UserControl
         selection ??= selected?.Id;
         var visible = tasks.Where(task => Matches(task, filter) &&
             (task.Title.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
-             task.StateLabel.Contains(query, StringComparison.CurrentCultureIgnoreCase))).ToArray();
+             task.StateLabel.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
+             task.Message.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
+             task.Id.ToString("D").Contains(query, StringComparison.CurrentCultureIgnoreCase))).ToArray();
         filtering = true;
         try
         {
@@ -99,8 +109,11 @@ public partial class TasksView : UserControl
         }
         finally { filtering = false; }
         SelectCurrent();
-        CountLabel.Text = $"{visible.Length} / {tasks.Count} 个任务 · 最近记录";
+        CountLabel.Text = tasks.Count == 0 ? "暂无任务" : $"{visible.Length} / {tasks.Count} 个任务 · 最近记录";
         EmptyNotice.IsVisible = visible.Length == 0;
+        EmptyPanel.IsVisible = visible.Length == 0;
+        TaskList.IsVisible = visible.Length > 0;
+        ClearFiltersButton.IsVisible = visible.Length == 0 && tasks.Count > 0;
         EmptyNotice.Text = tasks.Count == 0 ? "尚无任务。创建实例、安装版本或下载资源后，进度与结果会显示在这里。"
             : "没有符合筛选条件的任务。请更换关键词或状态。";
     }
@@ -116,16 +129,26 @@ public partial class TasksView : UserControl
 
     private void UpdateDetails()
     {
+        LogDetails.IsVisible = selected != null;
         DetailTitle.Text = selected?.Title ?? "选择任务查看记录";
         LogText.Text = selected == null ? "最近 100 条已结束任务会保存在本机；选择任务查看执行日志。" : string.Join(Environment.NewLine, selected.Log);
         CancelButton.IsVisible = selected?.CanCancel == true;
         RetryButton.IsVisible = selected?.State is DesktopTaskState.Failed or DesktopTaskState.Cancelled && retries.ContainsKey(selected.Id);
     }
 
+    private void ClearFilters(object? sender, RoutedEventArgs e)
+    {
+        SearchBox.Clear();
+        StatePicker.SelectedIndex = 0;
+        TaskList.Focus();
+    }
+
     private async void RetrySelected(object? sender, RoutedEventArgs e)
     {
-        if (host == null || selected == null || !retries.TryGetValue(selected.Id, out var retry)) return;
-        if (await host.ConfirmAction("重试安全任务", $"将按当前页面仍然有效的条件重新执行：{selected.Title}\n不会重试删除、覆盖、登录或游戏启动操作。", "重试")) await host.RunTask(retry, "SafeRetry");
+        if (host == null || selected is not { State: DesktopTaskState.Failed or DesktopTaskState.Cancelled } task
+            || !retries.TryGetValue(task.Id, out var retry)) return;
+        if (await host.ConfirmAction("重试安全任务", $"将重新执行条件仍然有效的任务：{task.Title}\n不会重试删除、覆盖、登录或游戏启动操作。", "重试"))
+            await host.RunTask(retry.Run, retry.Operation);
     }
     private async void CopyLog(object? sender, RoutedEventArgs e)
     {
@@ -138,7 +161,18 @@ public partial class TasksView : UserControl
         catch (Exception error) when (error is not OutOfMemoryException)
         { host?.SetStatus("日志复制失败，请检查系统剪贴板后重试。"); System.Diagnostics.Trace.TraceWarning(error.GetType().Name); }
     }
-    private void ExpandLog(object? sender, RoutedEventArgs e) { LogDetails.MaxHeight = double.IsPositiveInfinity(LogDetails.MaxHeight) ? 220 : double.PositiveInfinity; }
+    private void ExpandLog(object? sender, RoutedEventArgs e)
+    {
+        LogDetails.MaxHeight = double.IsPositiveInfinity(LogDetails.MaxHeight) ? 280 : double.PositiveInfinity;
+        UpdateLogToggle();
+    }
+
+    private void UpdateLogToggle()
+    {
+        string label = double.IsPositiveInfinity(LogDetails.MaxHeight) ? "收起日志" : "展开日志";
+        ExpandLogButton.Content = label;
+        AutomationProperties.SetName(ExpandLogButton, label);
+    }
     private void CancelSelected(object? sender, RoutedEventArgs e)
     {
         if (selected?.CanCancel == true) cancelCurrent?.Invoke();

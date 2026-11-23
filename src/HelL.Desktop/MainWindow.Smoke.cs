@@ -101,6 +101,15 @@ public sealed partial class MainWindow
             if (TasksView.History.First().State != Models.DesktopTaskState.Failed)
                 throw new InvalidOperationException("Task history did not record failure.");
             ShowPage("tasks");
+            var expandLogButton = TasksView.FindControl<Button>("ExpandLogButton")!;
+            if (expandLogButton.Content?.ToString() != "展开日志")
+                throw new InvalidOperationException("Task log toggle did not start in its collapsed state.");
+            expandLogButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            if (expandLogButton.Content?.ToString() != "收起日志")
+                throw new InvalidOperationException("Expanded task logs did not update their action label.");
+            expandLogButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            if (expandLogButton.Content?.ToString() != "展开日志")
+                throw new InvalidOperationException("Collapsed task logs did not restore their action label.");
             var statePicker = TasksView.FindControl<ComboBox>("StatePicker")!;
             var taskList = TasksView.FindControl<ListBox>("TaskList")!;
             statePicker.SelectedIndex = 2;
@@ -111,6 +120,47 @@ public sealed partial class MainWindow
             if (taskList.ItemCount != 0 || !TasksView.FindControl<TextBlock>("EmptyNotice")!.IsVisible)
                 throw new InvalidOperationException("Task search did not show its empty state.");
             TasksView.FindControl<TextBox>("SearchBox")!.Clear();
+            statePicker.SelectedIndex = 0;
+            var fixtureIdTask = new Models.DesktopTask("重复名称 UX 检查");
+            fixtureIdTask.Finish(Models.DesktopTaskState.Failed, "fixture-error-id-lookup");
+            var fixtureMessageTask = new Models.DesktopTask("重复名称 UX 检查");
+            fixtureMessageTask.Finish(Models.DesktopTaskState.Failed, "fixture-specific-network-error");
+            TasksView.Add(fixtureIdTask);
+            TasksView.Add(fixtureMessageTask);
+            var searchBox = TasksView.FindControl<TextBox>("SearchBox")!;
+            searchBox.Text = fixtureMessageTask.Id.ToString("D");
+            if (taskList.ItemCount != 1 || (taskList.SelectedItem as Models.DesktopTask)?.Id != fixtureMessageTask.Id)
+                throw new InvalidOperationException("Task search could not locate a task by its ID.");
+            searchBox.Text = "fixture-specific-network-error";
+            if (taskList.ItemCount != 1 || (taskList.SelectedItem as Models.DesktopTask)?.Id != fixtureMessageTask.Id)
+                throw new InvalidOperationException("Task search could not locate a task by its failure reason.");
+            searchBox.Clear();
+            statePicker.SelectedIndex = 2;
+            var failedItems = taskList.Items.OfType<Models.DesktopTask>().ToArray();
+            if (taskList.ItemCount != TasksView.History.Count(task => task.State == Models.DesktopTaskState.Failed)
+                || !failedItems.Any(task => task.Id == fixtureIdTask.Id)
+                || !failedItems.Any(task => task.Id == fixtureMessageTask.Id))
+                throw new InvalidOperationException("Task status filtering stopped working after reason/ID search.");
+            var progressTask = new Models.DesktopTask("Live task search fixture");
+            TasksView.Add(progressTask);
+            statePicker.SelectedIndex = 1;
+            searchBox.Text = "fixture-live-progress";
+            if (taskList.ItemCount != 0)
+                throw new InvalidOperationException("Live task search started with an unexpected match.");
+            progressTask.Report("fixture-live-progress", 10);
+            if (taskList.ItemCount != 1 || (taskList.SelectedItem as Models.DesktopTask)?.Id != progressTask.Id
+                || TasksView.FindControl<TextBlock>("EmptyNotice")!.IsVisible)
+                throw new InvalidOperationException("Task search did not include a running task whose updated message matches the query.");
+            progressTask.Report("fixture-no-longer-matching", 20);
+            if (taskList.ItemCount != 0 || !TasksView.FindControl<TextBlock>("EmptyNotice")!.IsVisible)
+                throw new InvalidOperationException("Task search retained a running task after its message stopped matching the query.");
+            progressTask.Finish(Models.DesktopTaskState.Failed, "fixture-live-progress");
+            if (taskList.ItemCount != 0)
+                throw new InvalidOperationException("Live message search bypassed the active-task filter after completion.");
+            statePicker.SelectedIndex = 2;
+            if (taskList.ItemCount != 1 || (taskList.SelectedItem as Models.DesktopTask)?.Id != progressTask.Id)
+                throw new InvalidOperationException("Failed-task search did not retain the matching final task message.");
+            searchBox.Clear();
             statePicker.SelectedIndex = 0;
             Task running = RunTask(async token =>
             {
@@ -213,7 +263,7 @@ public sealed partial class MainWindow
                 libraryNavigation = true, resourceTarget = true, unavailableDownloadDisabled = true,
                 corruptLibraryStartup = true,
                 imageDecodeBounds = true,
-                taskHistory = true, taskFiltering = true, taskCancellation = true,
+                taskHistory = true, taskFiltering = true, taskSearchById = true, taskSearchByReason = true, taskSearchLiveMessage = true, taskCancellation = true,
                 darkAndLightThemes = true, themePersistence = true,
                 launchOptions = true, loaderSelection = true, staleLoaderSelection = true
             }));

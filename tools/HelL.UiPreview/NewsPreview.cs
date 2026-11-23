@@ -81,7 +81,9 @@ internal static class NewsPreview
         Check(Walk(panel).OfType<TextBlock>().Any(text => text.Text.Contains("暂时没有新闻")), "Empty news has visible recovery context");
         var missing = new NewsImage("", "missing image fixture", 80);
         await missing.Loading;
-        Check(!missing.Ready && Walk(missing).OfType<TextBlock>().Single().Text == "暂无封面", "Missing artwork does not produce a broken image");
+        Check(!missing.Ready && Walk(missing).OfType<TextBlock>().Any(text => text.Text == "暂无封面")
+            && Walk(missing).OfType<VectorGlyph>().Any(glyph => glyph.Text == "\ue8a5"),
+            "Missing artwork keeps a labeled shared-icon fallback instead of a broken image");
         panel.Show(feed);
         string translated = await Task.Run(() => NewsLocalization.TranslatePending(News.LoadCached().Take(1).ToList(),
             HelL.Core.PyDict.Of("ai_local_url", "http://127.0.0.1:11434"), refresh: true));

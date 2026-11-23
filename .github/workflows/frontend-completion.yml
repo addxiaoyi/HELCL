@@ -3,7 +3,7 @@ name: Frontend completion acceptance
 on:
   workflow_dispatch:
   pull_request:
-    branches: ['codex/remote-close-loop', 'codex/frontend-foundation', 'codex/frontend-completion', 'codex/frontend-recheck', 'codex/frontend-details', 'codex/frontend-icons']
+    branches: ['codex/remote-close-loop', 'codex/frontend-foundation', 'codex/frontend-completion', 'codex/frontend-recheck', 'codex/frontend-details', 'codex/frontend-icons', 'codex/frontend-refine']
 
 permissions:
   contents: read
@@ -105,6 +105,7 @@ jobs:
       - name: Exercise desktop and three mobile viewports
         run: |
           xvfb-run -a dotnet src/HelL.Desktop/bin/Release/net10.0/HelL.Desktop.dll --home "$GITHUB_WORKSPACE/artifacts/desktop" --ui-smoke
+          xvfb-run -a dotnet src/HelL.Desktop/bin/Release/net10.0/HelL.Desktop.dll --home "$GITHUB_WORKSPACE/artifacts/user-journey" --user-journey-check
           for size in '320 720' '390 844' '844 390'; do
             read -r width height <<< "$size"
             xvfb-run -a dotnet tools/HelL.Mobile.Preview/bin/Release/net10.0/HelL.Mobile.Preview.dll "$GITHUB_WORKSPACE/artifacts/mobile-${width}x${height}" "$width" "$height"

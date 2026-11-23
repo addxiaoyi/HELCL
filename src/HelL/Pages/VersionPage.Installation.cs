@@ -11,9 +11,9 @@ namespace HelL.Pages;
 
 public sealed partial class VersionPage
 {
-    private readonly TextBlock _selectedVersion = Ui.Txt("选择一个版本", 24, true).Wrap();
-    private readonly TextBlock _versionHint = Ui.Muted("先在版本列表中选择要安装的游戏。").Wrap();
-    private readonly TextBlock _installHint = Ui.Muted("").Wrap();
+    private readonly TextBlock _selectedVersion = Ui.Txt("选择一个版本", 21, true).Wrap();
+    private readonly TextBlock _versionHint = Ui.Txt("先在版本列表中选择要安装的游戏。", 13, fg: "B.InkMuted").Wrap();
+    private readonly TextBlock _installHint = Ui.Txt("", 13, fg: "B.InkMuted").Wrap();
     private readonly TextBlock _installStatus = Ui.Txt("", 13).Wrap();
     private readonly ProgressBar _installProgress = Ui.Prog();
     private readonly SPanel _installActivity = Ui.V(10);
@@ -36,7 +36,9 @@ public sealed partial class VersionPage
         var extras = Ui.H(16, _optifine, _lite); extras.Wrap = true;
         var advanced = new Expander { Header = "模组加载器与兼容组件", Content = Ui.V(12,
             Ui.Field("加载器", _loader, "原版游戏不需要选择加载器。", 84), Ui.Field("兼容版本", _loaderVer, "先选择加载器；列表仅显示所选 Minecraft 版本支持的兼容版本。", 84), extras).M(0, 12, 0, 0) };
-        _install.MinHeight = 40; _install.BorderThickness = new Thickness(0);
+        _selectedVersion.LineHeight = 28;
+        _versionHint.LineHeight = _installHint.LineHeight = 20;
+        _install.MinHeight = 44; _install.BorderThickness = new Thickness(0);
         _cancelInstall.Click += (_, _) => RunOnce(_cancelInstall, async () => { await Api.CallAsync("cancel_task", new { task_id = _installTask }); _installStatus.Text = "正在取消安装…"; });
         _retryInstall.Click += (_, _) => RunOnce(_retryInstall, RetryInstall);
         _retryLoader.Click += (_, _) => Run(LoadLoaderVersionsAsync);
@@ -57,8 +59,11 @@ public sealed partial class VersionPage
         _installActivity.Children.Add(_installStatus); _installActivity.Children.Add(_installProgress); _installActivity.Children.Add(actions);
         _installActivity.Visibility = Visibility.Collapsed; _retryLoader.Visibility = Visibility.Collapsed;
         System.Windows.Automation.AutomationProperties.SetName(_installProgress, "Minecraft 安装进度");
-        return Ui.V(14, Ui.H3("确认安装"), _selectedVersion, _versionHint,
+        var choices = Ui.V(14, Ui.Txt("2 · 确认安装", 13, true, "B.InkMuted"), Ui.V(5, _selectedVersion, _versionHint),
             Ui.Field("安装到", _inst, "游戏文件和存档会保存在此实例中。", 84), advanced, _installHint, _retryLoader, _install.Stretch(), _installActivity);
+        Border surface = Ui.Card(choices, 18);
+        surface.CornerRadius = new CornerRadius(12);
+        return Ui.V(0, surface);
     }
 
     private void SelectRecommended()

@@ -61,6 +61,9 @@ public partial class AiAssistantView : UserControl
         SaveLocalButton.IsVisible = !needsKey;
         if (mode == "ollama" && string.IsNullOrWhiteSpace(EndpointBox.Text))
             EndpointBox.Text = "http://127.0.0.1:11434/v1";
+        if (ConnectionHint != null) ConnectionHint.Text = mode == "ollama"
+            ? "需要先启动本机 Ollama，并准备好所填模型。保存连接不会下载模型或验证服务。"
+            : "使用你信任的服务地址和模型。保存连接后，发送问题才会请求该服务。";
     }
 
     private async void SaveConfig(object? sender, RoutedEventArgs e) => await SaveConfigurationAsync();
@@ -68,12 +71,29 @@ public partial class AiAssistantView : UserControl
     internal async Task SaveConfigurationAsync()
     {
         if (host == null) return;
+        if (host.IsWorking) { host.SetStatus("当前任务尚未结束，请稍后保存连接。"); return; }
+        ConfigError.IsVisible = false;
+        string mode = (ModePicker.SelectedItem as ComboBoxItem)?.Tag as string ?? "ollama";
+        string key = ApiKeyBox.Text ?? "";
+        string endpoint = (EndpointBox.Text ?? "").Trim().TrimEnd('/');
+        bool sameProvider = activeProfile?.Mode == mode && activeProfile.Endpoint == endpoint;
+        if (key.Length == 0 && sameProvider) key = activeProfile!.ApiKey;
+        DesktopAiProfile profile;
+        try
+        {
+            if (mode == "custom" && key.Length == 0 && activeProfile?.Mode == "custom" && !sameProvider)
+                throw new ArgumentException("服务地址已改变，请填写新服务的 API 密钥。旧服务密钥不会自动沿用。");
+            profile = DesktopAiProfile.Validate(mode, endpoint, ModelBox.Text ?? "", key);
+        }
+        catch (ArgumentException error)
+        {
+            ConfigError.Text = error.Message;
+            ConfigError.IsVisible = ConfigPanel.IsVisible = true;
+            ConfigError.BringIntoView();
+            return;
+        }
         await host.RunTask(async token =>
         {
-            string mode = (ModePicker.SelectedItem as ComboBoxItem)?.Tag as string ?? "ollama";
-            string key = ApiKeyBox.Text ?? "";
-            if (key.Length == 0 && activeProfile?.Mode == mode) key = activeProfile.ApiKey;
-            var profile = DesktopAiProfile.Validate(mode, EndpointBox.Text ?? "", ModelBox.Text ?? "", key);
             bool wasEnabled = ConfigPanel.IsEnabled;
             ConfigPanel.IsEnabled = false;
             try
@@ -86,6 +106,12 @@ public partial class AiAssistantView : UserControl
                 ProviderSubtitle.Text = $"当前模型：{profile.Model} · {new Uri(profile.Endpoint).Host}";
                 host.SetStatus("AI 模型连接配置已保存。");
             }
+            catch (Exception) when (!token.IsCancellationRequested)
+            {
+                ConfigError.Text = "连接未保存。请检查系统凭据库或数据目录权限后重试，填写内容已保留。";
+                ConfigError.IsVisible = ConfigPanel.IsVisible = true;
+                throw;
+            }
             finally { ConfigPanel.IsEnabled = wasEnabled; }
         });
     }
@@ -94,9 +120,18 @@ public partial class AiAssistantView : UserControl
     {
         if (sender is Button { Tag: string prompt })
         {
-            PromptInput.Text = prompt;
-            SendPrompt(sender, e);
+            AppendPrompt(prompt);
+            host?.SetStatus("建议已填入，可编辑后点击发送。");
         }
+    }
+
+    private void AppendPrompt(string text, bool log = false)
+    {
+        string draft = PromptInput.Text?.TrimEnd() ?? "";
+        PromptInput.Text = draft.Length == 0 ? text : draft == text ? draft : draft + "\n\n" + text;
+        reviewLog |= log;
+        PromptInput.Focus();
+        PromptInput.CaretIndex = PromptInput.Text.Length;
     }
 
     private async void DiagnoseLatestLog(object? sender, RoutedEventArgs e)
@@ -112,8 +147,7 @@ public partial class AiAssistantView : UserControl
         string latestLog = Path.Combine(inst.path, "logs", "latest.log");
         if (!File.Exists(latestLog))
         {
-            PromptInput.Text = $"我的实例「{instName}」目前还没有生成 logs/latest.log，请告诉我启动 Minecraft 前需要检查哪些常见环境项？";
-            PromptInput.Focus();
+            AppendPrompt($"我的实例「{instName}」目前还没有生成 logs/latest.log，请告诉我启动 Minecraft 前需要检查哪些常见环境项？");
             return;
         }
         await LoadLogReviewAsync(instName, latestLog);
@@ -126,9 +160,7 @@ public partial class AiAssistantView : UserControl
         {
             string tail = await (read?.Invoke(path) ?? Task.Run(() => LogPreview.ReadTail(path)));
             if (PromptInput.Text != draft) { host?.SetStatus("日志已读取，但输入已改变。为保留新草稿，请重新点击读取。"); return false; }
-            PromptInput.Text = $"请分析实例“{instance}”的 latest.log 日志末尾内容：\n\n```\n{tail}\n```";
-            reviewLog = true;
-            PromptInput.Focus();
+            AppendPrompt($"请分析实例“{instance}”的 latest.log 日志末尾内容：\n\n```\n{tail}\n```", log: true);
             host?.SetStatus("已载入脱敏日志预览。确认内容后点击发送；发送前会再次显示目标服务。");
             return true;
         }

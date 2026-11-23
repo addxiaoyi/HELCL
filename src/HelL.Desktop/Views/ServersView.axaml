@@ -5,7 +5,8 @@
     <Grid ColumnDefinitions="*,Auto,Auto" Margin="2,0,0,14">
       <StackPanel Spacing="5" VerticalAlignment="Center">
         <TextBlock Text="多人联机" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
-        <TextBlock x:Name="SubtitleText" IsVisible="True" />
+        <TextBlock x:Name="SubtitleText" IsVisible="True" TextWrapping="Wrap" />
+        <Button Content="更换游戏版本" Classes="ghost" Click="ChooseVersion" HorizontalAlignment="Left" Padding="0,2" MinHeight="24" FontSize="12" />
         <Button x:Name="UndoRemoveButton" Content="撤销移除" Classes="soft" IsVisible="False" Click="UndoRemoveServer" />
         <TextBlock x:Name="ServerCountBadge" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
       </StackPanel>

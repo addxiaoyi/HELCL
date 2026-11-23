@@ -17,6 +17,8 @@ public sealed partial class MainWindow : Window
     private CancellationTokenSource? task;
     private bool playing;
     private bool closing;
+    private bool closePromptOpen;
+    private bool discardSettingsOnClose;
     private Models.DesktopTask? activeTask;
     private string? pendingQuickServer;
     private string? SelectedName => (InstanceList.SelectedItem as InstanceEntry)?.Name;
@@ -50,6 +52,7 @@ public sealed partial class MainWindow : Window
                 ApplyGlassBackdrop();
             if (change.Property == WindowStateProperty && MaxIcon != null)
             {
+                ResizeHandles.IsVisible = WindowState == WindowState.Normal;
                 MaxIcon.Kind = WindowState == WindowState.Maximized
                     ? "WindowRestore"
                     : "WindowMaximize";
@@ -65,12 +68,21 @@ public sealed partial class MainWindow : Window
         Opened += (_, _) => ApplyGlassBackdrop();
         if (Program.UiSmoke) Opened += RunUiSmoke;
         if (Program.CatalogSmoke) Opened += RunCatalogSmoke;
+        if (Program.UserJourneyCheck) Opened += RunUserJourneyCheck;
     }
 
     private void BeginTitleBarDrag(object? sender, PointerPressedEventArgs e)
     {
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             BeginMoveDrag(e);
+    }
+
+    private void BeginWindowResize(object? sender, PointerPressedEventArgs e)
+    {
+        if (!CanResize || WindowState != WindowState.Normal || sender is not Border { Tag: WindowEdge edge }
+            || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+        e.Handled = true;
+        BeginResizeDrag(edge, e);
     }
 
     private void ToggleMaximizeTitleBar(object? sender, TappedEventArgs e) => MaximizeRestoreWindow(sender, e);
@@ -156,16 +168,18 @@ public sealed partial class MainWindow : Window
             HeroCover.IsVisible = false;
         }
         ResourcesView.SetTarget(InstanceList.SelectedItem as InstanceEntry);
-        InstallerView.RefreshInstances(SelectedName);
+        InstallerView.RefreshInstances();
     }
 
     private void SelectInstance(object? sender, SelectionChangedEventArgs e)
     {
+        if (changingInstance) return;
         if (InstanceList.SelectedItem is not InstanceEntry instance)
         {
             ResourcesView.SetTarget(null);
             return;
         }
+        string previous = launcher.SelectedInstance;
         try
         {
             launcher.SelectInstance(instance.Name);
@@ -173,13 +187,20 @@ public sealed partial class MainWindow : Window
             TopInstanceLabel.Text = instance.Name;
             JavaPath.Text = launcher.JavaPreference(instance.Name);
             LoadLaunchOptions(instance.Name);
-            UpdateEnvironmentSummary(instance.Name);
             UpdateHeroVisuals(instance);
             JavaChoices.ItemsSource = null;
             JavaChoices.IsVisible = false;
             InstallTarget.Text = "安装到 · " + instance.Name;
-            InstalledVersions.ItemsSource = instance.Versions;
-            InstalledVersions.SelectedIndex = instance.Versions.Length == 0 ? -1 : 0;
+            changingInstance = true;
+            try
+            {
+                InstalledVersions.ItemsSource = instance.Versions;
+                InstalledVersions.SelectedItem = contentVersions.TryGetValue(instance.Name, out string? version) && instance.Versions.Contains(version)
+                    ? version : instance.Versions.FirstOrDefault();
+            }
+            finally { changingInstance = false; }
+            if (InstalledVersions.SelectedItem is string selectedVersion) contentVersions[instance.Name] = selectedVersion;
+            UpdateEnvironmentSummary(instance.Name);
             UpdateLaunchButton();
             Workspace.IsEnabled = task == null;
             ResourcesView.SetTarget(instance);
@@ -187,7 +208,16 @@ public sealed partial class MainWindow : Window
             if (SavesView.IsVisible) SavesView.Reload(instance.Name);
             if (ServersView.IsVisible) ServersView.Reload(instance.Name);
         }
-        catch (Exception ex) { ShowError(ex); }
+        catch (Exception ex)
+        {
+            if (launcher.SelectedInstance != instance.Name)
+            {
+                changingInstance = true;
+                try { InstanceList.SelectedItem = InstanceList.Items.OfType<InstanceEntry>().FirstOrDefault(item => item.Name == previous); }
+                finally { changingInstance = false; }
+            }
+            ShowError(ex);
+        }
     }
 
     private void UpdateHeroVisuals(InstanceEntry entry)
@@ -217,10 +247,10 @@ public sealed partial class MainWindow : Window
             HeroLoaderBadge.Text = string.IsNullOrWhiteSpace(mcVer) ? loaderLabel : $"{mcVer} · {loaderLabel}";
             HeroGroupBadge.Text = string.IsNullOrWhiteSpace(group) ? "独立实例" : group;
 
-            int modCount = Mods.ListInstanceModEntries(inst).Count;
-            int shaderCount = Mods.ListContentFiles(inst, "shaderpacks").Count;
-            int worldCount = Saves.ListSaves(inst).Count;
-            int serverCount = Servers.ListServers(inst).Count;
+            int modCount = Mods.ListInstanceModEntries(ContentInstance(instanceName, "mods")).Count;
+            int shaderCount = Mods.ListContentFiles(ContentInstance(instanceName, "shaderpacks"), "shaderpacks").Count;
+            int worldCount = Saves.ListSaves(ContentInstance(instanceName, "saves")).Count;
+            int serverCount = Servers.ListServers(ContentInstance(instanceName)).Count;
             var ptDict = Playtime.GetAllPlaytime() as PyDict;
             long sec = ptDict != null && ptDict.Get(instanceName) is PyDict pRow ? Py.Int(pRow.Get("total", 0L)) : 0L;
             string ptLabel = sec > 0 ? Playtime.FormatDuration(sec) : "尚未记录";
@@ -252,7 +282,7 @@ public sealed partial class MainWindow : Window
         string name = (InstanceName.Text ?? "").Trim();
         string? error = InstanceNameError(name);
         SetInstanceError(error);
-        if (error != null) { InstanceName.Focus(); return; }
+        if (error != null) { FocusInstanceName(sender, e); return; }
         await RunTask(_ =>
         {
             try
@@ -270,7 +300,11 @@ public sealed partial class MainWindow : Window
             }
             return Task.CompletedTask;
         });
-        if (!InstanceError.IsVisible && SelectedName == name) RefreshButton.Focus();
+        if (!InstanceError.IsVisible && SelectedName == name)
+        {
+            if (sender is Button { Tag: "install" }) ShowPage("install");
+            else RefreshButton.Focus();
+        }
     }
 
     private string? InstanceNameError(string name)
@@ -288,7 +322,9 @@ public sealed partial class MainWindow : Window
         InstanceError.Text = message ?? "";
         InstanceError.IsVisible = message != null;
         InstanceName.Classes.Set("invalid", message != null);
+        WelcomeName.Classes.Set("invalid", message != null);
         Avalonia.Automation.AutomationProperties.SetHelpText(InstanceName, message ?? "最多 48 个字符。按 Enter 创建实例。");
+        Avalonia.Automation.AutomationProperties.SetHelpText(WelcomeName, message ?? "最多 48 个字符。按 Enter 创建实例并选择游戏版本。");
     }
 
     private void EditInstanceName(object? sender, TextChangedEventArgs e)
@@ -303,7 +339,24 @@ public sealed partial class MainWindow : Window
         CreateInstance(sender, new RoutedEventArgs());
     }
 
-    private void FocusInstanceName(object? sender, RoutedEventArgs e) => InstanceName.Focus();
+    private void FocusInstanceName(object? sender, RoutedEventArgs e)
+    {
+        if (WelcomePanel.IsVisible && LaunchView.IsVisible) WelcomeName.Focus();
+        else InstanceName.Focus();
+    }
+
+    private void SubmitWelcomeName(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || task != null) return;
+        e.Handled = true;
+        CreateInstance(WelcomeCreateButton, new RoutedEventArgs());
+    }
+
+    internal void BeginInstanceCreation()
+    {
+        ShowPage("launch");
+        FocusInstanceName(this, new RoutedEventArgs());
+    }
 
     private void ToggleInstaller(object? sender, RoutedEventArgs e)
     {
@@ -311,7 +364,15 @@ public sealed partial class MainWindow : Window
         if (InstallerSheet.IsVisible) InstallerSheet.BringIntoView();
     }
 
-    private void SelectInstalledVersion(object? sender, SelectionChangedEventArgs e) => UpdateLaunchButton();
+    private void SelectInstalledVersion(object? sender, SelectionChangedEventArgs e)
+    {
+        UpdateLaunchButton();
+        if (changingInstance || SelectedName is not { } name) return;
+        if (InstalledVersions.SelectedItem is string version) contentVersions[name] = version;
+        else contentVersions.Remove(name);
+        UpdateEnvironmentSummary(name);
+        RefreshContentPages();
+    }
 
     private void SelectRemoteVersion(object? sender, SelectionChangedEventArgs e)
     {
@@ -348,19 +409,19 @@ public sealed partial class MainWindow : Window
         finally { RefreshButton.Content = "刷新列表"; }
     });
 
-    private async void InstallVersion(object? sender, RoutedEventArgs e) => await RunTask(async token =>
+    private async void InstallVersion(object? sender, RoutedEventArgs e)
     {
-        string name = SelectedName ?? throw new InvalidOperationException("请先选择实例。");
-        string version = RemoteVersions.SelectedItem as string ?? throw new InvalidOperationException("请选择要安装的版本。");
-        var progress = CreateProgress();
+        if (SelectedName is not { } name || RemoteVersions.SelectedItem is not string version) return;
         string loader = SelectedLoader;
-        string? loaderVersion = (LoaderVersionPicker.SelectedItem as LoaderVersion)?.Id;
-        string installed = await Task.Run(() => launcher.Install(name, version, loader, loaderVersion, progress, token), token);
-        ReloadInstances(name);
-        InstalledVersions.SelectedItem = installed;
-        InstallerSheet.IsVisible = false;
-        Status.Text = $"{installed} 安装完成。";
-    });
+        string? build = (LoaderVersionPicker.SelectedItem as LoaderVersion)?.Id;
+        int revision = loaderSelectionRevision;
+        await InstallWithConfirmationAsync(name, version, loader, build, () => SelectedName == name
+            && revision == loaderSelectionRevision && (LoaderVersionPicker.SelectedItem as LoaderVersion)?.Id == build, installed =>
+        {
+            InstalledVersions.SelectedItem = installed;
+            InstallerSheet.IsVisible = false;
+        });
+    }
 
     private async void DetectJava(object? sender, RoutedEventArgs e) => await RunTask(async token =>
     {
@@ -444,7 +505,7 @@ public sealed partial class MainWindow : Window
         task = cancellation;
         activeTask = new Models.DesktopTask(TaskTitle(operation));
         TasksView.Add(activeTask);
-        if (operation is "Search" or "LoadReleases" or "RefreshVersions" or "RefreshLoaderVersions" or "RefreshLibrary") TasksView.SetRetry(activeTask, action);
+        if (operation is "Search" or "LoadReleases" or "RefreshVersions" or "RefreshLoaderVersions" or "RefreshLibrary") TasksView.SetRetry(activeTask, operation, action);
         TaskState.Text = "进行中";
         TaskState.Classes.Set("error", false);
         Avalonia.Automation.AutomationProperties.SetHelpText(Status, "");
@@ -473,8 +534,11 @@ public sealed partial class MainWindow : Window
             task = null;
             activeTask = null;
             SetBusy(false);
-            ResourcesView.ResumeDocuments();
-            ShowPage(currentPage);
+            if (!closing)
+            {
+                ResourcesView.ResumeDocuments();
+                ShowPage(currentPage);
+            }
             if (TaskState.Text == "进行中") TaskState.Text = "已完成";
             if (closing) Close();
         }
@@ -485,6 +549,7 @@ public sealed partial class MainWindow : Window
         InstanceList.IsEnabled = !busy;
         InstanceName.IsEnabled = !busy;
         CreateButton.IsEnabled = !busy;
+        WelcomeName.IsEnabled = WelcomeCreateButton.IsEnabled = !busy;
         Workspace.IsEnabled = !busy && SelectedName != null;
         AccountPanel.IsEnabled = !busy;
         LibraryView.IsEnabled = true;
@@ -511,11 +576,35 @@ public sealed partial class MainWindow : Window
 
     private void OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        if (task == null) return;
+        if (task == null)
+        {
+            if (discardSettingsOnClose || !SettingsView.HasUnsavedNetworkSettings) return;
+            e.Cancel = true;
+            if (!closePromptOpen) _ = ConfirmSettingsExitAsync();
+            return;
+        }
         e.Cancel = true;
         if (playing) { Status.Text = "请先退出正在运行的 Minecraft。"; return; }
         closing = true;
         CancelTask(this, new RoutedEventArgs());
+    }
+
+    private async Task ConfirmSettingsExitAsync()
+    {
+        closePromptOpen = true;
+        try
+        {
+            ShowPage("settings");
+            if (!await ConfirmAction("网络设置尚未保存", "退出会丢弃本次修改。选择取消可继续编辑并保存。", "放弃修改并退出"))
+            {
+                closing = false;
+                ShowPage(currentPage);
+                return;
+            }
+            discardSettingsOnClose = true;
+            Close();
+        }
+        finally { closePromptOpen = false; }
     }
 
     private void ShowError(Exception ex)
@@ -546,6 +635,7 @@ public sealed partial class MainWindow : Window
 
     internal void ShowPage(string page)
     {
+        bool enteringInstaller = page == "install" && currentPage != page;
         currentPage = page;
         if (task == null)
         {
@@ -555,7 +645,7 @@ public sealed partial class MainWindow : Window
                 {
                     case "launch": if (SelectedName != null) UpdateEnvironmentSummary(SelectedName); break;
                     case "library": LibraryView.Reload(SelectedName); break;
-                    case "install": InstallerView.RefreshInstances(SelectedName); break;
+                    case "install": InstallerView.RefreshInstances(enteringInstaller ? SelectedName : null); break;
                     case "mods": ModsView.Reload(SelectedName); break;
                     case "saves": SavesView.Reload(SelectedName); break;
                     case "servers": ServersView.Reload(SelectedName); break;
@@ -585,9 +675,11 @@ public sealed partial class MainWindow : Window
         LaunchView.IsVisible = page == "launch";
         LibraryView.IsVisible = page == "library";
         InstallerView.IsVisible = page == "install";
+        if (!closing) InstallerView.ResumeLoaderLookup();
         ModsView.IsVisible = page == "mods";
         SavesView.IsVisible = page == "saves";
         ResourcesView.IsVisible = page == "resources";
+        ResourcesView.ResumeSearch();
         ServersView.IsVisible = page == "servers";
         AiView.IsVisible = page == "ai";
         JavaView.IsVisible = page == "java";

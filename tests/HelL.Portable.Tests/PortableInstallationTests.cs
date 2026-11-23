@@ -25,6 +25,61 @@ public sealed class PortableInstallationTests : IDisposable
     }
 
     [Fact]
+    public void CatalogAcceptsInheritedClientAndDetectsTheLoader()
+    {
+        var launcher = new PortableLauncher(root);
+        launcher.CreateInstance("实例");
+        var instance = new Instance("实例");
+        WriteProfile(instance, "1.21.1", new PyDict(), client: true);
+        WriteProfile(instance, "fabric-loader-test", PyDict.Of("inheritsFrom", "1.21.1", "mainClass", "net.fabricmc.loader.Main"));
+
+        var target = new PortableCatalog().Target("实例", "fabric-loader-test");
+
+        Assert.Equal("1.21.1", target.GameVersion);
+        Assert.Equal("fabric", target.Loader);
+    }
+
+    [Theory]
+    [InlineData("missing-client")]
+    [InlineData("pending-parent")]
+    [InlineData("journal")]
+    public void CatalogRejectsIncompleteInheritedProfiles(string failure)
+    {
+        var launcher = new PortableLauncher(root);
+        launcher.CreateInstance("实例");
+        var instance = new Instance("实例");
+        WriteProfile(instance, "1.21.1", new PyDict(), client: failure != "missing-client");
+        WriteProfile(instance, "fabric-loader-test", PyDict.Of("inheritsFrom", "1.21.1", "jar", "1.21.1", "mainClass", "net.fabricmc.loader.Main"), client: failure != "missing-client");
+        if (failure == "pending-parent") File.WriteAllText(Path.Combine(instance.VersionsDir(), "1.21.1", ".portable-install-pending"), "pending");
+        if (failure == "journal") Utils.WriteJson(Path.Combine(instance.path, ".portable-install.json"),
+            PyDict.Of("Schema", 1L, "Version", "1.21.1", "Loader", "fabric", "LoaderVersion", "test", "ReadyVersions", new PyDict(), "PreviousVersion", ""));
+
+        var error = Assert.Throws<InvalidOperationException>(() => new PortableCatalog().Target("实例", "fabric-loader-test"));
+        Assert.IsType<InvalidDataException>(error.InnerException);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ReferenceFilterCannotHideAnIncompleteInstallation(bool journalOnly)
+    {
+        var launcher = new PortableLauncher(root);
+        launcher.CreateInstance("实例");
+        launcher.SetReferenceVersion("实例", "1.21.1", "fabric");
+        var instance = new Instance("实例");
+        if (journalOnly) Utils.WriteJson(Path.Combine(instance.path, ".portable-install.json"),
+            PyDict.Of("Schema", 1L, "Version", "1.21.1", "Loader", "fabric", "LoaderVersion", "test", "ReadyVersions", new PyDict(), "PreviousVersion", ""));
+        else
+        {
+            WriteProfile(instance, "1.21.1", new PyDict(), client: true);
+            File.WriteAllText(Path.Combine(instance.VersionsDir(), "1.21.1", ".portable-install-pending"), "pending");
+        }
+
+        var error = Assert.Throws<InvalidOperationException>(() => new PortableCatalog().Target("实例", "1.21.1"));
+        Assert.IsType<InvalidDataException>(error.InnerException);
+    }
+
+    [Fact]
     public void MissingOrPendingParentPreventsInheritedLaunch()
     {
         var launcher = new PortableLauncher(root);

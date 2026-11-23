@@ -225,7 +225,7 @@
             </StackPanel>
 
             <StackPanel x:Name="DetailsPanel" IsVisible="False" Spacing="14">
-              <Button Content="‹ 返回" Classes="back" Click="BackToSearch"/>
+              <Button Classes="back" Click="BackToSearch" AutomationProperties.Name="返回资源搜索"><StackPanel Orientation="Horizontal" Spacing="6"><icons:LauncherIcon Kind="ChevronLeft" Width="16" Height="16"/><TextBlock Text="返回"/></StackPanel></Button>
               <Border Classes="glass">
                 <StackPanel Spacing="12">
                   <Grid ColumnDefinitions="56,*" ColumnSpacing="12"><pictures:ProjectPicture x:Name="ProjectIcon" Width="52" Height="52" CornerRadius="11"/><StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center"><TextBlock x:Name="ProjectTitle" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock x:Name="ProjectAuthor" Classes="caption" TextWrapping="Wrap"/></StackPanel></Grid>
@@ -246,7 +246,7 @@
 
         <!-- [4] 新建实例 -->
         <ScrollViewer x:Name="CreatePage" IsVisible="False"><StackPanel Margin="20,18" Spacing="14" MaxWidth="600">
-          <Button Classes="back" Tag="library" Click="Navigate" AutomationProperties.Name="返回版本管理"><TextBlock Text="‹ 实例"/></Button>
+          <Button Classes="back" Tag="library" Click="Navigate" AutomationProperties.Name="返回版本管理"><StackPanel Orientation="Horizontal" Spacing="6"><icons:LauncherIcon Kind="ChevronLeft" Width="16" Height="16"/><TextBlock Text="实例"/></StackPanel></Button>
           <TextBlock Text="新建实例" Classes="title" FontSize="22"/>
           <Border Classes="glass">
             <StackPanel Spacing="12">
@@ -259,7 +259,7 @@
 
         <!-- [5] 管理实例 -->
         <ScrollViewer x:Name="ManagePage" IsVisible="False"><StackPanel Margin="20,18" Spacing="14" MaxWidth="600">
-          <Button Classes="back" Tag="library" Click="Navigate" AutomationProperties.Name="返回版本管理"><TextBlock Text="‹ 实例"/></Button>
+          <Button Classes="back" Tag="library" Click="Navigate" AutomationProperties.Name="返回版本管理"><StackPanel Orientation="Horizontal" Spacing="6"><icons:LauncherIcon Kind="ChevronLeft" Width="16" Height="16"/><TextBlock Text="实例"/></StackPanel></Button>
           <TextBlock Text="实例设置" Classes="title" FontSize="22"/>
           <StackPanel x:Name="InstanceEditor" Spacing="14">
             <Border Classes="glass">
@@ -323,21 +323,23 @@
           <Grid Grid.Row="1">
             <ScrollViewer x:Name="AiMessagesScroll" HorizontalScrollBarVisibility="Disabled"><StackPanel Spacing="12">
               <Border x:Name="AiSettingsPanel" Classes="glass" IsVisible="False"><StackPanel Spacing="10">
-                <TextBlock Text="模型连接" Classes="section"/>
+                <Grid ColumnDefinitions="*,Auto"><TextBlock Text="模型连接" Classes="section" VerticalAlignment="Center"/><Button Grid.Column="1" Content="返回对话" Classes="inline" Click="ToggleAiSettings"/></Grid>
                 <ComboBox x:Name="AiMode" SelectedIndex="0" HorizontalAlignment="Stretch" SelectionChanged="AiModeChanged" AutomationProperties.Name="AI 服务类型"><ComboBoxItem Content="OpenAI 兼容端点" Tag="custom"/><ComboBoxItem Content="公共网关" Tag="public"/></ComboBox>
                 <TextBlock x:Name="AiAddressLabel" Text="HTTPS 地址（到 /v1）" Classes="field-label"/><TextBox x:Name="AiAddress" PlaceholderText="https://api.openai.com/v1" AutomationProperties.Name="AI 服务地址"/>
                 <TextBlock Text="模型名称" Classes="field-label"/><TextBox x:Name="AiModel" PlaceholderText="gpt-4o-mini" AutomationProperties.Name="AI 模型名称"/>
                 <StackPanel x:Name="AiKeyField" Spacing="5"><TextBlock Text="API 密钥" Classes="field-label"/><TextBox x:Name="AiKey" PasswordChar="●" AutomationProperties.Name="AI API 密钥"/></StackPanel>
+                <TextBlock x:Name="AiSettingsError" Classes="error" TextWrapping="Wrap" IsVisible="False" AutomationProperties.LiveSetting="Polite"/>
                 <Button x:Name="AiSaveButton" Content="保存连接" Classes="primary" Click="SaveAiSettings" HorizontalAlignment="Stretch"/>
+                <TextBlock Text="聊天记录保存在本机 mobile-chat.json，最多保留最近 48 条，不包含 API 密钥；可清空并撤销。" Classes="caption" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel></Border>
               <Border x:Name="AiEmpty" Classes="glass"><StackPanel Spacing="6"><TextBlock Text="需要排查什么问题？" Classes="section"/><TextBlock Text="支持询问版本搭配、模组冲突与报错原因。" Classes="muted" FontSize="13" TextWrapping="Wrap"/></StackPanel></Border>
               <ItemsControl x:Name="AiMessages">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="10"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate><DataTemplate><Border Classes="glass"><StackPanel Spacing="6"><TextBlock Text="{Binding Speaker}" Classes="caption"/><chat:ChatContent Text="{Binding Content}"/><TextBlock Text="{Binding Notice}" Classes="caption"/></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate>
+                <ItemsControl.ItemTemplate><DataTemplate><Border Classes="chat-message"><StackPanel Spacing="8"><TextBlock Text="{Binding Speaker}" Classes="chat-role" FontSize="12"/><chat:ChatContent Text="{Binding Content}"/><TextBlock Text="{Binding Notice}" Classes="caption" FontSize="12" IsVisible="{Binding Notice.Length}"/></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate>
               </ItemsControl>
             </StackPanel></ScrollViewer>
           </Grid>
-          <StackPanel Grid.Row="2" Spacing="8"><WrapPanel><Button x:Name="AiLatestButton" Content="回到最新消息" Classes="inline" Click="JumpToLatestAi" IsVisible="False"/><Button x:Name="AiRetryButton" Content="重试上个问题" Classes="inline" Click="RetryAiMessage" IsVisible="False"/><Button x:Name="AiEditRetryButton" Content="编辑后重发" Classes="inline" Click="EditFailedAi" IsVisible="False"/><Button x:Name="AiUndoClearButton" Content="撤销清空" Classes="inline" Click="UndoClearAi" IsVisible="False"/></WrapPanel><TextBlock x:Name="AiStorageNotice" Classes="caption" TextWrapping="Wrap"/><TextBox x:Name="AiPrompt" AcceptsReturn="True" MinHeight="60" MaxHeight="120" MaxLength="8000" PlaceholderText="输入问题…" TextWrapping="Wrap" AutomationProperties.Name="AI 消息"/><Grid ColumnDefinitions="*,Auto" ColumnSpacing="10"><TextBlock x:Name="AiChatNotice" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center"/><Button x:Name="AiSendButton" Grid.Column="1" Content="发送" Classes="primary" Click="SendAiMessage" MinWidth="76"/></Grid></StackPanel>
+          <StackPanel x:Name="AiComposer" Grid.Row="2" Spacing="8" IsVisible="{Binding !#AiSettingsPanel.IsVisible}"><WrapPanel><Button x:Name="AiLatestButton" Content="回到最新消息" Classes="inline" Click="JumpToLatestAi" IsVisible="False"/><Button x:Name="AiRetryButton" Content="重试上个问题" Classes="inline" Click="RetryAiMessage" IsVisible="False"/><Button x:Name="AiEditRetryButton" Content="编辑后重发" Classes="inline" Click="EditFailedAi" IsVisible="False"/><Button x:Name="AiUndoClearButton" Content="撤销清空" Classes="inline" Click="UndoClearAi" IsVisible="False"/></WrapPanel><TextBlock x:Name="AiStorageNotice" Classes="caption" TextWrapping="Wrap"/><TextBox x:Name="AiPrompt" AcceptsReturn="True" MinHeight="60" MaxHeight="120" MaxLength="8000" PlaceholderText="输入问题…" TextWrapping="Wrap" AutomationProperties.Name="AI 消息"/><Grid ColumnDefinitions="*,Auto" ColumnSpacing="10"><TextBlock x:Name="AiChatNotice" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center"/><Button x:Name="AiSendButton" Grid.Column="1" Content="发送" Classes="primary" Click="SendAiMessage" MinWidth="76"/></Grid></StackPanel>
         </Grid>
 
         <!-- [8] 设置页（iOS Grouped Table） -->

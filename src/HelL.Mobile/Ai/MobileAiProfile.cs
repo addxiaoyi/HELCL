@@ -13,6 +13,11 @@ internal sealed record MobileAiProfile(string Mode, string Endpoint, string Mode
 
     internal static MobileAiProfile Read(LauncherConfig config, ISecretStore store)
     {
+        lock (config._lock) return ReadStored(config, store);
+    }
+
+    private static MobileAiProfile ReadStored(LauncherConfig config, ISecretStore store)
+    {
         bool mobile = !string.IsNullOrEmpty(Py.S(config.Get("mobile_ai_mode")));
         string mode = Py.S(config.Get(mobile ? "mobile_ai_mode" : "ai_mode", "custom"));
         mode = mode is "newapi" or "自定义" ? "custom" : mode;
@@ -44,41 +49,29 @@ internal sealed record MobileAiProfile(string Mode, string Endpoint, string Mode
     internal static void Save(LauncherConfig config, ISecretStore store, MobileAiProfile profile)
     {
         profile = Validate(profile.Mode, profile.Endpoint, profile.Model, profile.ApiKey);
-        string id = profile.Mode == "custom" ? Guid.NewGuid().ToString("N") : "";
-        string previousId = Py.S(config.Get("mobile_ai_key_id"));
-        bool committed = false;
-        try
+        lock (config._lock)
         {
-            if (id.Length > 0)
+            string id = profile.Mode == "custom" ? Guid.NewGuid().ToString("N") : "";
+            string previousId = Py.S(config.Get("mobile_ai_key_id"));
+            bool committed = false;
+            try
             {
-                store.SetPassword(KeyService, id, profile.ApiKey);
-                if (store.GetPassword(KeyService, id) != profile.ApiKey) throw new IOException("系统凭据库未能验证 API 密钥，原配置保留。");
-            }
-            lock (config._lock)
-            {
-                var previous = Fields.ToDictionary(field => field, field => (Exists: config.data.ContainsKey(field), Value: config.Get(field)));
-                try
+                if (id.Length > 0)
                 {
-                    config.Update(PyDict.Of(Fields[0], profile.Mode, Fields[1], profile.Endpoint, Fields[2], profile.Model, Fields[3], id));
-                    config.Save();
-                    committed = true;
+                    store.SetPassword(KeyService, id, profile.ApiKey);
+                    if (store.GetPassword(KeyService, id) != profile.ApiKey) throw new IOException("系统凭据库未能验证 API 密钥，原配置保留。");
                 }
-                catch
-                {
-                    foreach (var field in previous)
-                        if (field.Value.Exists) config.data[field.Key] = field.Value.Value;
-                        else config.data.Remove(field.Key);
-                    throw;
-                }
+                config.Commit(PyDict.Of(Fields[0], profile.Mode, Fields[1], profile.Endpoint, Fields[2], profile.Model, Fields[3], id));
+                committed = true;
             }
-        }
-        finally
-        {
-            string discard = committed ? previousId : id;
-            if (discard.Length > 0)
+            finally
             {
-                try { store.DeletePassword(KeyService, discard); }
-                catch (Exception error) { System.Diagnostics.Trace.TraceWarning("MobileAiProfile.Save key cleanup: " + error.Message); }
+                string discard = committed ? previousId : id;
+                if (discard.Length > 0)
+                {
+                    try { store.DeletePassword(KeyService, discard); }
+                    catch (Exception error) { System.Diagnostics.Trace.TraceWarning("MobileAiProfile.Save key cleanup: " + error.GetType().Name); }
+                }
             }
         }
     }

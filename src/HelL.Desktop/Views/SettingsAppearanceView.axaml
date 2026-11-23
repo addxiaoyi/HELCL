@@ -10,11 +10,9 @@
         <Border Classes="inset-group">
           <StackPanel>
             <Border Classes="group-row">
-              <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Spacing="2" VerticalAlignment="Center">
-                  <TextBlock Text="界面色调" FontWeight="Medium" />
-                  <TextBlock Text="切换深色冰晶或浅色纸白层级" Classes="muted" FontSize="11.5" />
-                </StackPanel>
+              <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="6">
+                <TextBlock Text="界面色调" FontWeight="Medium" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="切换深色冰晶或浅色纸白层级" Classes="muted" FontSize="11.5" TextWrapping="Wrap" />
                 <Border Grid.Column="1" Classes="segmented" VerticalAlignment="Center">
                   <StackPanel x:Name="ThemeCards" Orientation="Horizontal" Spacing="2">
                     <Button Tag="dark" Content="深色" Classes="seg-item current" Click="PickThemeCard" />
@@ -26,11 +24,9 @@
             </Border>
 
             <Border Classes="group-row-last">
-              <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Spacing="2" VerticalAlignment="Center">
-                  <TextBlock Text="窗口通透度" FontWeight="Medium" />
-                  <TextBlock Text="系统支持时调整背景通透度；不可用时使用清晰实色，偏好会保留。" Classes="muted" FontSize="12" TextWrapping="Wrap" />
-                </StackPanel>
+              <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="6">
+                <TextBlock Text="窗口通透度" FontWeight="Medium" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="系统支持时调整背景通透度；不可用时使用清晰实色，偏好会保留。" Classes="muted" FontSize="12" TextWrapping="Wrap" />
                 <Border Grid.Column="1" Classes="segmented" VerticalAlignment="Center">
                   <StackPanel x:Name="GlassCards" Orientation="Horizontal" Spacing="2">
                     <Button Tag="ultra" Content="极透" Classes="seg-item" Click="PickGlassCard" />
@@ -46,6 +42,7 @@
       </StackPanel>
 
       <!-- 分组 2：下载与网络 -->
+      <TextBlock x:Name="AppearanceNotice" IsVisible="False" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
       <StackPanel Spacing="8">
         <TextBlock Text="网络与下载" Classes="group-header" Margin="4,0" />
         <Border Classes="inset-group">
@@ -53,7 +50,7 @@
             <Border Classes="group-row">
               <Grid ColumnDefinitions="130,*" ColumnSpacing="14">
                 <TextBlock Text="下载源" FontWeight="Medium" VerticalAlignment="Center" />
-                <ComboBox x:Name="MirrorCombo" Grid.Column="1" HorizontalAlignment="Stretch" SelectedIndex="0">
+                <ComboBox x:Name="MirrorCombo" Grid.Column="1" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="EditNetworkSource" AutomationProperties.Name="下载源">
                   <ComboBoxItem Content="自动（推荐）" Tag="auto" />
                   <ComboBoxItem Content="BMCLAPI 镜像" Tag="bmclapi" />
                   <ComboBoxItem Content="官方源直连" Tag="official" />
@@ -63,12 +60,14 @@
             <Border Classes="group-row-last">
               <Grid ColumnDefinitions="130,*,Auto" ColumnSpacing="14">
                 <TextBlock Text="并发线程" FontWeight="Medium" VerticalAlignment="Center" />
-                <TextBox x:Name="ThreadsBox" Grid.Column="1" Width="96" HorizontalAlignment="Left" Text="32" MaxLength="2" />
-                <Button Grid.Column="2" Content="保存" Classes="soft" Click="SaveNetworkSettings" VerticalAlignment="Center" />
+                <TextBox x:Name="ThreadsBox" Grid.Column="1" Width="96" HorizontalAlignment="Left" Text="32" MaxLength="2" TextChanged="EditNetworkThreads" AutomationProperties.Name="下载并发线程数" />
+                <Button x:Name="SaveNetworkButton" Grid.Column="2" Content="保存" Classes="soft" Click="SaveNetworkSettings" VerticalAlignment="Center" IsEnabled="False" />
               </Grid>
             </Border>
           </StackPanel>
         </Border>
+        <TextBlock x:Name="NetworkNotice" Classes="muted" FontSize="12" TextWrapping="Wrap" Margin="4,0" IsVisible="False" AutomationProperties.LiveSetting="Polite" />
+        <Button x:Name="DiscardNetworkButton" Content="撤销修改" Classes="ghost" HorizontalAlignment="Left" Click="DiscardNetworkSettings" IsVisible="False" />
       </StackPanel>
 
       <!-- 分组 3：存储与版本 -->

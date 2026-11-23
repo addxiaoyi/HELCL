@@ -49,6 +49,11 @@ public sealed partial class MainWindow
         await CheckInstallCancellationAsync();
         await CheckLibraryRefreshRetryAsync();
         await CheckResourceRefreshAsync();
+        var settingsAndBadgeFailures = new List<Exception>();
+        try { await CheckSettingsDraftAsync(); } catch (IOException error) { settingsAndBadgeFailures.Add(error); }
+        try { await CheckTaskBadgeContrastAsync(); } catch (IOException error) { settingsAndBadgeFailures.Add(error); }
+        if (settingsAndBadgeFailures.Count > 0) throw new AggregateException(settingsAndBadgeFailures);
+        await CheckLaunchEntryAsync();
         await CheckDesktopRecheckSafetyAsync();
         await CheckDesktopDetailsAsync();
         await CheckDesktopIconsAsync();

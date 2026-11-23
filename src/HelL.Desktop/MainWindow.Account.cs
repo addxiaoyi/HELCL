@@ -104,14 +104,20 @@ public sealed partial class MainWindow
 
     private void UpdateLaunchButton()
     {
-        if (LaunchButton == null || DemoMode == null || LaunchNotice == null) return;
+        if (LaunchButton == null || FirstInstallButton == null || InstallAnotherVersionButton == null || DemoMode == null || LaunchNotice == null) return;
+        bool hasVersions = InstalledVersions.ItemCount > 0;
         bool installed = InstalledVersions.SelectedItem != null;
         bool demo = DemoMode.IsChecked == true;
         bool signedIn = account?.IsSignedIn == true;
         LaunchButton.Content = DemoMode.IsChecked == true ? "启动试玩" : "启动游戏";
+        FirstInstallButton.IsVisible = !hasVersions;
+        FirstInstallButton.IsEnabled = SelectedName != null && !IsWorking;
+        LaunchButton.IsVisible = hasVersions;
+        InstallAnotherVersionButton.IsVisible = hasVersions;
         LaunchButton.IsEnabled = installed && launchOptionsReady && (demo || signedIn);
         LaunchNotice.Text = !launchOptionsReady ? "启动设置读取失败。请展开内存与窗口，修复并保存后再启动。"
-            : !installed ? "这个实例还没有游戏版本，请在下方安装。"
+            : !hasVersions ? "先安装游戏版本，即可启动此实例。"
+            : !installed ? "请选择已安装的游戏版本。"
             : !demo && !signedIn ? "启动正式游戏需要登录微软账号，也可以勾选试玩模式。"
             : $"Minecraft {InstalledVersions.SelectedItem} · {(demo ? "试玩模式" : "微软账号启动")}";
     }

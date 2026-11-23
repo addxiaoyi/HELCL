@@ -39,3 +39,13 @@ The desktop window now removes native decorations, the outer stroke, card outlin
 The standard window tint changes from 58% to 40% opacity in dark mode and from 68% to 45% in light mode. Large panel fills change from 87% to 44% dark and from 92% to 25% light. Blur is preferred over the heavier acrylic material; plain transparency preserves its alpha, while unsupported transparency and the explicit solid option remain opaque. These overrides are scoped to Desktop.
 
 The Windows preview was inspected before and after removing strokes. The full UI smoke passes at `TestResults/borderless-ui-smoke-20261123/`; the existing no-compositor readability checks remain intact and report contrast above 9:1 in both themes. Desktop service tests pass 29 with one Unix-only skip, at `TestResults/borderless-tests-20261123/desktop.trx`. Final manual edge-drag verification was interrupted by concurrent user input, so it is not counted as a passed native interaction check.
+
+## Settings, status and launch-entry recovery (2026-11-23)
+
+Unsaved download-source and thread-count edits now survive background-task completion, failure and navigation. The page shows the pending draft and an explicit discard action. Valid saves use the existing atomic configuration commit; validation or write failures retain the draft, explain the error inline and preserve the last saved in-memory settings.
+
+Task badges use theme resources instead of fixed model brushes. Failure and neutral states have opaque small backplates so their text contrast does not depend on wallpaper. Rendered selected-row checks cover running, cancelling, completed, failed and cancelled states while switching the same task between dark and light themes: all ten samples exceed 6.8:1. State changes are exercised after the row is rendered.
+
+Instances with no installed version show one primary “安装游戏版本” action, opening the installer for that instance. Existing versions retain launch and additional-install actions; clearing a version selection does not incorrectly offer first installation. The instance heading is keyboard focusable and opens a selectable full-name flyout; both heading and sidebar expose full-name hover hints.
+
+`MainWindow.SettingsDraftCheck.cs`, `MainWindow.TaskBadgeCheck.cs` and `MainWindow.LaunchEntryCheck.cs` run in the complete Desktop UI smoke. Failing-first receipts are under `TestResults/ux-fixes-red-20261123/`; final passing receipts, ten badge samples, first-install and full-name images are under `TestResults/ux-fixes-final-20261123/`. Desktop service tests pass 29 with one Unix-only skip at `TestResults/ux-fixes-tests-20261123/desktop.trx`. The controlled install-entry check launches no game and downloads no files.

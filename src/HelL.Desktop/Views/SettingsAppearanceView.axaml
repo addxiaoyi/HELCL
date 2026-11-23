@@ -53,7 +53,7 @@
             <Border Classes="group-row">
               <Grid ColumnDefinitions="130,*" ColumnSpacing="14">
                 <TextBlock Text="下载源" FontWeight="Medium" VerticalAlignment="Center" />
-                <ComboBox x:Name="MirrorCombo" Grid.Column="1" HorizontalAlignment="Stretch" SelectedIndex="0">
+                <ComboBox x:Name="MirrorCombo" Grid.Column="1" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="EditNetworkSource" AutomationProperties.Name="下载源">
                   <ComboBoxItem Content="自动（推荐）" Tag="auto" />
                   <ComboBoxItem Content="BMCLAPI 镜像" Tag="bmclapi" />
                   <ComboBoxItem Content="官方源直连" Tag="official" />
@@ -63,12 +63,14 @@
             <Border Classes="group-row-last">
               <Grid ColumnDefinitions="130,*,Auto" ColumnSpacing="14">
                 <TextBlock Text="并发线程" FontWeight="Medium" VerticalAlignment="Center" />
-                <TextBox x:Name="ThreadsBox" Grid.Column="1" Width="96" HorizontalAlignment="Left" Text="32" MaxLength="2" />
-                <Button Grid.Column="2" Content="保存" Classes="soft" Click="SaveNetworkSettings" VerticalAlignment="Center" />
+                <TextBox x:Name="ThreadsBox" Grid.Column="1" Width="96" HorizontalAlignment="Left" Text="32" MaxLength="2" TextChanged="EditNetworkThreads" AutomationProperties.Name="下载并发线程数" />
+                <Button x:Name="SaveNetworkButton" Grid.Column="2" Content="保存" Classes="soft" Click="SaveNetworkSettings" VerticalAlignment="Center" IsEnabled="False" />
               </Grid>
             </Border>
           </StackPanel>
         </Border>
+        <TextBlock x:Name="NetworkNotice" Classes="muted" FontSize="12" TextWrapping="Wrap" Margin="4,0" IsVisible="False" AutomationProperties.LiveSetting="Polite" />
+        <Button x:Name="DiscardNetworkButton" Content="撤销修改" Classes="ghost" HorizontalAlignment="Left" Click="DiscardNetworkSettings" IsVisible="False" />
       </StackPanel>
 
       <!-- 分组 3：存储与版本 -->

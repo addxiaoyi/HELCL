@@ -283,6 +283,11 @@
   <Style Selector="TextBlock.error"><Setter Property="Foreground" Value="{DynamicResource HelL.Error}" /></Style>
   <Style Selector="TextBox.invalid"><Setter Property="BorderBrush" Value="{DynamicResource HelL.Error}" /><Setter Property="BorderThickness" Value="1" /></Style>
 
+  <Style Selector="Border.task-state"><Setter Property="Background" Value="{DynamicResource HelL.TaskStateBackground}" /></Style>
+  <Style Selector="Border.task-state > TextBlock"><Setter Property="Foreground" Value="{DynamicResource HelL.TaskStateForeground}" /></Style>
+  <Style Selector="Border.task-state.failed"><Setter Property="Background" Value="{DynamicResource HelL.TaskFailedBackground}" /></Style>
+  <Style Selector="Border.task-state.failed > TextBlock"><Setter Property="Foreground" Value="{DynamicResource HelL.TaskFailedForeground}" /></Style>
+
   <!-- 用透底色区分内容分组。 -->
   <Style Selector="Border.surface, Border.inset-group">
     <Setter Property="Background" Value="{DynamicResource HelL.DesktopPanel}" />

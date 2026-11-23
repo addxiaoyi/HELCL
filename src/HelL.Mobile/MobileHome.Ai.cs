@@ -62,20 +62,51 @@ public sealed partial class MobileHome
 
     private void ToggleAiSettings(object? sender, RoutedEventArgs e) => AiSettingsPanel.IsVisible = !AiSettingsPanel.IsVisible;
 
-    private async void SaveAiSettings(object? sender, RoutedEventArgs e) => await Run(async token =>
+    private async void SaveAiSettings(object? sender, RoutedEventArgs e)
     {
+        if (operation != null) { Status.Text = "当前任务尚未结束，请稍后保存连接。"; return; }
+        AiSettingsError.IsVisible = false;
         string mode = (AiMode.SelectedItem as ComboBoxItem)?.Tag as string ?? "custom";
         string key = AiKey.Text ?? "";
-        if (key.Length == 0 && aiProfile?.Mode == mode) key = aiProfile.ApiKey;
-        var profile = MobileAiProfile.Validate(mode, AiAddress.Text ?? "", AiModel.Text ?? "", key);
-        await Task.Run(() => MobileAiProfile.Save(Config.CONFIG, session.Secrets, profile), token);
-        aiProfile = profile;
-        AiKey.Clear();
-        AiProviderNotice.Text = profile.Model + " · " + new Uri(profile.Endpoint).Host;
-        AiSettingsPanel.IsVisible = false;
-        AiChatNotice.Text = "连接已保存，可以开始对话。";
-        Status.Text = "AI 连接已安全保存。";
-    }, allowNavigation: true);
+        string endpoint = (AiAddress.Text ?? "").Trim().TrimEnd('/');
+        bool sameProvider = aiProfile?.Mode == mode && aiProfile.Endpoint == endpoint;
+        if (key.Length == 0 && sameProvider) key = aiProfile!.ApiKey;
+        MobileAiProfile profile;
+        try
+        {
+            if (mode == "custom" && key.Length == 0 && aiProfile?.Mode == "custom" && !sameProvider)
+                throw new ArgumentException("服务地址已改变，请填写新服务的 API 密钥。旧服务密钥不会自动沿用。");
+            profile = MobileAiProfile.Validate(mode, endpoint, AiModel.Text ?? "", key);
+        }
+        catch (ArgumentException error)
+        {
+            AiSettingsError.Text = error.Message;
+            AiSettingsError.IsVisible = AiSettingsPanel.IsVisible = true;
+            AiChatNotice.Text = "连接未保存，请检查设置。";
+            Status.Text = error.Message;
+            Dispatcher.UIThread.Post(() => AiSaveButton.BringIntoView(), DispatcherPriority.Loaded);
+            return;
+        }
+        await Run(async token =>
+        {
+            try
+            {
+                await Task.Run(() => MobileAiProfile.Save(Config.CONFIG, session.Secrets, profile), token);
+                aiProfile = profile;
+                AiKey.Clear();
+                AiProviderNotice.Text = profile.Model + " · " + new Uri(profile.Endpoint).Host;
+                AiSettingsPanel.IsVisible = false;
+                AiChatNotice.Text = "连接已保存，可以开始对话。";
+                Status.Text = "AI 连接已安全保存。";
+            }
+            catch (Exception) when (!token.IsCancellationRequested)
+            {
+                AiSettingsError.Text = "连接未保存。请检查系统凭据库或存储权限后重试，填写内容已保留。";
+                AiSettingsError.IsVisible = AiSettingsPanel.IsVisible = true;
+                throw;
+            }
+        }, allowNavigation: true);
+    }
 
     private async void SendAiMessage(object? sender, RoutedEventArgs e) => await SendAiPromptAsync(AiPrompt.Text?.Trim() ?? "");
 

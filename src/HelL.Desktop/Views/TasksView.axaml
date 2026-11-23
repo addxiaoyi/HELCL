@@ -37,7 +37,10 @@
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>
-          <TextBlock x:Name="EmptyNotice" Text="当前会话暂无任务记录" Classes="muted" FontSize="12.5" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          <StackPanel x:Name="EmptyPanel" Spacing="12" Margin="20,36" MinHeight="100" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock x:Name="EmptyNotice" Text="当前会话暂无任务记录" Classes="muted" FontSize="13" MaxWidth="440" TextWrapping="Wrap" TextAlignment="Center" />
+            <Button x:Name="ClearFiltersButton" Content="清除筛选" Classes="soft" HorizontalAlignment="Center" Click="ClearFilters" IsVisible="False" />
+          </StackPanel>
         </Grid>
       </Border>
 

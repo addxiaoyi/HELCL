@@ -308,12 +308,37 @@ public sealed partial class MobileHome
         await WaitAiOperation();
         if (AiKey.Text?.Length > 0 || File.ReadAllText(HelL.Core.Launcher.Config.CONFIG_FILE).Contains("fictional-preview-key"))
             throw new IOException("The AI connection exposed its API key in the form or configuration file.");
+        AiSettingsPanel.IsVisible = true;
+        AiAddress.Text = "https://different-provider.invalid/v1";
+        AiSaveButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await WaitAiOperation();
+        bool changedProviderRejected = aiProfile?.Endpoint == "https://fixture.invalid/v1" && AiSettingsPanel.IsVisible;
+        if (changedProviderRejected)
+        {
+            await Capture("ai-provider-change-blocked");
+            var errorPosition = AiSettingsError.TranslatePoint(default, AiMessagesScroll);
+            if (errorPosition == null || errorPosition.Value.Y < 0 || errorPosition.Value.Y + AiSettingsError.Bounds.Height > AiMessagesScroll.Bounds.Height)
+                throw new IOException("The AI settings error is outside the visible phone form.");
+            var savePosition = AiSaveButton.TranslatePoint(default, AiMessagesScroll);
+            if (AiComposer.IsVisible || savePosition == null || savePosition.Value.Y + AiSaveButton.Bounds.Height > AiMessagesScroll.Bounds.Height)
+                throw new IOException("Connection settings did not expose the save action above the keyboard/composer area.");
+        }
+        AiKey.Text = "fictional-preview-key";
+        AiAddress.Text = "https://fixture.invalid/v1/";
+        AiSaveButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await WaitAiOperation();
+        AiSettingsPanel.IsVisible = true;
+        AiSaveButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await WaitAiOperation();
+        bool sameProviderRetained = !AiSettingsPanel.IsVisible && aiProfile?.ApiKey == "fictional-preview-key";
         AiPrompt.Text = "这组模组应该如何排查兼容性？";
         AiSendButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         await WaitAiOperation();
         var reply = session.Chat.Entries.LastOrDefault();
         if (reply?.State != "complete" || !reply.Text.Contains("本机隔离 HTTP 回放") || !string.IsNullOrEmpty(AiPrompt.Text))
             throw new IOException("The AI send button did not complete its isolated streamed response: " + AiChatNotice.Text);
+        if (!changedProviderRejected) throw new IOException("Changing the AI endpoint reused the previous provider's secret.");
+        if (!sameProviderRetained) throw new IOException("Saving the same AI endpoint did not retain its existing secret.");
         await Capture("ai-replay");
         ClearAiChat(this, new RoutedEventArgs());
         CompleteConfirmation(true);

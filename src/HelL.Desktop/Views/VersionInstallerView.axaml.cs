@@ -66,6 +66,7 @@ public partial class VersionInstallerView : UserControl
     }
 
     private string SelectedLoader => (LoaderCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "none";
+    private void CreateTarget(object? sender, RoutedEventArgs e) => host?.BeginInstanceCreation();
 
     private async void FetchManifest(object? sender, RoutedEventArgs e)
     {
@@ -118,7 +119,7 @@ public partial class VersionInstallerView : UserControl
             (query.Length == 0 || row.Id.Contains(query, StringComparison.OrdinalIgnoreCase))).ToArray();
         VersionList.ItemsSource = filtered;
         if (VersionList.SelectedItem == null && filtered.Length > 0) VersionList.SelectedIndex = 0;
-        VersionCountLabel.Text = !fetchedRemote ? $"常用 {filtered.Length} 版" : $"{filtered.Length} 个版本";
+        VersionCountLabel.Text = !fetchedRemote ? "内置常用版本 · 刷新获取完整清单" : $"{filtered.Length} 个版本";
         EmptyState.IsVisible = filtered.Length == 0;
         EmptyText.Text = !fetchedRemote && activeChannel != "release"
             ? "点击右上角「刷新清单」获取快照与远古版本"
@@ -214,7 +215,12 @@ public partial class VersionInstallerView : UserControl
         bool hasVersion = VersionList.SelectedItem is RemoteVersionRow;
         bool loaderReady = SelectedLoader == "none" || LoaderBuildCombo.SelectedItem is LoaderVersion;
         StartInstallButton.IsEnabled = hasInstance && hasVersion && loaderReady;
-        if (InstancePicker.SelectedItem is InstanceEntry target && VersionList.SelectedItem is RemoteVersionRow selected)
+        CreateTargetButton.IsVisible = InstancePicker.ItemCount == 0;
+        InstancePicker.IsEnabled = InstancePicker.ItemCount > 0;
+        if (!hasInstance) InstallHintText.Text = "先创建一个实例，安装的游戏和存档会保存在其中。";
+        else if (!hasVersion) InstallHintText.Text = "请选择左侧的 Minecraft 版本。";
+        else if (!loaderReady) InstallHintText.Text = "请选择兼容的加载器构建；没有结果时可更换游戏版本或加载器。";
+        else if (InstancePicker.SelectedItem is InstanceEntry target && VersionList.SelectedItem is RemoteVersionRow selected)
             InstallHintText.Text = BuildInstallSummary(target.Name, selected.Id, SelectedLoader);
     }
 
@@ -237,7 +243,7 @@ public partial class VersionInstallerView : UserControl
         try { free = $"{new DriveInfo(Path.GetPathRoot(path)!).AvailableFreeSpace / 1073741824d:F1} GB"; }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException) { free = "无法读取"; }
         bool installed = File.Exists(Path.Combine(path, "versions", version, version + ".json"));
-        return $"目标实例：{instance}\n目标目录：{path}\n版本：{version} · 加载器：{loader}\n磁盘可用：{free}\n下载量与额外占用：清单解析前未知，不显示估算值。\n已有版本：{(installed ? "已存在，将校验并复用可用文件，修复缺失内容" : "新安装，已有其它版本保留")}";
+        return $"磁盘可用：{free}\n{(installed ? "此版本已存在，将校验并修复缺失文件。" : "将添加所选版本，已有版本和存档保留。")}\n下一步会显示目标目录、加载器和下载计划，确认后开始。";
     }
 
     private async void ImportModpack(object? sender, RoutedEventArgs e)

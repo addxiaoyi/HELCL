@@ -2,10 +2,10 @@
              x:Class="HelL.Desktop.Views.VersionInstallerView">
   <Grid Margin="36,10,36,24" RowDefinitions="Auto,*">
     <Grid ColumnDefinitions="*,Auto,Auto" Margin="2,0,0,14">
-      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+      <StackPanel Spacing="3" VerticalAlignment="Center">
         <TextBlock Text="安装" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
         <TextBlock x:Name="SubtitleText" IsVisible="False" />
-        <TextBlock x:Name="VersionCountLabel" Text="" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
+        <TextBlock x:Name="VersionCountLabel" Text="" Classes="muted" FontSize="12.5" TextWrapping="Wrap" />
       </StackPanel>
       <Button Grid.Column="1" Content="导入整合包…" Classes="soft" Click="ImportModpack" Margin="0,0,8,0" />
       <Button x:Name="FetchButton" Grid.Column="2" Content="刷新清单" Classes="soft" Click="FetchManifest" />
@@ -14,9 +14,9 @@
     <Grid Grid.Row="1" ColumnDefinitions="1.3*,*" ColumnSpacing="16">
       <!-- 左侧：纯净版本列表（无方块贴图） -->
       <Grid RowDefinitions="Auto,*">
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,10">
+        <Grid RowDefinitions="Auto,Auto" RowSpacing="8" Margin="0,0,0,10">
           <TextBox x:Name="SearchBox" PlaceholderText="筛选版本号（如 1.21.1）…" TextChanged="FilterVersions" AutomationProperties.Name="搜索 Minecraft 版本" />
-          <Border Grid.Column="1" Classes="segmented">
+          <Border Grid.Row="1" Classes="segmented" HorizontalAlignment="Left">
             <StackPanel x:Name="ChannelTabs" Orientation="Horizontal" Spacing="2">
               <Button Tag="release" Content="正式版" Classes="seg-item current" Click="SelectChannel" />
               <Button Tag="snapshot" Content="快照" Classes="seg-item" Click="SelectChannel" />
@@ -50,7 +50,8 @@
       </Grid>
 
       <!-- 右侧：macOS Inset Grouped 安装面单 -->
-      <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
+      <Grid Grid.Column="1" RowDefinitions="*,Auto" RowSpacing="10">
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="14">
           <Border Classes="inset-group">
             <StackPanel>
@@ -58,6 +59,7 @@
                 <StackPanel Spacing="6">
                   <TextBlock Text="目标实例" Classes="group-header" />
                   <ComboBox x:Name="InstancePicker" HorizontalAlignment="Stretch" PlaceholderText="请先创建实例" SelectionChanged="TargetInstanceChanged" />
+                  <Button x:Name="CreateTargetButton" Content="创建第一个实例" Classes="soft" Click="CreateTarget" HorizontalAlignment="Left" IsVisible="False" />
                 </StackPanel>
               </Border>
 
@@ -94,14 +96,15 @@
 
               <Border Classes="group-row-last">
                 <StackPanel Spacing="10">
-                  <TextBlock x:Name="InstallHintText" Text="已下载的核心与依赖文件会自动复用。" Classes="muted" FontSize="11.5" TextWrapping="Wrap" />
-                  <Button x:Name="StartInstallButton" Content="安装到实例" Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" IsEnabled="False" Click="StartInstall" />
+                  <TextBlock x:Name="InstallHintText" Text="先创建实例，再选择要安装的版本。" Classes="muted" FontSize="12" TextWrapping="Wrap" />
                 </StackPanel>
               </Border>
             </StackPanel>
           </Border>
         </StackPanel>
       </ScrollViewer>
+      <Button x:Name="StartInstallButton" Grid.Row="1" Content="安装到实例" Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" IsEnabled="False" Click="StartInstall" />
+      </Grid>
     </Grid>
   </Grid>
 </UserControl>

@@ -14,11 +14,15 @@ public sealed partial class MainWindow
     private async void RestoreAccount(object? sender, EventArgs e)
     {
         if (Program.UiSmoke) return;
+        var vault = new AccountVault(DataRoot, SystemSecretStore.Create());
+        account = new PortableAccount(vault);
+        if (!vault.HasSavedAccount) { UpdateAccount(); return; }
         await RunTask(async token =>
         {
-            account = new PortableAccount(new AccountVault(Program.DataRoot, SystemSecretStore.Create()));
+            Status.Text = "正在恢复保存的账号…";
             await Task.Run(account.Restore, token);
             UpdateAccount();
+            Status.Text = account.Notice;
         });
     }
 

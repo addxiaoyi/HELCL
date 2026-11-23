@@ -323,11 +323,12 @@
           <Grid Grid.Row="1">
             <ScrollViewer x:Name="AiMessagesScroll" HorizontalScrollBarVisibility="Disabled"><StackPanel Spacing="12">
               <Border x:Name="AiSettingsPanel" Classes="glass" IsVisible="False"><StackPanel Spacing="10">
-                <TextBlock Text="模型连接" Classes="section"/>
+                <Grid ColumnDefinitions="*,Auto"><TextBlock Text="模型连接" Classes="section" VerticalAlignment="Center"/><Button Grid.Column="1" Content="返回对话" Classes="inline" Click="ToggleAiSettings"/></Grid>
                 <ComboBox x:Name="AiMode" SelectedIndex="0" HorizontalAlignment="Stretch" SelectionChanged="AiModeChanged" AutomationProperties.Name="AI 服务类型"><ComboBoxItem Content="OpenAI 兼容端点" Tag="custom"/><ComboBoxItem Content="公共网关" Tag="public"/></ComboBox>
                 <TextBlock x:Name="AiAddressLabel" Text="HTTPS 地址（到 /v1）" Classes="field-label"/><TextBox x:Name="AiAddress" PlaceholderText="https://api.openai.com/v1" AutomationProperties.Name="AI 服务地址"/>
                 <TextBlock Text="模型名称" Classes="field-label"/><TextBox x:Name="AiModel" PlaceholderText="gpt-4o-mini" AutomationProperties.Name="AI 模型名称"/>
                 <StackPanel x:Name="AiKeyField" Spacing="5"><TextBlock Text="API 密钥" Classes="field-label"/><TextBox x:Name="AiKey" PasswordChar="●" AutomationProperties.Name="AI API 密钥"/></StackPanel>
+                <TextBlock x:Name="AiSettingsError" Classes="error" TextWrapping="Wrap" IsVisible="False" AutomationProperties.LiveSetting="Polite"/>
                 <Button x:Name="AiSaveButton" Content="保存连接" Classes="primary" Click="SaveAiSettings" HorizontalAlignment="Stretch"/>
                 <TextBlock Text="聊天记录保存在本机 mobile-chat.json，最多保留最近 48 条，不包含 API 密钥；可清空并撤销。" Classes="caption" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel></Border>
@@ -338,7 +339,7 @@
               </ItemsControl>
             </StackPanel></ScrollViewer>
           </Grid>
-          <StackPanel Grid.Row="2" Spacing="8"><WrapPanel><Button x:Name="AiLatestButton" Content="回到最新消息" Classes="inline" Click="JumpToLatestAi" IsVisible="False"/><Button x:Name="AiRetryButton" Content="重试上个问题" Classes="inline" Click="RetryAiMessage" IsVisible="False"/><Button x:Name="AiEditRetryButton" Content="编辑后重发" Classes="inline" Click="EditFailedAi" IsVisible="False"/><Button x:Name="AiUndoClearButton" Content="撤销清空" Classes="inline" Click="UndoClearAi" IsVisible="False"/></WrapPanel><TextBlock x:Name="AiStorageNotice" Classes="caption" TextWrapping="Wrap"/><TextBox x:Name="AiPrompt" AcceptsReturn="True" MinHeight="60" MaxHeight="120" MaxLength="8000" PlaceholderText="输入问题…" TextWrapping="Wrap" AutomationProperties.Name="AI 消息"/><Grid ColumnDefinitions="*,Auto" ColumnSpacing="10"><TextBlock x:Name="AiChatNotice" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center"/><Button x:Name="AiSendButton" Grid.Column="1" Content="发送" Classes="primary" Click="SendAiMessage" MinWidth="76"/></Grid></StackPanel>
+          <StackPanel x:Name="AiComposer" Grid.Row="2" Spacing="8" IsVisible="{Binding !#AiSettingsPanel.IsVisible}"><WrapPanel><Button x:Name="AiLatestButton" Content="回到最新消息" Classes="inline" Click="JumpToLatestAi" IsVisible="False"/><Button x:Name="AiRetryButton" Content="重试上个问题" Classes="inline" Click="RetryAiMessage" IsVisible="False"/><Button x:Name="AiEditRetryButton" Content="编辑后重发" Classes="inline" Click="EditFailedAi" IsVisible="False"/><Button x:Name="AiUndoClearButton" Content="撤销清空" Classes="inline" Click="UndoClearAi" IsVisible="False"/></WrapPanel><TextBlock x:Name="AiStorageNotice" Classes="caption" TextWrapping="Wrap"/><TextBox x:Name="AiPrompt" AcceptsReturn="True" MinHeight="60" MaxHeight="120" MaxLength="8000" PlaceholderText="输入问题…" TextWrapping="Wrap" AutomationProperties.Name="AI 消息"/><Grid ColumnDefinitions="*,Auto" ColumnSpacing="10"><TextBlock x:Name="AiChatNotice" Classes="caption" TextWrapping="Wrap" VerticalAlignment="Center"/><Button x:Name="AiSendButton" Grid.Column="1" Content="发送" Classes="primary" Click="SendAiMessage" MinWidth="76"/></Grid></StackPanel>
         </Grid>
 
         <!-- [8] 设置页（iOS Grouped Table） -->

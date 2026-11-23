@@ -82,7 +82,9 @@ public partial class ResourceBrowserView : UserControl
             if (VersionPicker.SelectedIndex < 0 && selected?.Versions.Length > 0) VersionPicker.SelectedIndex = 0;
         }
         finally { settingTarget = false; }
-        InvalidateResults("目标已更新，请搜索匹配此实例的资源。");
+        InvalidateResults(selected == null ? "可以先浏览全部资源；下载前请创建实例并安装游戏版本。"
+            : selected.Versions.Length == 0 ? "此实例尚未安装游戏，可先浏览资源；安装版本后可筛选兼容文件。"
+            : "目标已更新，请搜索匹配此实例的资源。");
     }
 
     private CatalogTarget? Target() => Version.Length == 0 || instance.Length == 0 ? null : catalog.Target(instance, Version);
@@ -240,6 +242,7 @@ public partial class ResourceBrowserView : UserControl
                 displayedPage = page;
                 Results.ItemsSource = rows;
                 PageLabel.Text = $"第 {page + 1} 页 · 每页最多 {PageSize} 项";
+                Pagination.IsVisible = rows.Count > 0;
                 PreviousPageButton.IsEnabled = page > 0;
                 // Aliases and source deduplication can shorten a page without exhausting the upstream feed.
                 NextPageButton.IsEnabled = rows.Count > 0 && page < MaximumPageIndex
@@ -269,7 +272,8 @@ public partial class ResourceBrowserView : UserControl
         NextPageButton.IsEnabled = false;
         PageLabel.Text = hasSearched
             ? $"上次结果：第 {displayedPage + 1} 页 · 每页最多 {PageSize} 项"
-            : $"第 1 页 · 每页最多 {PageSize} 项";
+            : "";
+        Pagination.IsVisible = hasSearched && lastResults.Count > 0;
     }
 
     private void SelectProject(object? sender, SelectionChangedEventArgs e) => DetailsButton.IsEnabled = resultsCurrent && Results.SelectedItem is CatalogProject;

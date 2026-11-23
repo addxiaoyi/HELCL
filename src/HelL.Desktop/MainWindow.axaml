@@ -207,10 +207,16 @@
                     </Border>
                     <TextBlock Text="创建第一个 Minecraft 实例" FontSize="19" FontWeight="SemiBold" HorizontalAlignment="Center" />
                     <TextBlock Text="每个实例拥有独立的游戏核心、模组、光影、存档与启动参数。" Classes="muted" FontSize="13" TextAlignment="Center" MaxWidth="400" TextWrapping="Wrap" />
+                    <StackPanel Spacing="6" MaxWidth="360" HorizontalAlignment="Stretch">
+                      <TextBlock Text="给这个世界起个名字" Classes="group-header" />
+                      <TextBox x:Name="WelcomeName" Text="{Binding #InstanceName.Text, Mode=TwoWay}" PlaceholderText="例如：我的生存世界" MaxLength="48" KeyDown="SubmitWelcomeName" AutomationProperties.Name="第一个实例名称" />
+                      <TextBlock Text="{Binding #InstanceError.Text}" IsVisible="{Binding #InstanceError.IsVisible}" Classes="error" TextWrapping="Wrap" />
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center" Margin="0,4,0,0">
-                      <Button Content="填写实例名称" Click="FocusInstanceName" Classes="accent" />
+                      <Button x:Name="WelcomeCreateButton" Content="创建并选择游戏版本" Tag="install" Click="CreateInstance" Classes="accent" />
                       <Button Content="探索资源中心" Click="JumpToResources" Classes="soft" />
                     </StackPanel>
+                    <TextBlock Text="创建后选择 Minecraft 版本，再确认下载。" Classes="muted" FontSize="12" TextWrapping="Wrap" TextAlignment="Center" />
                   </StackPanel>
                 </Border>
 

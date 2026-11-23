@@ -66,6 +66,7 @@ public sealed partial class MainWindow : Window
         Opened += (_, _) => ApplyGlassBackdrop();
         if (Program.UiSmoke) Opened += RunUiSmoke;
         if (Program.CatalogSmoke) Opened += RunCatalogSmoke;
+        if (Program.UserJourneyCheck) Opened += RunUserJourneyCheck;
     }
 
     private void BeginTitleBarDrag(object? sender, PointerPressedEventArgs e)
@@ -261,7 +262,7 @@ public sealed partial class MainWindow : Window
         string name = (InstanceName.Text ?? "").Trim();
         string? error = InstanceNameError(name);
         SetInstanceError(error);
-        if (error != null) { InstanceName.Focus(); return; }
+        if (error != null) { FocusInstanceName(sender, e); return; }
         await RunTask(_ =>
         {
             try
@@ -279,7 +280,11 @@ public sealed partial class MainWindow : Window
             }
             return Task.CompletedTask;
         });
-        if (!InstanceError.IsVisible && SelectedName == name) RefreshButton.Focus();
+        if (!InstanceError.IsVisible && SelectedName == name)
+        {
+            if (sender is Button { Tag: "install" }) ShowPage("install");
+            else RefreshButton.Focus();
+        }
     }
 
     private string? InstanceNameError(string name)
@@ -297,7 +302,9 @@ public sealed partial class MainWindow : Window
         InstanceError.Text = message ?? "";
         InstanceError.IsVisible = message != null;
         InstanceName.Classes.Set("invalid", message != null);
+        WelcomeName.Classes.Set("invalid", message != null);
         Avalonia.Automation.AutomationProperties.SetHelpText(InstanceName, message ?? "最多 48 个字符。按 Enter 创建实例。");
+        Avalonia.Automation.AutomationProperties.SetHelpText(WelcomeName, message ?? "最多 48 个字符。按 Enter 创建实例并选择游戏版本。");
     }
 
     private void EditInstanceName(object? sender, TextChangedEventArgs e)
@@ -312,7 +319,24 @@ public sealed partial class MainWindow : Window
         CreateInstance(sender, new RoutedEventArgs());
     }
 
-    private void FocusInstanceName(object? sender, RoutedEventArgs e) => InstanceName.Focus();
+    private void FocusInstanceName(object? sender, RoutedEventArgs e)
+    {
+        if (WelcomePanel.IsVisible && LaunchView.IsVisible) WelcomeName.Focus();
+        else InstanceName.Focus();
+    }
+
+    private void SubmitWelcomeName(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || task != null) return;
+        e.Handled = true;
+        CreateInstance(WelcomeCreateButton, new RoutedEventArgs());
+    }
+
+    internal void BeginInstanceCreation()
+    {
+        ShowPage("launch");
+        FocusInstanceName(this, new RoutedEventArgs());
+    }
 
     private void ToggleInstaller(object? sender, RoutedEventArgs e)
     {
@@ -497,6 +521,7 @@ public sealed partial class MainWindow : Window
         InstanceList.IsEnabled = !busy;
         InstanceName.IsEnabled = !busy;
         CreateButton.IsEnabled = !busy;
+        WelcomeName.IsEnabled = WelcomeCreateButton.IsEnabled = !busy;
         Workspace.IsEnabled = !busy && SelectedName != null;
         AccountPanel.IsEnabled = !busy;
         LibraryView.IsEnabled = true;

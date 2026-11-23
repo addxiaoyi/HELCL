@@ -109,8 +109,11 @@ public partial class TasksView : UserControl
         }
         finally { filtering = false; }
         SelectCurrent();
-        CountLabel.Text = $"{visible.Length} / {tasks.Count} 个任务 · 最近记录";
+        CountLabel.Text = tasks.Count == 0 ? "暂无任务" : $"{visible.Length} / {tasks.Count} 个任务 · 最近记录";
         EmptyNotice.IsVisible = visible.Length == 0;
+        EmptyPanel.IsVisible = visible.Length == 0;
+        TaskList.IsVisible = visible.Length > 0;
+        ClearFiltersButton.IsVisible = visible.Length == 0 && tasks.Count > 0;
         EmptyNotice.Text = tasks.Count == 0 ? "尚无任务。创建实例、安装版本或下载资源后，进度与结果会显示在这里。"
             : "没有符合筛选条件的任务。请更换关键词或状态。";
     }
@@ -126,10 +129,18 @@ public partial class TasksView : UserControl
 
     private void UpdateDetails()
     {
+        LogDetails.IsVisible = selected != null;
         DetailTitle.Text = selected?.Title ?? "选择任务查看记录";
         LogText.Text = selected == null ? "最近 100 条已结束任务会保存在本机；选择任务查看执行日志。" : string.Join(Environment.NewLine, selected.Log);
         CancelButton.IsVisible = selected?.CanCancel == true;
         RetryButton.IsVisible = selected?.State is DesktopTaskState.Failed or DesktopTaskState.Cancelled && retries.ContainsKey(selected.Id);
+    }
+
+    private void ClearFilters(object? sender, RoutedEventArgs e)
+    {
+        SearchBox.Clear();
+        StatePicker.SelectedIndex = 0;
+        TaskList.Focus();
     }
 
     private async void RetrySelected(object? sender, RoutedEventArgs e)

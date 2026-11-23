@@ -46,6 +46,7 @@
       </StackPanel>
 
       <!-- 分组 2：下载与网络 -->
+      <TextBlock x:Name="AppearanceNotice" IsVisible="False" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
       <StackPanel Spacing="8">
         <TextBlock Text="网络与下载" Classes="group-header" Margin="4,0" />
         <Border Classes="inset-group">

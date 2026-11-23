@@ -28,6 +28,7 @@ public partial class ModsManagerView : UserControl
     }
 
     internal void Initialize(MainWindow window) => host = window;
+    private void ChooseVersion(object? sender, RoutedEventArgs e) => host?.ChooseContentVersion();
 
     internal void Reload(string? instanceName = null)
     {
@@ -43,8 +44,8 @@ public partial class ModsManagerView : UserControl
             ApplyFilter();
             return;
         }
-        var inst = new Instance(currentInstance);
-        InstanceSubtitle.Text = currentInstance;
+        var inst = host.ContentInstance(currentInstance, currentKind);
+        InstanceSubtitle.Text = host.ContentLabel(currentInstance);
 
         if (currentKind == "mods")
         {
@@ -66,7 +67,8 @@ public partial class ModsManagerView : UserControl
             {
                 string full = Path.Combine(dir, file);
                 long bytes = File.Exists(full) ? new FileInfo(full).Length : 0;
-                return new ContentRow(file, file, FormatSize(bytes), true, false);
+                string filename = Path.GetFileName(file);
+                return new ContentRow(filename, filename, FormatSize(bytes), true, false);
             }).ToArray();
         }
         ApplyFilter();
@@ -103,7 +105,7 @@ public partial class ModsManagerView : UserControl
         if (host == null || string.IsNullOrEmpty(currentInstance) || currentKind != "mods") return;
         await host.RunTask(_ =>
         {
-            var inst = new Instance(currentInstance);
+            var inst = host.ContentInstance(currentInstance, currentKind);
             string query = SearchBox.Text?.Trim() ?? "";
             var visible = allRows.Where(row => query.Length == 0 || row.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase)).ToArray();
             foreach (var row in visible.Where(r => r.Enabled != enable))
@@ -133,7 +135,7 @@ public partial class ModsManagerView : UserControl
         if (row == null) return;
         await host.RunTask(_ =>
         {
-            var inst = new Instance(currentInstance);
+            var inst = host.ContentInstance(currentInstance, currentKind);
             Mods.SetModEnabled(inst, fileName, !row.Enabled);
             Reload(currentInstance);
             host.SetStatus($"{(row.Enabled ? "已禁用" : "已启用")} {row.DisplayName}");
@@ -145,12 +147,12 @@ public partial class ModsManagerView : UserControl
     {
         if (host == null || string.IsNullOrEmpty(currentInstance) || sender is not Button { Tag: string fileName }) return;
         string target = currentInstance, kind = currentKind;
-        if (!await host.ConfirmAction("删除资源文件", $"实例：{target}\n类型：{kind}\n文件：{fileName}\n删除不会自动恢复，请确认已保存原文件。", "删除文件")) return;
+        var content = host.ContentInstance(target, kind);
+        if (!await host.ConfirmAction("删除资源文件", $"目标：{host.ContentLabel(target)}\n类型：{kind}\n文件：{fileName}\n删除不会自动恢复，请确认已保存原文件。", "删除文件")) return;
         await host.RunTask(_ =>
         {
-            var inst = new Instance(target);
-            if (kind == "mods") Mods.DeleteMod(inst, fileName);
-            else Mods.DeleteContentFile(inst, kind, fileName);
+            if (kind == "mods") Mods.DeleteMod(content, fileName);
+            else Mods.DeleteContentFile(content, kind, fileName);
             Reload(currentInstance);
             host.SetStatus($"已删除 {fileName}");
             return Task.CompletedTask;
@@ -181,17 +183,17 @@ public partial class ModsManagerView : UserControl
     internal async Task ImportPathsAsync(string target, string kind, IReadOnlyList<string> paths)
     {
         if (host == null || paths.Count == 0) return;
-        if (kind is not ("mods" or "resourcepacks" or "shaderpacks" or "datapacks")) throw new ArgumentException("Invalid resource type.");
+        if (kind is not ("mods" or "resourcepacks" or "shaderpacks" or "datapacks")) throw new ArgumentException("资源类型无效，请重新选择。");
         string folder = RequireImportFolder(target, kind);
         var plan = paths.Select(path => (Source: Path.GetFullPath(path), Destination: Mods._mod_file_at(folder, Path.GetFileName(path)))).ToArray();
         if (plan.Select(item => item.Destination).Distinct(StringComparer.OrdinalIgnoreCase).Count() != plan.Length)
-            throw new ArgumentException("Multiple sources have the same destination filename.");
+            throw new ArgumentException("所选文件有重名项，请每次只导入一个同名文件。");
         foreach (var item in plan)
         {
-            if (!File.Exists(item.Source)) throw new FileNotFoundException("An import source is no longer available.");
+            if (!File.Exists(item.Source)) throw new FileNotFoundException("原文件已移动或不可读，请重新选择。");
             bool accepted = kind == "mods" ? item.Source.EndsWith(".jar", StringComparison.OrdinalIgnoreCase) || item.Source.EndsWith(".jar.disabled", StringComparison.OrdinalIgnoreCase)
                 : item.Source.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) || item.Source.EndsWith(".jar", StringComparison.OrdinalIgnoreCase);
-            if (!accepted) throw new ArgumentException("The import source does not match the selected resource type.");
+            if (!accepted) throw new ArgumentException("文件格式与所选资源类型不符，请检查后重试。");
             DependencyTarget.RequireLocalPath(item.Source);
             DependencyTarget.RequireLocalPath(item.Destination);
         }
@@ -199,7 +201,7 @@ public partial class ModsManagerView : UserControl
         if (replacements.Count > 0 && !await host.ConfirmAction("确认覆盖资源文件", $"固定目标实例：{target}\n类型：{kind}\n以下同名文件将被替换：\n{string.Join("\n", replacements.Select(Path.GetFileName))}\n取消会保留全部原文件。", "覆盖这些文件")) return;
         await host.RunTask(_ =>
         {
-            if (RequireImportFolder(target, kind) != folder) throw new IOException("The import destination changed.");
+            if (RequireImportFolder(target, kind) != folder) throw new IOException("目标游戏版本已改变，请重新确认导入位置。");
             Directory.CreateDirectory(folder);
             foreach (var item in plan)
             {
@@ -215,9 +217,9 @@ public partial class ModsManagerView : UserControl
     private string RequireImportFolder(string target, string kind)
     {
         if (host is null || !host.GameLauncher.InstancesList().Any(entry => entry.Name == target))
-            throw new IOException("The original target instance no longer exists.");
-        var instance = new Instance(target);
-        if (!Directory.Exists(instance.path)) throw new IOException("The original target directory no longer exists.");
+            throw new IOException("原目标实例已不存在，请重新选择实例。");
+        var instance = host.ContentInstance(target, kind);
+        if (!Directory.Exists(instance.path)) throw new IOException("原目标目录已不存在，请刷新实例后重试。");
         string folder = Path.Combine(instance.path, kind);
         DependencyTarget.RequireLocalPath(folder);
         return folder;
@@ -241,7 +243,7 @@ public partial class ModsManagerView : UserControl
     private async void OpenContentFolder(object? sender, RoutedEventArgs e)
     {
         if (host == null || string.IsNullOrEmpty(currentInstance)) return;
-        var inst = new Instance(currentInstance);
+        var inst = host.ContentInstance(currentInstance, currentKind);
         string dir = Path.Combine(inst.path, currentKind);
         Directory.CreateDirectory(dir);
         var folder = await host.StorageProvider.TryGetFolderFromPathAsync(dir);

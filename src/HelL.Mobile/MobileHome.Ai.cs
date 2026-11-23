@@ -60,7 +60,11 @@ public sealed partial class MobileHome
         AiAddressLabel.Text = custom ? "HTTPS 服务地址（到 /v1）" : "HTTPS 网关地址";
     }
 
-    private void ToggleAiSettings(object? sender, RoutedEventArgs e) => AiSettingsPanel.IsVisible = !AiSettingsPanel.IsVisible;
+    private void ToggleAiSettings(object? sender, RoutedEventArgs e)
+    {
+        AiSettingsPanel.IsVisible = !AiSettingsPanel.IsVisible;
+        Dispatcher.UIThread.Post(RecordPlatformAudit, DispatcherPriority.Loaded);
+    }
 
     private async void SaveAiSettings(object? sender, RoutedEventArgs e)
     {

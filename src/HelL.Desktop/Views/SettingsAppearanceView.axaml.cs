@@ -15,6 +15,7 @@ public partial class SettingsAppearanceView : UserControl
     private string NetworkSource => (MirrorCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "auto";
     private bool HasNetworkDraft => savedNetwork is { } saved
         && (NetworkSource != saved.Source || ThreadsBox.Text != saved.Threads);
+    internal bool HasUnsavedNetworkSettings => HasNetworkDraft;
 
     public SettingsAppearanceView() => InitializeComponent();
 
@@ -72,6 +73,13 @@ public partial class SettingsAppearanceView : UserControl
     }
 
     private void DiscardNetworkSettings(object? sender, RoutedEventArgs e) => LoadNetworkSettings();
+
+    internal void SetAppearanceNotice(string message, bool failed)
+    {
+        AppearanceNotice.Text = message;
+        AppearanceNotice.IsVisible = true;
+        AppearanceNotice.Classes.Set("error", failed);
+    }
 
     internal void SyncThemeSelection(string theme)
     {

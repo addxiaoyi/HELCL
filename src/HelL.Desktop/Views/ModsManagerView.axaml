@@ -8,6 +8,7 @@
       <StackPanel Spacing="4" VerticalAlignment="Center">
         <TextBlock Text="模组与资源" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
         <TextBlock x:Name="InstanceSubtitle" TextWrapping="Wrap" MaxWidth="360" Classes="muted" FontSize="12.5" VerticalAlignment="Center" />
+        <Button Content="更换游戏版本" Classes="ghost" Click="ChooseVersion" HorizontalAlignment="Left" Padding="0,2" MinHeight="24" FontSize="12" />
         <TextBlock x:Name="SummaryBadge" Classes="muted" FontSize="12" VerticalAlignment="Center" />
       </StackPanel>
       <Button Grid.Column="1" Content="导入…" Classes="soft" Click="ImportFiles" Margin="0,0,8,0" />

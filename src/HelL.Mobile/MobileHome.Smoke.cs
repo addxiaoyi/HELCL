@@ -1,4 +1,5 @@
 using System.Text.Json;
+using HelL.Core.Launcher;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -132,6 +133,21 @@ public sealed partial class MobileHome
             }
             ShowPage("more");
             await Capture("more");
+            string configBackup = Config.CONFIG_FILE + ".appearance-fixture";
+            long configRevision = Config.CONFIG.revision;
+            var savedTheme = Application.Current!.RequestedThemeVariant;
+            int savedThemeIndex = ThemePicker.SelectedIndex;
+            File.Move(Config.CONFIG_FILE, configBackup);
+            Directory.CreateDirectory(Config.CONFIG_FILE);
+            bool appearancePreserved;
+            try
+            {
+                ThemePicker.SelectedIndex = savedThemeIndex == 0 ? 1 : 0;
+                appearancePreserved = ThemePicker.SelectedIndex == savedThemeIndex && Application.Current.RequestedThemeVariant == savedTheme
+                    && Config.CONFIG.revision == configRevision;
+            }
+            finally { Directory.Delete(Config.CONFIG_FILE); File.Move(configBackup, Config.CONFIG_FILE); }
+            if (!appearancePreserved) throw new IOException("Failed mobile theme save changed the visible or persisted preference.");
             ThemePicker.SelectedIndex = 1;
             if (Application.Current?.RequestedThemeVariant != Avalonia.Styling.ThemeVariant.Light
                 || Py.S(HelL.Core.Launcher.Config.CONFIG.Get("mobile_theme", "")) != "light")
@@ -145,6 +161,12 @@ public sealed partial class MobileHome
             await Capture("ai-empty");
             if (!AiPage.IsVisible || !AiSettingsPanel.IsVisible || BottomNavigation.Children.OfType<Button>().Count() != 5)
                 throw new IOException("The AI page did not expose configuration and its real navigation entry.");
+            AiPrompt.Text = "返回后保留的草稿";
+            RequestBack();
+            await Task.Delay(100);
+            if (!AiPage.IsVisible || AiSettingsPanel.IsVisible || AiPrompt.Text != "返回后保留的草稿")
+                throw new IOException("System back must close AI settings before leaving the conversation and preserve its draft.");
+            AiPrompt.Clear();
             AiSettingsPanel.IsVisible = false;
             AiMessages.ItemsSource = new[]
             {

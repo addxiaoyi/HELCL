@@ -225,6 +225,12 @@ public sealed partial class MobileHome
     public bool RequestBack()
     {
         if (confirmation is not null) { CompleteConfirmation(false); return true; }
+        if (currentPage == "ai" && AiSettingsPanel.IsVisible)
+        {
+            AiSettingsPanel.IsVisible = false;
+            Avalonia.Threading.Dispatcher.UIThread.Post(RecordPlatformAudit, Avalonia.Threading.DispatcherPriority.Loaded);
+            return true;
+        }
         if (DetailsPanel.IsVisible && ResourcesPage.IsVisible) { BackToSearch(this, new RoutedEventArgs()); return true; }
         if (currentPage == "home") return false;
         if (backNavigationPending) return true;

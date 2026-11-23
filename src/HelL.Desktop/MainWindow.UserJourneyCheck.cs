@@ -143,6 +143,8 @@ public sealed partial class MainWindow
                 findings.Add("小窗口的版本搜索或安装操作被遮挡。");
             var navigation = Navigation.Children.OfType<Button>().Where(button => button.Classes.Contains("current")).ToArray();
             if (navigation.Length != 1 || navigation[0].Tag?.ToString() != "install") findings.Add("导航没有唯一标记当前页面。");
+            await CheckInstanceContextAsync(findings);
+            await CheckAppearanceCommitAsync(findings);
             File.WriteAllText(Path.Combine(Program.DataRoot, "user-journey.json"), JsonSerializer.Serialize(new { ok = findings.Count == 0, findings }));
             exitCode = findings.Count == 0 ? 0 : 1;
         }

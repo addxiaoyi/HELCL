@@ -238,6 +238,8 @@ public static class Net
 		{
 			foreach (KeyValuePair<string, string> header in o.Headers)
 			{
+				if (string.Equals(header.Key, "x-api-key", StringComparison.OrdinalIgnoreCase) && !Source.IsOfficialCurseForgeApi(url))
+					continue;
 				if (header.Value == null)
 				{
 					continue;
@@ -271,7 +273,9 @@ public static class Net
 				httpRequestMessage.Content.Headers.TryAddWithoutValidation("Content-Type", o.ContentType);
 			}
 		}
-		HttpClient httpClient = (o.AllowRedirects ? Http : HttpRaw);
+		// HttpClient retains custom headers across redirects. Keep user CurseForge keys on the canonical API.
+		bool credentialed = httpRequestMessage.Headers.Contains("x-api-key");
+		HttpClient httpClient = (o.AllowRedirects && !credentialed ? Http : HttpRaw);
 		CancellationTokenSource cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(o.Token);
 		cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(Math.Max(0.5, o.ConnectTimeout + o.ReadTimeout)));
 		HttpResponseMessage result2;
@@ -290,6 +294,11 @@ public static class Net
 			throw Classify(e, result, o, cancellationTokenSource.IsCancellationRequested);
 		}
 		cancellationTokenSource.Dispose();
+		if (credentialed && o.AllowRedirects && (int)result2.StatusCode is >= 300 and < 400)
+		{
+			result2.Dispose();
+			throw new NetError("HTTPError", "CurseForge 凭据请求不接受重定向，请重试或切换资源源。");
+		}
 		return new NetResponse(result2, url, o.ReadTimeout, o.Token);
 	}
 

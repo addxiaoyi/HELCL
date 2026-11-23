@@ -52,8 +52,8 @@ public sealed partial class PortableLauncher
             throw new ArgumentException("请输入正式 Minecraft 版本，例如 1.21.1。此设置仅用于资源兼容性筛选。");
         string normalized = CatalogLoader.Normalize(loader);
         var game = RequireInstance(name);
-        game.SetMeta("portable_reference_version", version);
-        game.SetMeta("portable_reference_loader", normalized.Length == 0 ? "vanilla" : normalized);
+        game.UpdateMeta(PyDict.Of("portable_reference_version", version,
+            "portable_reference_loader", normalized.Length == 0 ? "vanilla" : normalized));
     }
     public string ReferenceVersion(string name) => Py.S(RequireInstance(name).Meta().Get("portable_reference_version"));
     public string ReferenceLoader(string name) => Py.S(RequireInstance(name).Meta().Get("portable_reference_loader", "vanilla"));

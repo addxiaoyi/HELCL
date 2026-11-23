@@ -122,7 +122,7 @@ public class DownloadManager
 	public Dictionary<string, string> ExtraHeaders(string url)
 	{
 		Dictionary<string, string> dictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-		if (!string.IsNullOrEmpty(url) && (url.Contains("api.curseforge.com") || url.Contains("/curseforge/v1/")))
+		if (Source.IsOfficialCurseForgeApi(url))
 		{
 			string value = Config.CurseforgeKey();
 			if (!string.IsNullOrEmpty(value))
@@ -322,9 +322,9 @@ public class DownloadManager
 			}
 		}
 		tracker.StartFile(key, name, list[0], size);
-		NotifyProgress(force: true);
 		try
 		{
+			NotifyProgress(force: true);
 			bool skipped;
 			lock (Downloader.PathLock(text))
 			{

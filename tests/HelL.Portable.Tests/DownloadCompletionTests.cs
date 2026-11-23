@@ -63,6 +63,21 @@ public sealed class DownloadCompletionTests
     }
 
     [Fact]
+    public void CancellationThrownByInitialProgressEndsTheSingleFile()
+    {
+        using var home = new TestHome();
+        string path = Path.Combine(home.Dir, "not-downloaded.bin");
+        var tracker = new DownloadTracker();
+        var manager = new DownloadManager(tracker: tracker, on_progress: (_, _, _) => throw new TaskCancelled());
+
+        Assert.Throws<TaskCancelled>(() => manager.Download("http://127.0.0.1:1/not-requested", path, expand: false));
+
+        Assert.Equal("fail", tracker.Snapshot().phase);
+        Assert.False(tracker.Snapshot().active);
+        Assert.False(File.Exists(path));
+    }
+
+    [Fact]
     public void AFailedFilePromotionMustKeepTheInstalledTarget()
     {
         using var home = new TestHome();

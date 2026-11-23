@@ -38,15 +38,18 @@ public sealed partial class PortableCatalog
     public CatalogTarget Target(string instance, string version)
     {
         var game = ExistingInstance(instance);
-        if (Py.S(game.Meta().Get("portable_reference_version")) == version &&
+        string safeVersion = Utils.SafeVersionId(version);
+        bool hasInstallation = Directory.Exists(Path.Combine(game.VersionsDir(), safeVersion)) ||
+            File.Exists(Path.Combine(game.path, ".portable-install.json"));
+        if (!hasInstallation && Py.S(game.Meta().Get("portable_reference_version")) == version &&
             Regex.IsMatch(version, @"\A(?:1|[2-9]\d)\.\d+(?:\.\d+)?\z"))
         {
             string loader = CatalogLoader.Normalize(Py.S(game.Meta().Get("portable_reference_loader", "vanilla")));
             return new CatalogTarget { Version = version, GameVersion = version, Loader = loader.Length == 0 ? "vanilla" : loader };
         }
-        if (!game.InstalledIds().Contains(version) || !File.Exists(Path.Combine(game.VersionsDir(), version, version + ".jar")) ||
-            File.Exists(Path.Combine(game.VersionsDir(), version, ".portable-install-pending")))
-            throw new InvalidOperationException("请先为目标实例安装完整的 Minecraft 版本。");
+        try { PortableLauncher.ResolveLaunchMetadata(game, version); }
+        catch (InvalidDataException error)
+        { throw new InvalidOperationException("请先为目标实例安装完整的 Minecraft 版本。", error); }
         var target = CatalogTarget.Inspect(game, version);
         if (target.Error.Length > 0 || target.GameVersion.Length == 0)
             throw new InvalidDataException("目标版本信息不可用，请修复游戏安装后重试。");

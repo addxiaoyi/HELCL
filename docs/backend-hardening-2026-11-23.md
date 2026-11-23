@@ -29,4 +29,6 @@ Final local suites pass: Portable **390** (one platform skip), Mobile **69**, De
 
 The dedicated Bugbot interface was unavailable; an independent source-review agent found the rename, cover and concurrent-read follow-ups and verified their final repairs without further blockers. This is not a formal Bugbot scan. Latest cross-platform service, WPF, Desktop smoke, Mobile preview and native Android CI receipts are attached to the current commit of [draft PR #11](https://github.com/addxiaoyi/HELCL/pull/11).
 
+Linux CI also exposed a fixture shutdown difference: a stopped `HttpListener` completes the pending accept with `ObjectDisposedException`, whereas Windows reports `HttpListenerException`. Cleanup accepts both after stopping the listener; the credential and redirect assertions remain unchanged.
+
 These regressions verify controlled failure handling. They do not certify real upstream pagination, a real game installation, OS credential-provider outages or crash recovery across multiple files. Previous native-window and reading acceptance remains documented in `frontend-reading-desktop.md` and `frontend-reading-2026-11-20.md`.

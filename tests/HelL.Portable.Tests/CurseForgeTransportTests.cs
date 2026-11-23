@@ -73,7 +73,7 @@ public sealed class CurseForgeTransportTests : IDisposable
         {
             listener.Stop();
             try { await redirected; }
-            catch (HttpListenerException) { }
+            catch (Exception error) when (error is HttpListenerException or ObjectDisposedException) { }
         }
     }
 

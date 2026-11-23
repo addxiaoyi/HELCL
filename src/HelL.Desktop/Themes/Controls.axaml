@@ -22,7 +22,7 @@
     <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
     <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Transitions">
       <Transitions>
         <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
@@ -72,7 +72,7 @@
   <Style Selector="Button.accent:disabled /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Foreground" Value="{DynamicResource HelL.Muted}" />
     <Setter Property="Opacity" Value="0.7" />
   </Style>
@@ -81,7 +81,7 @@
     <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
     <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="8.5" />
     <Setter Property="FontWeight" Value="Medium" />
   </Style>
@@ -95,7 +95,7 @@
   <Style Selector="Button.glass-card">
     <Setter Property="Background" Value="{DynamicResource HelL.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="13" />
     <Setter Property="Padding" Value="15,13" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -164,7 +164,7 @@
   <Style Selector="Button.nav">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Foreground" Value="{DynamicResource HelL.Muted}" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     <Setter Property="MinHeight" Value="32" />
@@ -193,6 +193,10 @@
     <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
     <Setter Property="FontWeight" Value="Medium" />
   </Style>
+  <Style Selector="Button.nav:focus-visible">
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.Accent}" />
+    <Setter Property="BorderThickness" Value="1.5" />
+  </Style>
   <Style Selector="Border.nav-count">
     <Setter Property="MinWidth" Value="22" />
     <Setter Property="Padding" Value="6,1" />
@@ -206,7 +210,7 @@
     <Setter Property="CornerRadius" Value="9" />
     <Setter Property="Padding" Value="2.5" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
   </Style>
   <Style Selector="Button.seg-item, Button.pill-tab">
     <Setter Property="Background" Value="Transparent" />
@@ -234,7 +238,7 @@
   <Style Selector="Button.tag-chip">
     <Setter Property="Background" Value="{DynamicResource HelL.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="99" />
     <Setter Property="MinHeight" Value="30" />
     <Setter Property="Padding" Value="14,4" />
@@ -253,11 +257,11 @@
     <Setter Property="FontSize" Value="13" />
     <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
   </Style>
   <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
-    <Setter Property="BorderBrush" Value="{DynamicResource HelL.BadgeBorder}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource HelL.Accent}" />
     <Setter Property="BorderThickness" Value="1" />
   </Style>
 
@@ -269,7 +273,7 @@
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Foreground" Value="{DynamicResource HelL.Ink}" />
   </Style>
 
@@ -279,13 +283,13 @@
   <Style Selector="TextBlock.error"><Setter Property="Foreground" Value="{DynamicResource HelL.Error}" /></Style>
   <Style Selector="TextBox.invalid"><Setter Property="BorderBrush" Value="{DynamicResource HelL.Error}" /><Setter Property="BorderThickness" Value="1" /></Style>
 
-  <!-- VisionOS / macOS 磨砂玻璃面单（1px 高光斜折射边框 + 柔和阴影） -->
+  <!-- 用透底色区分内容分组。 -->
   <Style Selector="Border.surface, Border.inset-group">
     <Setter Property="Background" Value="{DynamicResource HelL.DesktopPanel}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource HelL.DesktopPanelBorder}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="12" />
-    <Setter Property="BoxShadow" Value="0 3 12 0 #0B000000" />
+    <Setter Property="BoxShadow" Value="none" />
   </Style>
   <Style Selector="Border.library-list">
     <Setter Property="CornerRadius" Value="10" />
@@ -299,13 +303,13 @@
   <Style Selector="ListBox.library-rows > ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource HelL.Selection}" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.InkSoft}" />
-    <Setter Property="BorderThickness" Value="2,0,0,0" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="10" />
   </Style>
   <Style Selector="Border.group-row">
     <Setter Property="Padding" Value="16,12" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
-    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="BorderThickness" Value="0" />
   </Style>
   <Style Selector="Border.group-row-last">
     <Setter Property="Padding" Value="16,12" />
@@ -314,13 +318,13 @@
   <Style Selector="Border.tile">
     <Setter Property="Background" Value="{DynamicResource HelL.Field}" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="10" />
   </Style>
   <Style Selector="Border.badge">
     <Setter Property="Background" Value="{DynamicResource HelL.Selection}" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="99" />
     <Setter Property="Padding" Value="8,1.5" />
     <Setter Property="HorizontalAlignment" Value="Left" />
@@ -331,7 +335,7 @@
   <Style Selector="ListBox.rows > ListBoxItem">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.Line}" />
-    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="0" />
     <Setter Property="Padding" Value="16,11" />
     <Setter Property="Margin" Value="0" />
@@ -360,7 +364,7 @@
   <Style Selector="ContextMenu">
     <Setter Property="Background" Value="{DynamicResource HelL.ComboBoxDropDownBackground}" />
     <Setter Property="BorderBrush" Value="{DynamicResource HelL.GlassBorder}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="10" />
     <Setter Property="Padding" Value="5" />
   </Style>

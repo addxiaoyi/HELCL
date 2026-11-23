@@ -31,3 +31,11 @@ The full nonincremental build exits 0, retaining the baseline Core's 16 platform
 Evidence is under `TestResults/frontend-reading-20261120/desktop/`: `before-final/`, `before-complete/`, `before-delivery/`, `delivery/reading/`, `tests/desktop.trx`, logs and source-restoration receipts. The first two exploratory helper attempts failed to serialize the baseline's automatic (NaN) line height; these attempts are retained separately and are not claimed as valid comparison receipts. The final before/after source comparison temporarily restores only the five owned product files, then restores their exact bytes in `finally`; no Core code or assertions are weakened. Generated profiles, images and temporary keys are excluded from the handoff.
 
 The Windows screenshots were inspected for paragraph rhythm, code/header spacing, task density and long log wrapping. Linux glyph selection and screenshots remain an integrated-CI gate; Windows font results do not certify Linux/macOS or native screen-reader output.
+
+## Borderless transparency follow-up (2026-11-23)
+
+The desktop window now removes native decorations, the outer stroke, card outlines, sidebar/footer separators and decorative shadows. Grouping uses translucent fills. Keyboard focus and invalid-input indicators remain visible. Invisible 5px edge/corner targets call Avalonia's resize operation and are hidden while maximized; title dragging and window controls retain their existing handlers.
+
+The standard window tint changes from 58% to 40% opacity in dark mode and from 68% to 45% in light mode. Large panel fills change from 87% to 44% dark and from 92% to 25% light. Blur is preferred over the heavier acrylic material; plain transparency preserves its alpha, while unsupported transparency and the explicit solid option remain opaque. These overrides are scoped to Desktop.
+
+The Windows preview was inspected before and after removing strokes. The full UI smoke passes at `TestResults/borderless-ui-smoke-20261123/`; the existing no-compositor readability checks remain intact and report contrast above 9:1 in both themes. Desktop service tests pass 29 with one Unix-only skip, at `TestResults/borderless-tests-20261123/desktop.trx`. Final manual edge-drag verification was interrupted by concurrent user input, so it is not counted as a passed native interaction check.

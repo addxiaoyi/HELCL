@@ -50,6 +50,7 @@ public sealed partial class MainWindow : Window
                 ApplyGlassBackdrop();
             if (change.Property == WindowStateProperty && MaxIcon != null)
             {
+                ResizeHandles.IsVisible = WindowState == WindowState.Normal;
                 MaxIcon.Kind = WindowState == WindowState.Maximized
                     ? "WindowRestore"
                     : "WindowMaximize";
@@ -71,6 +72,14 @@ public sealed partial class MainWindow : Window
     {
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             BeginMoveDrag(e);
+    }
+
+    private void BeginWindowResize(object? sender, PointerPressedEventArgs e)
+    {
+        if (!CanResize || WindowState != WindowState.Normal || sender is not Border { Tag: WindowEdge edge }
+            || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+        e.Handled = true;
+        BeginResizeDrag(edge, e);
     }
 
     private void ToggleMaximizeTitleBar(object? sender, TappedEventArgs e) => MaximizeRestoreWindow(sender, e);

@@ -36,7 +36,7 @@ public sealed class ProjectPicture : Border
     {
         ClipToBounds = true;
         CornerRadius = new CornerRadius(10);
-        BorderThickness = new Thickness(1);
+        BorderThickness = new Thickness(0);
         this.Bind(BackgroundProperty, this.GetResourceObservable("HelL.Field"));
         this.Bind(BorderBrushProperty, this.GetResourceObservable("HelL.Line"));
         cubeGlyph.Bind(PathIcon.ForegroundProperty, this.GetResourceObservable("HelL.Muted"));

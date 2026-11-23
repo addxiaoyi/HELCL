@@ -5,17 +5,14 @@
         xmlns:icons="using:HelL.Design"
         x:Class="HelL.Desktop.MainWindow"
         Title="HelL" Width="1180" Height="760" MinWidth="800" MinHeight="600"
-        WindowDecorations="BorderOnly"
-        TransparencyLevelHint="AcrylicBlur, Blur, Mica, Transparent"
+        WindowDecorations="None"
+        TransparencyLevelHint="Blur, AcrylicBlur, Transparent"
         Background="Transparent" UseLayoutRounding="True">
-  <Border x:Name="WindowShell" BorderBrush="{DynamicResource HelL.GlassBorder}" BorderThickness="1">
+  <Border x:Name="WindowShell">
     <Grid>
-      <!-- 斜向冰晶漫反射光层 -->
-      <Border Background="{DynamicResource HelL.BackdropMesh}" IsHitTestVisible="False" />
-
       <Grid x:Name="ShellColumns" ColumnDefinitions="208,*">
         <!-- 左侧全高半透明磨砂侧边栏 -->
-        <Border Grid.Column="0" Background="{DynamicResource HelL.Chrome}" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="0,0,1,0" Padding="11,10,11,12">
+        <Border Grid.Column="0" Background="{DynamicResource HelL.Chrome}" Padding="11,10,11,12">
           <Grid RowDefinitions="Auto,*,Auto,Auto,Auto">
             <!-- 极简几何品牌标识（支持拖拽） -->
             <Border Background="Transparent" Padding="6,4,6,10" PointerPressed="BeginTitleBarDrag" DoubleTapped="ToggleMaximizeTitleBar">
@@ -115,7 +112,7 @@
               </Button>
               <Button Content="易读字号 / 标准字号" Classes="ghost" Click="ToggleReadableText" FontSize="12" />
             </StackPanel>
-            <Border Grid.Row="3" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="0,1,0,0" Padding="0,7,0,5" Margin="0,5,0,0">
+            <Border Grid.Row="3" Padding="0,7,0,5" Margin="0,5,0,0">
               <Grid MaxHeight="84">
                 <TextBlock x:Name="LibraryEmpty" Text="暂无实例" Classes="muted" FontSize="11.5" Margin="8,3" />
                 <ListBox x:Name="InstanceList" SelectionChanged="SelectInstance" Background="Transparent" AutomationProperties.Name="我的 Minecraft 实例">
@@ -205,7 +202,7 @@
                 <!-- 空实例引导 -->
                 <Border x:Name="WelcomePanel" Classes="surface" Padding="32,36">
                   <StackPanel Spacing="14" HorizontalAlignment="Center">
-                    <Border Width="42" Height="42" CornerRadius="11" Background="{DynamicResource HelL.Field}" BorderBrush="{DynamicResource HelL.GlassBorder}" BorderThickness="1" HorizontalAlignment="Center">
+                    <Border Width="42" Height="42" CornerRadius="11" Background="{DynamicResource HelL.Field}" HorizontalAlignment="Center">
                       <icons:LauncherIcon Kind="CubeOutline" Width="20" Height="20" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <TextBlock Text="创建第一个 Minecraft 实例" FontSize="19" FontWeight="SemiBold" HorizontalAlignment="Center" />
@@ -309,7 +306,7 @@
                           <Grid x:Name="AccountPanel" ColumnDefinitions="112,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="3">
                             <TextBlock Text="游戏账户" Grid.RowSpan="3" FontWeight="Medium" VerticalAlignment="Center" />
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
-                              <Border Width="28" Height="28" CornerRadius="99" Background="{DynamicResource HelL.Field}" BorderBrush="{DynamicResource HelL.Line}" BorderThickness="1">
+                              <Border Width="28" Height="28" CornerRadius="99" Background="{DynamicResource HelL.Field}">
                                 <icons:LauncherIcon Kind="AccountOutline" Width="15" Height="15" Foreground="{DynamicResource HelL.InkSoft}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                               </Border>
                               <StackPanel Spacing="1" VerticalAlignment="Center">
@@ -481,7 +478,7 @@
           </Grid>
 
           <!-- 底部半透状态条 -->
-          <Border Grid.Row="2" Background="{DynamicResource HelL.Chrome}" BorderBrush="{DynamicResource HelL.SubtleLine}" BorderThickness="0,1,0,0" Padding="24,5,24,6">
+          <Border Grid.Row="2" Background="{DynamicResource HelL.Chrome}" Padding="24,5,24,6">
             <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
               <Button x:Name="TaskStateBadge" Classes="ghost" Padding="6,1" MinHeight="22" Margin="0,0,8,0" Click="JumpToTasks" VerticalAlignment="Center">
                 <TextBlock x:Name="TaskState" Text="就绪" FontSize="11.5" Classes="muted" />
@@ -492,6 +489,16 @@
             </Grid>
           </Border>
         </Grid>
+      </Grid>
+      <Grid x:Name="ResizeHandles" ColumnDefinitions="5,*,5" RowDefinitions="5,*,5">
+        <Border Grid.Row="0" Grid.Column="0" Background="Transparent" Cursor="TopLeftCorner" Tag="{x:Static WindowEdge.NorthWest}" PointerPressed="BeginWindowResize" />
+        <Border Grid.Row="0" Grid.Column="1" Background="Transparent" Cursor="SizeNorthSouth" Tag="{x:Static WindowEdge.North}" PointerPressed="BeginWindowResize" />
+        <Border Grid.Row="0" Grid.Column="2" Background="Transparent" Cursor="TopRightCorner" Tag="{x:Static WindowEdge.NorthEast}" PointerPressed="BeginWindowResize" />
+        <Border Grid.Row="1" Grid.Column="0" Background="Transparent" Cursor="SizeWestEast" Tag="{x:Static WindowEdge.West}" PointerPressed="BeginWindowResize" />
+        <Border Grid.Row="1" Grid.Column="2" Background="Transparent" Cursor="SizeWestEast" Tag="{x:Static WindowEdge.East}" PointerPressed="BeginWindowResize" />
+        <Border Grid.Row="2" Grid.Column="0" Background="Transparent" Cursor="BottomLeftCorner" Tag="{x:Static WindowEdge.SouthWest}" PointerPressed="BeginWindowResize" />
+        <Border Grid.Row="2" Grid.Column="1" Background="Transparent" Cursor="SizeNorthSouth" Tag="{x:Static WindowEdge.South}" PointerPressed="BeginWindowResize" />
+        <Border Grid.Row="2" Grid.Column="2" Background="Transparent" Cursor="BottomRightCorner" Tag="{x:Static WindowEdge.SouthEast}" PointerPressed="BeginWindowResize" />
       </Grid>
     </Grid>
   </Border>

@@ -35,6 +35,7 @@ public sealed partial class MainWindow
         }
     }
     internal bool IsWorking => task is not null;
+    internal bool IsClosing => closing;
     internal Task<bool> ConfirmAction(string title, string body, string accept = "确认", CancellationToken cancellation = default)
         => DesktopDialogs.Confirm(this, title, body, accept, cancellation);
     internal string DataRoot => DataDirectory.Text ?? "";

@@ -9,7 +9,7 @@ Baseline: `5f9af75f55f35086e02b46be5f772547d6428d91`.
 - Code font candidates select a real system monospace face. An application font fallback restricted to CJK and full-width ranges uses the existing embedded Noto Sans SC. Latin stays monospace; Chinese runs are checked through actual shaped glyphs rather than a family-name string. No new font files or dependency are introduced.
 - Task rows and logs have clearer text sizes and line heights. The sparse list no longer leaves a full-height blank card before the log: a single row is followed by the detail panel with a 14px gap. Many rows remain in a viewport bounded by the available page height. The full task title and its action row are separate, and expanded logs keep a scrollable viewport in a short window.
 
-No AI requests, task retry permissions, cancellation or persistence behavior changed. The previous 66 vector drawings and all recovery checks remain required.
+The initial typography pass did not change AI requests or task behavior. Subsequent fixes also cover installation confirmation/cancellation, task history/retries and resource refresh scheduling; see the dated follow-up in [the reading record](frontend-reading-2026-11-20.md). The previous 66 vector drawings and all recovery checks remain required.
 
 ## Evidence
 

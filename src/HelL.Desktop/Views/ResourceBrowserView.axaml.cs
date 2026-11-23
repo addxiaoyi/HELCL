@@ -19,6 +19,8 @@ public partial class ResourceBrowserView : UserControl
     internal const int PageSize = 30;
     internal const int MaximumPageIndex = PortableCatalog.MaximumSearchOffset / PageSize;
     private bool hasSearched;
+    private bool searchPending;
+    private bool searchQueued;
     private int generation;
     private int projectGeneration;
     private string projectTarget = "";
@@ -44,6 +46,7 @@ public partial class ResourceBrowserView : UserControl
         QueryBox.PropertyChanged += (_, change) =>
         {
             if (change.Property != TextBox.TextProperty) return;
+            searchPending = false;
             generation++; resultsCurrent = false; DetailsButton.IsEnabled = false; DownloadButton.IsEnabled = false;
             MarkResultsStale();
             ResultNotice.Text = hasSearched
@@ -152,8 +155,23 @@ public partial class ResourceBrowserView : UserControl
         DetailPanel.IsVisible = false;
         DetailsButton.IsEnabled = false;
         DownloadButton.IsEnabled = false;
-        if (hasSearched && host is { IsWorking: false }) Avalonia.Threading.Dispatcher.UIThread.Post(async () => await Search());
+        searchPending = hasSearched;
+        ResumeSearch();
     }
+
+    internal void ResumeSearch()
+    {
+        if (searchQueued || !CanResumeSearch()) return;
+        searchQueued = true;
+        Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+        {
+            searchQueued = false;
+            if (CanResumeSearch()) await Search();
+        });
+    }
+
+    private bool CanResumeSearch() => searchPending && IsVisible
+        && host is { IsWorking: false, IsVisible: true, IsClosing: false };
 
     private async void SearchResources(object? sender, RoutedEventArgs e) => await Search();
     private async void PreviousPage(object? sender, RoutedEventArgs e)
@@ -181,6 +199,7 @@ public partial class ResourceBrowserView : UserControl
             if (revision != generation || binding != BindingKey)
                 throw new InvalidOperationException("搜索条件或结果已更新，请从资源页重新搜索或翻页。");
 
+            searchPending = false;
             string kind = Kind, source = Source, query = QueryBox.Text?.Trim() ?? "", order = Order;
             revision = ++generation;
             if (kind == "world" && source == "modrinth") throw new InvalidOperationException("世界资源请切换到 CurseForge。");

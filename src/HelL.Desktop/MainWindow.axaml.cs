@@ -593,6 +593,7 @@ public sealed partial class MainWindow : Window
         ModsView.IsVisible = page == "mods";
         SavesView.IsVisible = page == "saves";
         ResourcesView.IsVisible = page == "resources";
+        ResourcesView.ResumeSearch();
         ServersView.IsVisible = page == "servers";
         AiView.IsVisible = page == "ai";
         JavaView.IsVisible = page == "java";
